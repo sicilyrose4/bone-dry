@@ -587,6 +587,25 @@ function renderShelf() {
   const added = !sel && G.shelf.lastAdded;
   dom.shelfAdded.style.display = added ? 'flex' : 'none';
   if (added) dom.shelfAddedText.textContent = `${INGREDIENTS[G.shelf.lastAdded].name.toUpperCase()} ADDED`;
+  if (added && !G.shelf.addedShown) {
+    // "WHISKEY ADDED ✓" fades out after ~1.5s
+    G.shelf.addedShown = true;
+    dom.shelfAdded.classList.remove('fading');
+    clearTimeout(G.shelf.addedTimer);
+    G.shelf.addedTimer = setTimeout(() => {
+      dom.shelfAdded.classList.add('fading');
+      G.shelf.addedTimer = setTimeout(() => {
+        G.shelf.lastAdded = null;
+        G.shelf.addedShown = false;
+        dom.shelfAdded.classList.remove('fading');
+        dom.shelfAdded.style.display = 'none';
+      }, 400);
+    }, 1500);
+  } else if (!added) {
+    clearTimeout(G.shelf.addedTimer);
+    G.shelf.addedShown = false;
+    dom.shelfAdded.classList.remove('fading');
+  }
   dom.btnToGarnish.disabled = !G.drink.poured.some(p => p.oz > 0);
   $('btn-recipe-peek').style.display = G.drink.tier === 'familiar' ? 'block' : 'none';
 }
@@ -732,6 +751,7 @@ function scoreDrink(recipe, poured, drinkTime, tier, peeked) {
   recipe.ingredients.forEach(req => {
     const actual = poured.find(p => p.id === req.id);
     if (!actual) { score -= 30; return; }
+    if (req.count && (actual.count || 0) !== req.count) score -= 10;  // e.g. 2 limes when they asked for 1
     if (req.oz) {
       const diff = Math.abs((actual.oz || 0) - req.oz);
       if (diff > 1.5)       score -= 20;
@@ -1086,6 +1106,7 @@ function commitLiquidPour() {
     }
     G.drink.activeIngredient = id;
     G.shelf.lastAdded = id;   // "WHISKEY ADDED ✓"
+    G.shelf.addedShown = false; // restart its fade timer
   }
   G.pour.ozPoured = 0;
   G.shelf.selected = null;
@@ -1110,19 +1131,31 @@ const GARNISH_TRAY = {
 // Where a garnish lands, relative to the glass's top-left (glass is 122.49 x 164).
 // Rim slice = Figma 459:1230 (lime). Cherry/mint spots aren't designed yet.
 const RIM_SPOTS = [
-  { target:{ x:106, y:4 },  cx:108.29, cy:0.12, w:31.98, h:68.88, rot:125.81, flip:true },
-  { target:{ x:16,  y:4 },  cx:14.2,   cy:0.12, w:31.98, h:68.88, rot:-125.81 },   // 2nd slice: mirrored
+  { target:{ x:106, y:4 },  cx:108.29, cy:0.12, w:31.98, h:68.88, rot:125.81, flip:true },   // Figma lime
+  { target:{ x:16,  y:4 },  cx:14.2,   cy:0.12, w:31.98, h:68.88, rot:-125.81 },             // mirrored, left rim
+  { target:{ x:61,  y:2 },  cx:61,     cy:-4,   w:31.98, h:68.88, rot:180 },                 // back of the rim
 ];
+// Cherry drops into the drink; mint floats on top. Extras fan out a little.
 const GARNISH_SPOTS = {
-  cherry: { target:{ x:61, y:45 }, cx:61, cy:45, w:23.05, h:48.26, rot:0 },   // drops into the drink
-  mint:   { target:{ x:45, y:20 }, cx:45, cy:20, w:54.1,  h:32.4,  rot:0 },   // floats on top
+  cherry: { target:{ x:61, y:45 }, cx:61, cy:45, w:23.05, h:48.26, rot:0,
+            extra:[[0,0], [-17,8], [17,8], [0,18], [-9,26], [9,26]] },
+  mint:   { target:{ x:45, y:20 }, cx:45, cy:20, w:54.1,  h:32.4,  rot:0,
+            extra:[[0,0], [30,3], [-12,8], [16,12]] },
 };
 const RIM_GARNISHES = ['lime', 'lemon', 'orange'];
 
+// Any number of garnishes can go on a drink — each new one takes the next spot
 function garnishSpot(id, placed) {
-  if (!RIM_GARNISHES.includes(id)) return GARNISH_SPOTS[id];
-  const rimUsed = placed.filter(g => RIM_GARNISHES.includes(g.id)).length;
-  return RIM_SPOTS[Math.min(rimUsed, RIM_SPOTS.length - 1)];
+  if (RIM_GARNISHES.includes(id)) {
+    const n = placed.filter(g => RIM_GARNISHES.includes(g.id)).length;
+    const base = RIM_SPOTS[n % RIM_SPOTS.length];
+    const lap = Math.floor(n / RIM_SPOTS.length) * 6;   // later laps sit a bit lower
+    return { ...base, cy: base.cy + lap, target: { x: base.target.x, y: base.target.y + lap } };
+  }
+  const s = GARNISH_SPOTS[id];
+  const n = placed.filter(g => g.id === id).length;
+  const [dx, dy] = s.extra[n % s.extra.length];
+  return { ...s, cx: s.cx + dx, cy: s.cy + dy, target: { x: s.target.x + dx, y: s.target.y + dy } };
 }
 
 const LIQUID_PATH = 'M15.2349 92C9.81188 73.7941 3.01339 25.9849 0.0160161 2.24516C-0.134587 1.05236 0.796158 0 1.99843 0H98.1087C99.2614 0 100.176 0.963895 100.085 2.11295C98.3598 23.9369 88.5012 89.4568 83.4396 121.698C83.3135 122.501 82.7139 123.124 81.9206 123.302C56.3859 129.03 34.0433 125.913 24.8618 123.334C24.1586 123.137 23.6472 122.559 23.4847 121.847C22.6398 118.146 20.1902 108.635 15.2349 92Z';
@@ -1192,7 +1225,6 @@ function openGarnishScreen() {
 
 function toggleGarnish(id) {
   if (G.screen !== 'garnish' || !G.timerRunning) return;
-  if (G.drink.garnishes.some(g => g.id === id)) return; // already on the drink
   G.garnishSel = G.garnishSel === id ? null : id;
   renderGarnishScreen();
 }
@@ -1225,7 +1257,9 @@ function placeSelectedGarnish() {
   const id = G.garnishSel;
   if (!id || !G.timerRunning) return;
   G.drink.garnishes.push({ id, spot: garnishSpot(id, G.drink.garnishes) });
-  G.drink.poured.push({ id, count: 1 });
+  const existing = G.drink.poured.find(p => p.id === id);
+  if (existing) existing.count = (existing.count || 0) + 1;
+  else G.drink.poured.push({ id, count: 1 });
   G.garnishSel = null;
   renderGarnishScreen();
 }

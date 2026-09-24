@@ -576,7 +576,8 @@ html, body {
 .arrow-btn:disabled { opacity: 0.3; cursor: default; }
 #btn-to-bar     { left: 39px;  top: 324px; }
 #btn-to-garnish { left: 686px; top: 324px; }
-#btn-back-to-pour { left: 694px; top: 322px; }
+/* On the bar art the outlined style is too faint — filled like START ORDER */
+#btn-back-to-pour { left: 694px; top: 322px; background: #cccaf3; border-color: #cccaf3; color: #040318; }
 
 /* POUR — 120x38 at (362,323), #918fb7, radius 12 */
 #btn-pour {
@@ -609,7 +610,9 @@ html, body {
   justify-content: center;
   gap: 12px;
   pointer-events: none;
+  transition: opacity 0.4s ease;
 }
+#shelf-added.fading { opacity: 0; }
 #shelf-added-text {
   font-family: 'BarFontBold', sans-serif;
   font-size: 24px;
