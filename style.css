@@ -231,14 +231,15 @@ html, body {
 .counter-drink { position: absolute; transition: opacity 0.6s ease; }
 .counter-drink.leaving { opacity: 0; }
 
-/* Speech bubble — 222x61 rect, #918fb7, radius 13; tail from Figma (Vector 34) */
+/* Speech bubble — 222x61 rect, #353454, radius 13; tail from Figma (Vector 34).
+   Order text is lowercase to set it apart from the UI text. */
 #speech-area {
   position: absolute;
   top: 38px;
   min-width: 222px;
   height: 61px;
-  padding: 0 29px;
-  background: #918fb7;
+  padding: 0 39px;
+  background: #353454;
   border-radius: 13px;
   z-index: 10;
   pointer-events: none;
@@ -257,18 +258,18 @@ html, body {
   font-family: 'BarFontBold', sans-serif;
   font-size: 28px;
   line-height: normal;
-  color: #000;
+  color: #9d9cb6;
   text-align: center;
   white-space: nowrap;
 }
 
-/* Start order button — 180x46 at (631,319), #cccaf3, radius 12 */
+/* Start order button — 194x54 at (617,311), #cccaf3, radius 12 (Figma 483:1656) */
 #btn-start-order {
   position: absolute;
-  left: 631px;
-  top: 319px;
-  width: 180px;
-  height: 46px;
+  left: 617px;
+  top: 311px;
+  width: 194px;
+  height: 54px;
   z-index: 10;
   background: #cccaf3;
   color: #040318;
@@ -594,7 +595,7 @@ html, body {
 #btn-to-bar     { left: 39px;  top: 324px; }
 #btn-to-garnish { left: 686px; top: 324px; }
 /* On the bar art the outlined style is too faint — filled like START ORDER */
-#btn-back-to-pour { left: 694px; top: 322px; background: #cccaf3; border-color: #cccaf3; color: #040318; }
+#btn-back-to-pour { left: 694px; top: 318px; background: #cccaf3; border-color: #cccaf3; color: #040318; }
 
 /* POUR — 120x38 at (362,323), #918fb7, radius 12 */
 #btn-pour {

@@ -454,7 +454,7 @@ function selectCustomer(slot) {
   G.selectedIdx = slot;
   c.state = 'selected';
   renderCustomer(slot);
-  showSpeechArea(c.drink.name.toUpperCase(), slot);
+  showSpeechArea(c.drink.name.toLowerCase(), slot);   // orders are lowercase (Figma 459:1276)
   refreshBarControls();
 }
 
@@ -1384,7 +1384,7 @@ dom.pauseOverlay.addEventListener('pointerdown', (e) => {
    BOOT — loading screen preloads every image, then home
 ═══════════════════════════════════════════════════════════════ */
 function allImagePaths() {
-  const ui = ['speech-tail.svg?v=2','icon-restart.svg','arrow-bar.svg','shelf-line.svg','icon-check.svg','icon-back.svg',
+  const ui = ['speech-tail.svg?v=3','icon-restart.svg','arrow-bar.svg','shelf-line.svg','icon-check.svg','icon-back.svg',
               'pour-ticks.svg','tap-target.png','icon-settings.svg','select-outline-whiskey.svg','select-outline-cola.svg',
               'select-outline-lime.svg','icon-recipe.svg'].map(f => `assets/ui/${f}`);
   return [
