@@ -1381,11 +1381,41 @@ function preload(onProgress) {
 
 $('btn-start-shift').addEventListener('click', (e) => { e.stopPropagation(); initGame(); });
 
+// The bar fills on an eased curve over at least LOAD_MIN_MS, but never runs ahead of
+// real loading. Then it holds at full for a beat and fades into home.
+const LOAD_MIN_MS  = 2200;
+const LOAD_HOLD_MS = 350;
+const LOAD_FADE_MS = 400;
+const easeInOut = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
 window.addEventListener('DOMContentLoaded', () => {
   buildGarnishTray();
   showScreen('loading');
   const fill = $('loading-fill');
-  preload(p => { fill.style.width = (382 * p) + 'px'; })
-    .then(() => setTimeout(() => showScreen('home'), 300));
+  fill.style.transition = 'none';
+  let real = 0, done = false;
+  preload(p => { real = p; }).then(() => { real = 1; done = true; });
+
+  const start = performance.now();
+  const frame = (now) => {
+    const timed = easeInOut(Math.min(1, (now - start) / LOAD_MIN_MS));
+    const shown = Math.min(timed, real);
+    fill.style.width = (382 * shown) + 'px';
+    if (done && timed >= 1) {
+      setTimeout(() => {
+        // Crossfade: home fades in over the loading screen
+        const home = dom.screens.home;
+        home.style.opacity = '0';
+        home.classList.add('active');
+        void home.offsetWidth;
+        home.style.transition = `opacity ${LOAD_FADE_MS}ms ease`;
+        home.style.opacity = '1';
+        setTimeout(() => { showScreen('home'); home.style.transition = ''; home.style.opacity = ''; }, LOAD_FADE_MS);
+      }, LOAD_HOLD_MS);
+      return;
+    }
+    requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
 });
 
