@@ -231,7 +231,7 @@ html, body {
 .counter-drink { position: absolute; transition: opacity 0.6s ease; }
 .counter-drink.leaving { opacity: 0; }
 
-/* Speech bubble — 222x61, radius 42, colors per customer (Figma 486:1923 "speech bubble styles").
+/* Speech bubble — 222x61, radius 24, colors per customer (Figma 486:1923 "speech bubble styles").
    Order text is lowercase to set it apart from the UI text.
    Above the customer at y=32 (tail down), or on the counter at y=311 (tail up)
    when "above" would touch the tips / pause. */
@@ -242,7 +242,7 @@ html, body {
   height: 61px;
   padding: 0 39px;
   background: var(--bubble-bg, #9d9cb6);
-  border-radius: 42px;
+  border-radius: 24px;
   z-index: 10;
   pointer-events: none;
   display: flex;
