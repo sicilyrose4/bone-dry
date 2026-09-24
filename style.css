@@ -601,7 +601,7 @@ html, body {
 #btn-pour:active { transform: scale(0.96); }
 
 /* "WHISKEY ADDED ✓" — at (331,334), 201 wide */
-#shelf-added {
+#shelf-added, #garnish-toast {
   position: absolute;
   left: 331px;
   top: 334px;
@@ -614,15 +614,15 @@ html, body {
   pointer-events: none;
   transition: opacity 0.4s ease;
 }
-#shelf-added.fading { opacity: 0; }
-#shelf-added-text {
+#shelf-added.fading, #garnish-toast.fading { opacity: 0; }
+#shelf-added-text, #garnish-toast-text {
   font-family: 'BarFontBold', sans-serif;
   font-size: 24px;
   line-height: normal;
   color: #cccaf3;
   white-space: nowrap;
 }
-#shelf-added img { width: 20px; height: 20px; flex: none; }
+#shelf-added img, #garnish-toast img { width: 20px; height: 20px; flex: none; }
 
 /* ═══════════════════════════════════════════
    SCREEN 4: POUR — Figma 454:551 / 454:524 / 454:486 (whiskey), 454:707–802 (cola)

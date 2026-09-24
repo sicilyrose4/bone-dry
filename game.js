@@ -1221,12 +1221,14 @@ function buildGarnishTray() {
 
 function openGarnishScreen() {
   G.garnishSel = null;
+  hideGarnishToast();
   showScreen('garnish');
   renderGarnishScreen();
 }
 
 function toggleGarnish(id) {
   if (G.screen !== 'garnish' || !G.timerRunning) return;
+  hideGarnishToast();
   G.garnishSel = G.garnishSel === id ? null : id;
   renderGarnishScreen();
 }
@@ -1268,6 +1270,25 @@ function placeSelectedGarnish() {
 
 $('garnish-target').addEventListener('click', (e) => { e.stopPropagation(); placeSelectedGarnish(); });
 
+// "GARNISH REMOVED ✓" — same look and 1.5s fade as the shelf confirmations
+let garnishToastTimer = null;
+function hideGarnishToast() {
+  clearTimeout(garnishToastTimer);
+  const t = $('garnish-toast');
+  t.classList.remove('fading');
+  t.style.display = 'none';
+}
+function flashGarnishToast(msg) {
+  hideGarnishToast();
+  const t = $('garnish-toast');
+  $('garnish-toast-text').textContent = msg;
+  t.style.display = 'flex';
+  garnishToastTimer = setTimeout(() => {
+    t.classList.add('fading');
+    garnishToastTimer = setTimeout(hideGarnishToast, 400);
+  }, 1500);
+}
+
 $('btn-remove-garnish').addEventListener('click', (e) => {
   e.stopPropagation();
   if (!G.timerRunning) return;
@@ -1275,6 +1296,7 @@ $('btn-remove-garnish').addEventListener('click', (e) => {
   G.drink.poured = G.drink.poured.filter(p => INGREDIENTS[p.id].type !== 'garnish');
   G.garnishSel = null;
   renderGarnishScreen();
+  flashGarnishToast('GARNISH REMOVED');
 });
 
 $('btn-garnish-to-pour').addEventListener('click', (e) => {
