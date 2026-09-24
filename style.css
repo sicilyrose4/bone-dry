@@ -1,0 +1,884 @@
+/* ─── FONTS ──────────────────────────────────────────────────── */
+@font-face {
+  font-family: 'BarFont';
+  src: url('assets/fonts/TheBarFont-Regular.otf');
+}
+@font-face {
+  font-family: 'BarFontBold';
+  src: url('assets/fonts/ThBarFont_Bold-Regular.otf');
+}
+
+/* ─── RESET & BASE ───────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%; height: 100%;
+  background: #000;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── VIEWPORT SCALING ───────────────────────────────────────── */
+#viewport {
+  width: 844px;
+  height: 390px;
+  transform-origin: top left;
+  position: relative;
+}
+
+#game {
+  width: 844px;
+  height: 390px;
+  position: relative;
+  overflow: hidden;
+  background: #000;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ─── SCREENS ────────────────────────────────────────────────── */
+.screen {
+  position: absolute;
+  inset: 0;
+  width: 844px;
+  height: 390px;
+  display: none;
+  overflow: hidden;
+}
+.screen.active { display: block; }
+
+/* ─── SHARED HUD ELEMENTS ────────────────────────────────────── */
+.pause-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 4px;
+}
+.pause-bar {
+  width: 4px;
+  height: 18px;
+  background: #fff;
+  border-radius: 2px;
+}
+.hud-left-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #8e8e8e;
+  font-family: 'BarFontBold', sans-serif;
+  font-size: 16px;
+  padding: 6px 10px;
+}
+.hud-left-btn img { filter: invert(60%); }
+.hud-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ═══════════════════════════════════════════
+   SCREEN 1: BAR
+═══════════════════════════════════════════ */
+#screen-bar {
+  background: #000;
+}
+.bar-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  top: -64px;
+}
+.counter {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 80px;
+  object-fit: cover;
+  z-index: 6;
+}
+
+/* Customer slots */
+.customer-slot {
+  position: absolute;
+  bottom: 60px;
+  width: 200px;
+  height: 270px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 4;
+  cursor: pointer;
+  transition: transform 0.5s ease;
+}
+#slot-0 { left: calc(170px - 100px); }
+#slot-1 { left: calc(390px - 100px); }
+#slot-2 { left: calc(660px - 100px); }
+
+.customer-slot img {
+  max-height: 250px;
+  object-fit: contain;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+.customer-slot.selected img {
+}
+.customer-slot.entering {
+  transform: translateX(200px);
+  opacity: 0;
+}
+.customer-slot.slide-in {
+  animation: slideIn 0.5s ease forwards;
+}
+@keyframes slideIn {
+  from { transform: translateX(200px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+.customer-slot.slide-out {
+  animation: slideOut 0.5s ease forwards;
+}
+@keyframes slideOut {
+  from { transform: translateX(0);     opacity: 1; }
+  to   { transform: translateX(-200px); opacity: 0; }
+}
+
+/* Speech bubble — floats over the customer, tail points down */
+#speech-area {
+  position: absolute;
+  width: auto;
+  max-width: 640px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 10px 32px;
+  z-index: 10;
+  pointer-events: none;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.22);
+  white-space: nowrap;
+}
+/* Tail pointing DOWN toward the customer */
+#speech-area::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: calc(50% + var(--tail-offset, 0px));
+  transform: translateX(-50%);
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 10px solid #fff;
+}
+#speech-text {
+  font-family: 'BarFont', sans-serif;
+  font-size: 16px;
+  color: #000;
+  line-height: 1.35;
+  text-align: center;
+}
+
+/* Start order button */
+#btn-start-order {
+  position: absolute;
+  right: 24px;
+  bottom: 80px;
+  z-index: 10;
+  background: #00e26a;
+  color: #000;
+  font-family: 'BarFontBold', sans-serif;
+  font-size: 20px;
+  border: none;
+  border-radius: 17px;
+  padding: 10px 22px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+#btn-start-order:active {
+  transform: scale(0.96);
+}
+
+/* Bar HUD */
+#bar-hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  z-index: 20;
+}
+#bar-tips {
+  font-family: 'BarFont', sans-serif;
+  font-size: 28px;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.7);
+}
+
+/* ═══════════════════════════════════════════
+   OVERLAY: RECIPE
+═══════════════════════════════════════════ */
+#overlay-recipe {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+#overlay-recipe.open {
+  display: flex;
+}
+#recipe-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+}
+#recipe-card {
+  position: relative;
+  z-index: 51;
+  background: #fff;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  width: 500px;
+  max-height: 356px;
+  overflow: hidden;
+  padding: 20px 24px 16px;
+  transform: translateY(100%);
+  transition: transform 0.35s ease;
+  display: flex;
+  flex-direction: column;
+}
+#recipe-card.slide-up {
+  transform: translateY(0);
+}
+#btn-recipe-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #ff5a5a;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-family: 'BarFont', sans-serif;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 52;
+  line-height: 1;
+}
+#recipe-content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+#recipe-content img.recipe-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Vodka-soda: full PNG, no card, anchored to bottom */
+#overlay-recipe.recipe-image-mode {
+  align-items: center;
+  justify-content: center;
+}
+#overlay-recipe.recipe-image-mode #recipe-backdrop {
+  background: rgba(0,0,0,0.5);
+}
+/* Card shrink-wraps the image; X sits on its top-right corner */
+#overlay-recipe.recipe-image-mode #recipe-card {
+  position: relative;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  width: auto;
+  max-height: none;
+  overflow: visible;
+  transform: none;
+  display: inline-block;
+}
+#overlay-recipe.recipe-image-mode #btn-recipe-close {
+  position: absolute;
+  top: -6px;
+  right: -3px;
+  z-index: 60;
+}
+#overlay-recipe.recipe-image-mode img.recipe-img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-height: 346px;
+  max-width: 540px;
+  object-fit: contain;
+}
+.recipe-drink-name {
+  font-family: 'BarFontBold', sans-serif;
+  font-size: 32px;
+  color: #000;
+  text-align: center;
+  margin-bottom: 10px;
+  padding-right: 24px; /* avoid close btn overlap */
+}
+.recipe-hr {
+  width: 100%;
+  border: none;
+  border-top: 1.5px solid #ccc;
+  margin-bottom: 12px;
+}
+.recipe-ingredient {
+  font-family: 'BarFont', sans-serif;
+  font-size: 21px;
+  color: #000;
+  text-align: center;
+  margin-bottom: 5px;
+  width: 100%;
+}
+
+/* ═══════════════════════════════════════════
+   SCREEN 3: SHELF
+═══════════════════════════════════════════ */
+#screen-shelf { background: #000; }
+
+.shelf-hud {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  z-index: 10;
+}
+#shelf-drink-name {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'BarFont', sans-serif;
+  font-size: 20px;
+  color: rgba(255,255,255,0.6);
+  letter-spacing: 0.08em;
+  pointer-events: none;
+  white-space: nowrap;
+  transition: color 0.15s ease;
+}
+#shelf-drink-name.dragging {
+  color: rgba(255,255,255,1);
+}
+
+#shelf-timer, #pour-timer {
+  font-family: 'BarFont', sans-serif;
+  font-size: 28px;
+  color: #fff;
+}
+
+/* Shelf lines — 30px margin each side */
+.shelf-line {
+  position: absolute;
+  left: 30px; right: 30px;
+  height: 1px;
+  background: rgba(255,255,255,0.35);
+  z-index: 2;
+}
+.top-shelf-line    { top: 150px; }
+.bottom-shelf-line { top: 272px; }
+.counter-line      { top: 372px; left: 0; right: 0; }
+
+/* Shelf rows — items start 21px inside shelf line edges */
+.shelf-row {
+  position: absolute;
+  left: 51px; right: 51px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+}
+#top-shelf    { top: 46px;  height: 104px; }
+#bottom-shelf { top: 152px; height: 120px; }
+
+.shelf-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: box-shadow 0.2s;
+}
+.shelf-item.added { }
+.shelf-item img   { pointer-events: none; }
+
+/* ─── INGREDIENT SIZES (consistent wherever they appear) ─────── */
+/* Spirits — tallest */
+[data-id="vodka"] img,
+[data-id="tequila"] img,
+[data-id="whiskey"] img,
+[data-id="white-rum"] img,
+[data-id="gin"] img             { height: 88px; width: auto; max-width: 80px; }
+
+/* Cans & water bottles */
+[data-id="cola"] img,
+[data-id="tonic-water"] img,
+[data-id="soda-water"] img      { height: 68px; width: auto; max-width: 80px; }
+
+/* Juice bottles */
+[data-id="cranberry"] img,
+[data-id="oj"] img              { height: 68px; width: auto; max-width: 80px; }
+
+/* Garnishes */
+[data-id="orange"] img,
+[data-id="mint"] img,
+[data-id="lemon"] img,
+[data-id="lime"] img,
+[data-id="cherry"] img          { height: 38px; width: auto; max-width: 60px; }
+
+/* Rim — salt & sugar */
+[data-id="salt"] img,
+[data-id="sugar"] img           { height: 24px; width: auto; }
+
+/* ─── DRAG GHOST ─────────────────────────────────────────────── */
+.drag-ghost {
+  position: absolute;
+  height: 80px;
+  width: auto;
+  max-width: 70px;
+  object-fit: contain;
+  pointer-events: none;
+  z-index: 300;
+  opacity: 0.88;
+  transform: translate(-50%, -50%);
+}
+
+/* Drop zone highlight when dragging */
+#counter-center-group.drag-over {
+  background: rgba(0,226,106,0.12);
+  border-radius: 14px;
+  outline: 2px dashed rgba(0,226,106,0.55);
+  padding: 8px 14px;
+}
+
+/* Counter area — two groups */
+#shelf-counter {
+  position: absolute;
+  top: 312px; bottom: 0;
+  left: 0; right: 0;
+}
+
+/* Left group: salt, sugar, ice — anchored to shelf left edge */
+#counter-left-group {
+  position: absolute;
+  left: 30px;
+  bottom: 12px;
+  display: flex;
+  align-items: flex-end;
+  gap: 18px;
+}
+
+/* Center group: soda water + glass — horizontally centered */
+#counter-center-group {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 12px;
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+}
+.counter-rim {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: box-shadow 0.2s;
+  gap: 3px;
+}
+.counter-rim.added { }
+.counter-rim img {
+  height: 24px; width: auto;
+}
+.counter-rim span { display: none; }
+.counter-static { display: flex; align-items: flex-end; }
+#ice-display img      { height: 50px; width: auto; }
+#shelf-glass-icon img { height: 68px; width: auto; }
+.counter-bottle {
+  display: flex;
+  align-items: flex-end;
+  cursor: grab;
+  border-radius: 6px;
+  transition: box-shadow 0.2s;
+}
+.counter-bottle.added { }
+.counter-bottle img   { height: 68px; width: auto; pointer-events: none; }
+
+/* Serve button */
+#btn-serve {
+  position: absolute;
+  right: 20px;
+  bottom: 22px;
+  background: #00e26a;
+  color: #000;
+  font-family: 'BarFontBold', sans-serif;
+  font-size: 26px;
+  border: none;
+  border-radius: 12px;
+  padding: 8px 22px;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+#btn-serve:active { transform: scale(0.96); }
+
+/* ═══════════════════════════════════════════
+   SCREEN 4: POUR
+═══════════════════════════════════════════ */
+#screen-pour {
+  background: #000;
+}
+
+.pour-hud {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  z-index: 10;
+}
+
+/* Liquid mode */
+#pour-liquid-mode {
+  position: absolute;
+  inset: 0;
+}
+
+/* Bottle — paired with glass, centered together */
+.pour-bottle {
+  position: absolute;
+  left: 185px;
+  top: 45px;
+  height: 270px;
+  width: auto;
+  max-height: 270px;
+  object-fit: contain;
+  transform-origin: bottom center;
+  transition: transform 0.3s ease;
+  z-index: 5;
+  pointer-events: none;
+  image-rendering: auto;
+}
+.pour-bottle.pouring {
+  /* rotate around bottom center, then translate up so cap clears the glass rim */
+  transform: translate(0, -187px) rotate(72deg);
+}
+
+/* Pour glass — paired with bottle, both centered ~422px */
+#pour-glass-container {
+  position: absolute;
+  width: 210px;
+  height: 260px;
+  left: 390px;
+  top: 55px;
+  z-index: 4;
+}
+#pour-glass-fill {
+  position: absolute;
+  bottom: 14px;
+  left: 25%;
+  width: 55%;
+  height: 0;
+  background: #c8e8ff;
+  z-index: 3;
+  border-radius: 0 0 6px 6px;
+  transition: background 0.3s;
+  /* trapezoid: wide at top, narrow at bottom to match glass taper */
+  clip-path: polygon(22% 100%, 84% 100%, 100% 0%, 0% 0%);
+}
+#pour-glass-outline {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  z-index: 5;
+  pointer-events: none;
+}
+#pour-glass-container.overpour #pour-glass-fill {
+  animation: redFlash 0.3s infinite;
+}
+@keyframes redFlash {
+  0%,100% { background-color: #c8e8ff; }
+  50%      { background-color: #ff4444; }
+}
+
+/* Measurement lines — inside glass container */
+#measure-lines {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+}
+.measure-tick {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  left: 18%;
+  right: 5%;
+}
+/* tick positions: oz/8 * 180 + 14px from bottom */
+#tick-05 { bottom: 25px; }
+#tick-1  { bottom: 37px; }
+#tick-25 { bottom: 70px; }
+#tick-4  { bottom: 104px; }
+#tick-6  { bottom: 149px; }
+#tick-8  { bottom: 176px; }
+
+.tick-line {
+  flex-shrink: 0;
+  width: 28px;
+  height: 1px;
+  background: rgba(255,255,255,0.6);
+}
+.tick-label {
+  font-family: 'BarFontBold', sans-serif;
+  font-size: 11px;
+  color: rgba(255,255,255,0.75);
+  white-space: nowrap;
+}
+
+/* Pour instruction — above the glass */
+#pour-instruction {
+  position: absolute;
+  left: 430px;
+  right: 14px;
+  top: 40px;
+  text-align: center;
+  font-family: 'BarFont', sans-serif;
+  font-size: 15px;
+  color: #8e8e8e;
+  pointer-events: none;
+  z-index: 6;
+}
+
+/* Garnish mode */
+#pour-garnish-mode {
+  position: absolute;
+  inset: 0;
+}
+#garnish-instruction {
+  position: absolute;
+  left: 0; right: 0;
+  top: 58px;
+  text-align: center;
+  font-family: 'BarFont', sans-serif;
+  font-size: 18px;
+  color: #8e8e8e;
+  pointer-events: none;
+  z-index: 6;
+}
+.garnish-drag-item {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  cursor: grab;
+  z-index: 8;
+  touch-action: none;
+}
+.garnish-drag-item:active { cursor: grabbing; }
+
+#garnish-glass-container {
+  position: absolute;
+  width: 130px;
+  height: 200px;
+  left: calc(610px - 65px);
+  top: calc(195px - 100px);
+  z-index: 4;
+}
+#garnish-glass-fill {
+  position: absolute;
+  bottom: 10px;
+  left: 10%;
+  width: 80%;
+  height: 0;
+  background: #e8e8e8;
+  z-index: 3;
+  border-radius: 0 0 4px 4px;
+}
+#garnish-glass-outline {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  z-index: 5;
+  pointer-events: none;
+}
+#garnish-drop-zone {
+  position: absolute;
+  top: -20px;
+  left: -10px;
+  width: 150px;
+  height: 50px;
+  z-index: 6;
+  border-radius: 50%;
+  pointer-events: none;
+  /* subtle highlight */
+  background: rgba(0,226,106,0.08);
+  border: 1px dashed rgba(0,226,106,0.3);
+}
+#garnish-placed-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  pointer-events: none;
+}
+.placed-garnish {
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  transform: translate(-50%, -50%);
+}
+
+/* Done button */
+#btn-pour-done {
+  position: absolute;
+  right: 24px;
+  bottom: 28px;
+  background: #00e26a;
+  color: #000;
+  font-family: 'BarFontBold', sans-serif;
+  font-size: 28px;
+  border: none;
+  border-radius: 12px;
+  width: 110px;
+  height: 38px;
+  cursor: pointer;
+  z-index: 10;
+  transition: transform 0.1s;
+}
+#btn-pour-done:active { transform: scale(0.96); }
+
+/* ═══════════════════════════════════════════
+   SCREEN 5: END
+═══════════════════════════════════════════ */
+#screen-end {
+  background: #000;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+#screen-end.active { display: flex; }
+#end-title {
+  font-family: 'BarFontBold', sans-serif;
+  font-size: 48px;
+  color: #fff;
+}
+#end-tips {
+  font-family: 'BarFont', sans-serif;
+  font-size: 32px;
+  color: #00e26a;
+}
+#end-served {
+  font-family: 'BarFont', sans-serif;
+  font-size: 24px;
+  color: #fff;
+}
+#btn-play-again {
+  background: #00e26a;
+  color: #000;
+  font-family: 'BarFontBold', sans-serif;
+  font-size: 28px;
+  border: none;
+  border-radius: 14px;
+  padding: 10px 32px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: transform 0.1s;
+}
+#btn-play-again:active { transform: scale(0.96); }
+
+/* ─── PAUSE OVERLAY ──────────────────────────────────────────── */
+#pause-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'BarFontBold', sans-serif;
+  font-size: 48px;
+  color: #fff;
+  letter-spacing: 4px;
+}
+
+/* ─── NOTIFICATIONS ──────────────────────────────────────────── */
+#notification-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 60px;
+  gap: 8px;
+}
+.notification {
+  background: rgba(0,0,0,0.55);
+  border-radius: 6px;
+  padding: 5px 16px;
+  font-family: 'BarFontBold', sans-serif;
+  font-size: 18px;
+  color: rgba(255,255,255,0.85);
+  letter-spacing: 0.04em;
+  animation: notifIn 0.2s ease, notifOut 0.3s ease 1.2s forwards;
+}
+@keyframes notifIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes notifOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* ─── TIP FLOAT (above customer, no background) ─────────────── */
+.tip-float {
+  position: absolute;
+  transform: translateX(-50%);
+  bottom: 130px;
+  font-family: 'BarFontBold', sans-serif;
+  font-size: 36px;
+  color: #00e26a;
+  pointer-events: none;
+  z-index: 200;
+  white-space: nowrap;
+  animation: tipFloat 2.5s ease forwards;
+}
+@keyframes tipFloat {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(0); }
+  15%  { opacity: 1; }
+  85%  { opacity: 1; }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-50px); }
+}

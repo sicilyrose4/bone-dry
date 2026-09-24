@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Bar</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="viewport">
+    <div id="game" touch-action="none">
+
+      <!-- ═══════════════════════════════════════════
+           SCREEN 1: BAR OVERVIEW
+      ═══════════════════════════════════════════ -->
+      <div id="screen-bar" class="screen active">
+        <img class="bar-bg" src="assets/bg.jpg" alt="" />
+        <!-- Customer slots -->
+        <div class="customer-slot" id="slot-0"></div>
+        <div class="customer-slot" id="slot-1"></div>
+        <div class="customer-slot" id="slot-2"></div>
+        <!-- Counter -->
+        <img class="counter" src="assets/counter.png" alt="" />
+        <!-- Speech bubble area -->
+        <div id="speech-area" style="display:none;">
+          <div id="speech-text"></div>
+        </div>
+        <!-- Start order button -->
+        <button id="btn-start-order" style="display:none;">START ORDER</button>
+        <!-- HUD -->
+        <div id="bar-hud">
+          <span id="bar-tips">$0.00</span>
+          <button id="bar-pause" class="pause-btn" aria-label="Pause">
+            <div class="pause-bar"></div>
+            <div class="pause-bar"></div>
+          </button>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════
+           OVERLAY: RECIPE CARD
+      ═══════════════════════════════════════════ -->
+      <div id="overlay-recipe">
+        <div id="recipe-backdrop"></div>
+        <div id="recipe-card">
+          <button id="btn-recipe-close" aria-label="Close recipe">✕</button>
+          <div id="recipe-content"></div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════
+           SCREEN 3: SHELF
+      ═══════════════════════════════════════════ -->
+      <div id="screen-shelf" class="screen">
+        <!-- HUD -->
+        <div class="shelf-hud">
+          <button id="btn-pour-out" class="hud-left-btn">
+            <img src="assets/icon-restart.svg" alt="" width="24" height="24" />
+            <span>POUR OUT</span>
+          </button>
+          <span id="shelf-drink-name"></span>
+          <div class="hud-right">
+            <span id="shelf-timer">00:00</span>
+            <button id="shelf-pause" class="pause-btn" aria-label="Pause">
+              <div class="pause-bar"></div>
+              <div class="pause-bar"></div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Top shelf line -->
+        <div class="shelf-line top-shelf-line"></div>
+
+        <!-- Top shelf: 7 spirits/mixers -->
+        <div id="top-shelf" class="shelf-row">
+          <div class="shelf-item" data-id="vodka"><img src="assets/ingredients2/vodka.png" alt="Vodka" /></div>
+          <div class="shelf-item" data-id="tequila"><img src="assets/ingredients2/Tequila.png" alt="Tequila" /></div>
+          <div class="shelf-item" data-id="tonic-water"><img src="assets/ingredients2/Tonic water.png" alt="Tonic Water" /></div>
+          <div class="shelf-item" data-id="whiskey"><img src="assets/ingredients2/Whiskey.png" alt="Whiskey" /></div>
+          <div class="shelf-item" data-id="cola"><img src="assets/ingredients2/Cola.png" alt="Cola" /></div>
+          <div class="shelf-item" data-id="white-rum"><img src="assets/ingredients2/White Rum.png" alt="White Rum" /></div>
+          <div class="shelf-item" data-id="gin"><img src="assets/ingredients2/Gin.png" alt="Gin" /></div>
+        </div>
+
+        <!-- Bottom shelf line -->
+        <div class="shelf-line bottom-shelf-line"></div>
+
+        <!-- Bottom shelf: 7 juices/garnishes -->
+        <div id="bottom-shelf" class="shelf-row">
+          <div class="shelf-item" data-id="cranberry"><img src="assets/ingredients2/orange juice-1.png" alt="Cranberry" /></div>
+          <div class="shelf-item" data-id="oj"><img src="assets/ingredients2/orange juice.png" alt="OJ" /></div>
+          <div class="shelf-item" data-id="orange"><img src="assets/ingredients2/orange.png" alt="Orange" /></div>
+          <div class="shelf-item" data-id="mint"><img src="assets/ingredients2/limt.png" alt="Mint" /></div>
+          <div class="shelf-item" data-id="lemon"><img src="assets/ingredients2/lemon.png" alt="Lemon" /></div>
+          <div class="shelf-item" data-id="lime"><img src="assets/ingredients2/lime.png" alt="Lime" /></div>
+          <div class="shelf-item" data-id="cherry"><img src="assets/ingredients2/cherries.png" alt="Cherry" /></div>
+        </div>
+
+        <!-- Counter line -->
+        <div class="shelf-line counter-line"></div>
+
+        <!-- Counter: salt/sugar/ice left, glass+soda centered -->
+        <div id="shelf-counter">
+          <div id="counter-left-group">
+            <div class="counter-rim" id="rim-salt" data-id="salt">
+              <img src="assets/ingredients2/salt.png" alt="Salt" />
+              <span>SALT</span>
+            </div>
+            <div class="counter-rim" id="rim-sugar" data-id="sugar">
+              <img src="assets/ingredients2/sugar.png" alt="Sugar" />
+              <span>SUGAR</span>
+            </div>
+            <div class="counter-static" id="ice-display">
+              <img src="assets/ingredients2/ice.png" alt="Ice" />
+            </div>
+          </div>
+          <div id="counter-center-group">
+            <div class="shelf-item counter-bottle" data-id="soda-water">
+              <img src="assets/ingredients2/soda water.png" alt="Soda Water" />
+            </div>
+            <div class="counter-static" id="shelf-glass-icon">
+              <img src="assets/ingredients2/glass.png" alt="glass" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Serve button -->
+        <button id="btn-serve">SERVE</button>
+      </div>
+
+      <!-- ═══════════════════════════════════════════
+           SCREEN 4: POUR SCREEN
+      ═══════════════════════════════════════════ -->
+      <div id="screen-pour" class="screen">
+        <!-- HUD -->
+        <div class="pour-hud">
+          <button id="btn-back-to-shelf" class="hud-left-btn">
+            <img src="assets/icon-back.svg" alt="" width="24" height="24" />
+            <span>BACK</span>
+          </button>
+          <div class="hud-right">
+            <span id="pour-timer">05:00</span>
+            <button id="pour-pause" class="pause-btn" aria-label="Pause">
+              <div class="pause-bar"></div>
+              <div class="pause-bar"></div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Liquid mode -->
+        <div id="pour-liquid-mode">
+          <img id="pour-bottle-img" src="" alt="" class="pour-bottle" />
+
+          <!-- Glass container -->
+          <div id="pour-glass-container">
+            <div id="pour-glass-fill"></div>
+            <!-- Measurement lines inside glass -->
+            <div id="measure-lines">
+              <div class="measure-tick" id="tick-8">
+                <div class="tick-line"></div>
+                <span class="tick-label">8 OZ</span>
+              </div>
+              <div class="measure-tick" id="tick-6">
+                <div class="tick-line"></div>
+                <span class="tick-label">6 OZ</span>
+              </div>
+              <div class="measure-tick" id="tick-4">
+                <div class="tick-line"></div>
+                <span class="tick-label">4 OZ</span>
+              </div>
+              <div class="measure-tick" id="tick-25">
+                <div class="tick-line"></div>
+                <span class="tick-label">2.5 OZ</span>
+              </div>
+              <div class="measure-tick" id="tick-1">
+                <div class="tick-line"></div>
+                <span class="tick-label">1 OZ</span>
+              </div>
+              <div class="measure-tick" id="tick-05">
+                <div class="tick-line"></div>
+                <span class="tick-label">0.5 OZ</span>
+              </div>
+            </div>
+            <img id="pour-glass-outline" src="assets/crop-glass-pour.png" alt="" />
+          </div>
+
+          <!-- Pour instruction -->
+          <div id="pour-instruction">HOLD ANYWHERE TO POUR</div>
+        </div>
+
+        <!-- Garnish mode -->
+        <div id="pour-garnish-mode" style="display:none;">
+          <div id="garnish-instruction">DRAG TO PLACE</div>
+          <img id="garnish-draggable" src="" alt="" class="garnish-drag-item" />
+
+          <!-- Placed garnishes layer -->
+          <div id="garnish-placed-layer"></div>
+
+          <!-- Glass -->
+          <div id="garnish-glass-container">
+            <div id="garnish-glass-fill"></div>
+            <img id="garnish-glass-outline" src="assets/crop-glass-pour.png" alt="" />
+            <div id="garnish-drop-zone"></div>
+          </div>
+        </div>
+
+        <!-- Done button -->
+        <button id="btn-pour-done">DONE</button>
+      </div>
+
+      <!-- ═══════════════════════════════════════════
+           SCREEN 5: SHIFT END
+      ═══════════════════════════════════════════ -->
+      <div id="screen-end" class="screen">
+        <h1 id="end-title">SHIFT OVER</h1>
+        <p id="end-tips">Total Tips: $0.00</p>
+        <p id="end-served">Customers served: 0</p>
+        <button id="btn-play-again">PLAY AGAIN</button>
+      </div>
+
+      <!-- Pause overlay -->
+      <div id="pause-overlay" style="display:none;">
+        <span>PAUSED</span>
+      </div>
+
+      <!-- Notification layer -->
+      <div id="notification-layer"></div>
+
+    </div><!-- #game -->
+  </div><!-- #viewport -->
+
+  <script src="game.js"></script>
+</body>
+</html>
