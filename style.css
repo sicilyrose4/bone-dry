@@ -216,14 +216,14 @@ html, body {
 .counter-drink { position: absolute; transition: opacity 0.6s ease; }
 .counter-drink.leaving { opacity: 0; }
 
-/* Speech bubble — 222x61 rect, #d9d9d9, radius 13; tail from Figma (Vector 34) */
+/* Speech bubble — 222x61 rect, #918fb7, radius 13; tail from Figma (Vector 34) */
 #speech-area {
   position: absolute;
   top: 38px;
   min-width: 222px;
   height: 61px;
-  padding: 0 37px;
-  background: #d9d9d9;
+  padding: 0 29px;
+  background: #918fb7;
   border-radius: 13px;
   z-index: 10;
   pointer-events: none;
@@ -239,7 +239,7 @@ html, body {
   height: 27.46px;
 }
 #speech-text {
-  font-family: 'BarFont', sans-serif;
+  font-family: 'BarFontBold', sans-serif;
   font-size: 28px;
   line-height: normal;
   color: #000;

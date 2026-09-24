@@ -1311,7 +1311,7 @@ dom.pauseOverlay.addEventListener('pointerdown', (e) => {
    BOOT — loading screen preloads every image, then home
 ═══════════════════════════════════════════════════════════════ */
 function allImagePaths() {
-  const ui = ['speech-tail.svg','icon-restart.svg','arrow-bar.svg','shelf-line.svg','icon-check.svg','icon-back.svg',
+  const ui = ['speech-tail.svg?v=2','icon-restart.svg','arrow-bar.svg','shelf-line.svg','icon-check.svg','icon-back.svg',
               'pour-ticks.svg','tap-target.png','icon-settings.svg','select-outline-whiskey.svg','select-outline-cola.svg',
               'select-outline-lime.svg'].map(f => `assets/ui/${f}`);
   return [
