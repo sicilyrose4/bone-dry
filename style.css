@@ -231,15 +231,17 @@ html, body {
 .counter-drink { position: absolute; transition: opacity 0.6s ease; }
 .counter-drink.leaving { opacity: 0; }
 
-/* Speech bubble — 222x61 rect, #353454, radius 42 (renders as a pill, same as Figma); tail from Figma (Vector 34).
-   Order text is lowercase to set it apart from the UI text. */
+/* Speech bubble — 222x61, radius 42, colors per customer (Figma 486:1923 "speech bubble styles").
+   Order text is lowercase to set it apart from the UI text.
+   Above the customer at y=32 (tail down), or on the counter at y=311 (tail up)
+   when "above" would touch the tips / pause. */
 #speech-area {
   position: absolute;
-  top: 38px;
+  top: 32px;
   min-width: 222px;
   height: 61px;
   padding: 0 39px;
-  background: #353454;
+  background: var(--bubble-bg, #9d9cb6);
   border-radius: 42px;
   z-index: 10;
   pointer-events: none;
@@ -247,18 +249,24 @@ html, body {
   align-items: center;
   justify-content: center;
 }
+#speech-area.below { top: 311px; }
 #speech-area .speech-tail {
   position: absolute;
-  top: 51px;
+  top: 51px;                      /* above: hangs off the bottom, tip down */
   left: var(--tail-left, 144px);
   width: 30.5px;
   height: 27.46px;
+  fill: var(--bubble-bg, #9d9cb6);
+}
+#speech-area.below .speech-tail {
+  top: -22.46px;                  /* below: sticks up from the top, tip up (Figma Vector 36, rotated 180°) */
+  transform: scaleY(-1);
 }
 #speech-text {
   font-family: 'BarFontBold', sans-serif;
   font-size: 28px;
   line-height: normal;
-  color: #9d9cb6;
+  color: var(--bubble-text, #353454);
   text-align: center;
   white-space: nowrap;
 }

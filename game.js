@@ -74,14 +74,18 @@ const ART = {
    the Figma component sets on the "updates" page. `sink` lowers a
    customer behind the counter (purple sits 23px lower in the bar frames).
 ═══════════════════════════════════════════════════════════════ */
+// `bubble`: speech bubble colors + where it sits over this customer (Figma 486:1923).
+//   dx = bubble center relative to the customer's center, tail = tail's left edge relative to it.
 const CUSTOMERS = {
-  red:    { w:102, h:224, sel:{ x:-11,   y:-5.5, w:124, h:235 } },
-  purple: { w:108, h:241, sel:{ x:-8,    y:1.5,  w:124, h:238 }, sink:23 },
-  lime:   { w:130, h:232, sel:{ x:-2.5,  y:0,    w:135, h:232 } },
-  pink:   { w:138, h:189, sel:{ x:-31.5, y:-12,  w:201, h:213 } },
-  green:  { w:116, h:222, sel:{ x:-5.5,  y:-2,   w:127, h:226 } },
-  orange: { w:101, h:223, sel:{ x:0,     y:-14.5,w:101, h:252 } },
+  red:    { w:102, h:224, sel:{ x:-11,   y:-5.5, w:124, h:235 },           bubble:{ bg:'#c06b7f', text:'#551222', dx:-49, tail:-15.5 } },
+  purple: { w:108, h:241, sel:{ x:-8,    y:1.5,  w:124, h:238 }, sink:23,  bubble:{ bg:'#9d9cb6', text:'#353454', dx:-41, tail:-7.5 } },
+  lime:   { w:130, h:232, sel:{ x:-2.5,  y:0,    w:135, h:232 },           bubble:{ bg:'#c5c497', text:'#393308', dx:-35, tail:-1.5 } },
+  pink:   { w:138, h:189, sel:{ x:-31.5, y:-12,  w:201, h:213 },           bubble:{ bg:'#c597b3', text:'#631041', dx:-49, tail:-15.5 } },
+  green:  { w:116, h:222, sel:{ x:-5.5,  y:-2,   w:127, h:226 },           bubble:{ bg:'#8bb08f', text:'#304833', dx:32,  tail:-15 } },
+  orange: { w:101, h:223, sel:{ x:0,     y:-14.5,w:101, h:252 },           bubble:{ bg:'#e6baa0', text:'#522408', dx:-41, tail:-7.5 } },
 };
+// Bubble on the counter, under the customer (Figma: orange example) — tail points up
+const BUBBLE_BELOW = { dx:38.5, tail:-17.5 };
 const CUSTOMER_IDS = Object.keys(CUSTOMERS);
 const customerImg = (id, state) => `assets/customers/${id}-${state}.png`;
 
@@ -459,15 +463,38 @@ function selectCustomer(slot) {
 }
 
 function showSpeechArea(text, slotIdx) {
-  // Figma: bubble centered 41px left of the customer, tail 7.5px left of center
+  const c = G.customers[slotIdx];
+  const style = CUSTOMERS[c.type].bubble;
   const cx = SLOT_CX[slotIdx];
+  const area = dom.speechArea;
   dom.speechText.textContent = text;
-  dom.speechArea.style.display = 'flex';
-  const w = dom.speechArea.offsetWidth;
-  const left = Math.min(Math.max(cx - 41 - w / 2, 8), 844 - w - 8);
-  const tailLeft = Math.min(Math.max(cx - 7.5 - left, 13), w - 13 - 30.5);
-  dom.speechArea.style.left = left + 'px';
-  dom.speechArea.style.setProperty('--tail-left', tailLeft + 'px');
+  area.style.setProperty('--bubble-bg', style.bg);
+  area.style.setProperty('--bubble-text', style.text);
+  area.classList.remove('below');
+  area.style.display = 'flex';
+  const w = area.offsetWidth;
+  const clampLeft = l => Math.min(Math.max(l, 8), 844 - w - 8);
+
+  // Above the customer, unless that would touch the tips or pause at the top.
+  // The far-right customer's bubble always stays above (START ORDER is below them).
+  let left = clampLeft(cx + style.dx - w / 2);
+  let tailX = cx + style.tail;
+  if (slotIdx !== 2 && bubbleHitsTopRow(left, w)) {
+    area.classList.add('below');
+    left = clampLeft(cx + BUBBLE_BELOW.dx - w / 2);
+    tailX = cx + BUBBLE_BELOW.tail;
+  }
+  const tailLeft = Math.min(Math.max(tailX - left, 24), w - 24 - 30.5);
+  area.style.left = left + 'px';
+  area.style.setProperty('--tail-left', tailLeft + 'px');
+}
+
+// Would a bubble at the top (y 32–93) touch the tips amount or the pause button?
+function bubbleHitsTopRow(left, w) {
+  const GAP = 10;
+  const tipsRight = 30 + dom.barTips.offsetWidth;          // "$0.00" starts at x=30
+  const pauseLeft = 800;                                   // pause bars start at x=800
+  return left < tipsRight + GAP || left + w > pauseLeft - GAP;
 }
 
 function hideSpeechArea() {
@@ -1384,7 +1411,7 @@ dom.pauseOverlay.addEventListener('pointerdown', (e) => {
    BOOT — loading screen preloads every image, then home
 ═══════════════════════════════════════════════════════════════ */
 function allImagePaths() {
-  const ui = ['speech-tail.svg?v=3','icon-restart.svg','arrow-bar.svg','shelf-line.svg','icon-check.svg','icon-back.svg',
+  const ui = ['icon-restart.svg','arrow-bar.svg','shelf-line.svg','icon-check.svg','icon-back.svg',
               'pour-ticks.svg','tap-target.png','icon-settings.svg','select-outline-whiskey.svg','select-outline-cola.svg',
               'select-outline-lime.svg','icon-recipe.svg'].map(f => `assets/ui/${f}`);
   return [
