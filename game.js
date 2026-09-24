@@ -92,6 +92,36 @@ const COUNTER_TOP = 348;
 const SHIFT_SECONDS = 300;
 
 /* ═══════════════════════════════════════════════════════════════
+   PROGRESS — saved on this device between shifts
+   Familiarity: never made → recipe shows automatically;
+   made 1–2x (familiar) → hidden, can peek for a tip cost; 3+ (mastered) → no peek.
+═══════════════════════════════════════════════════════════════ */
+const SAVE_KEY = 'boneDry.progress.v1';
+const PEEK_COST = 0.50;   // tip lost for peeking at a familiar recipe
+
+function loadProgress() {
+  try {
+    const p = JSON.parse(localStorage.getItem(SAVE_KEY));
+    if (p && p.drinks) return { drinks: p.drinks, shifts: p.shifts || [] };
+  } catch (e) { /* no saved progress yet */ }
+  return { drinks: {}, shifts: [] };
+}
+const PROGRESS = loadProgress();
+
+function saveProgress() {
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(PROGRESS)); } catch (e) { /* storage unavailable */ }
+}
+
+function timesMade(drinkId) {
+  return PROGRESS.drinks[drinkId]?.made || 0;
+}
+
+function tierOf(drinkId) {
+  const n = timesMade(drinkId);
+  return n === 0 ? 'new' : n <= 2 ? 'familiar' : 'mastered';
+}
+
+/* ═══════════════════════════════════════════════════════════════
    GAME STATE
 ═══════════════════════════════════════════════════════════════ */
 const G = {
@@ -115,6 +145,8 @@ const G = {
     poured: [],          // totals per ingredient [{id, oz?, count?}] — used for scoring
     layers: [],          // every pour in order [{id, oz}] — drawn as bands in the glass
     garnishes: [],       // placed on the drink [{id, spot}]
+    tier: 'new',         // new | familiar | mastered (when the order started)
+    peeked: false,       // looked at the recipe on a familiar drink
     activeIngredient: null,
   },
   pour: {
@@ -215,7 +247,7 @@ function showScreen(name) {
   G.screen = name;
   Object.values(dom.screens).forEach(s => s.classList.remove('active'));
   if (dom.screens[name]) dom.screens[name].classList.add('active');
-  if (name === 'bar') { dom.overlay.classList.remove('open'); dom.overlay.classList.remove('recipe-image-mode'); }
+  if (name !== 'shelf') { dom.recipeCard.classList.remove('slide-up'); dom.overlay.classList.remove('open'); dom.overlay.classList.remove('recipe-image-mode'); }
   updateTimerDisplays();
 }
 
@@ -324,10 +356,16 @@ function updateDial(score, drinkTime, peeked) {
    CUSTOMER MANAGEMENT
 ═══════════════════════════════════════════════════════════════ */
 function pickDrink() {
-  const pool = DRINKS.filter(d => d.id !== G.lastDrinkId);
-  const d = pool[Math.floor(Math.random() * pool.length)];
-  G.lastDrinkId = d.id;
-  return d;
+  // Calm → mostly new/familiar drinks; as the dial climbs, mastered drinks show up more
+  const d = effectiveDial();
+  const weight = { new: 0.6 * (1 - d) + 0.1, familiar: 1, mastered: 0.3 + 1.2 * d };
+  const pool = DRINKS.filter(x => x.id !== G.lastDrinkId);
+  const total = pool.reduce((sum, x) => sum + weight[tierOf(x.id)], 0);
+  let r = Math.random() * total;
+  let pick = pool[pool.length - 1];
+  for (const x of pool) { r -= weight[tierOf(x.id)]; if (r <= 0) { pick = x; break; } }
+  G.lastDrinkId = pick.id;
+  return pick;
 }
 
 function trySpawnCustomer() {
@@ -548,6 +586,7 @@ function renderShelf() {
   dom.shelfAdded.style.display = added ? 'flex' : 'none';
   if (added) dom.shelfAddedText.textContent = `${INGREDIENTS[G.shelf.lastAdded].name.toUpperCase()} ADDED`;
   dom.btnToGarnish.disabled = !G.drink.poured.some(p => p.oz > 0);
+  $('btn-recipe-peek').style.display = G.drink.tier === 'familiar' ? 'block' : 'none';
 }
 
 function openShelf() {
@@ -579,6 +618,7 @@ const ozToY = oz => OZ_ZERO_Y - oz * PX_PER_OZ;
 const POUR_POSE = {
   whiskey: { idle:{ x:87, y:-68, w:191, h:448 }, tilt:{ cx:182.5, cy:156,  rot:68.63 } },
   cola:    { idle:{ x:95, y:87,  w:176, h:293 }, tilt:{ cx:258.6, cy:85.3, rot:75.8 } },
+  vodka:   { idle:{ x:92, y:-66, w:175, h:444 }, tilt:{ cx:180.5, cy:134,  rot:77.42 } },  // Figma 437:295 / 437:333
 };
 function pourPose(id) {
   if (POUR_POSE[id]) return POUR_POSE[id];
@@ -678,7 +718,7 @@ document.querySelectorAll('.tick-label').forEach(el => {
 /* ═══════════════════════════════════════════════════════════════
    SCORING
 ═══════════════════════════════════════════════════════════════ */
-function scoreDrink(recipe, poured, drinkTime) {
+function scoreDrink(recipe, poured, drinkTime, tier, peeked) {
   let score = 100;
   const reqIds = recipe.ingredients.map(r => r.id);
   const pouredIds = poured.map(p => p.id);
@@ -700,9 +740,10 @@ function scoreDrink(recipe, poured, drinkTime) {
 
   score = Math.max(0, Math.min(100, score));
 
-  // Time bonus: faster service → higher tip
+  // Time bonus: faster service → higher tip (a brand-new drink has no time pressure)
   let timeMult = 1.0;
-  if (drinkTime < 30)       timeMult = 1.5;
+  if (tier === 'new')       timeMult = 1.0;
+  else if (drinkTime < 30)  timeMult = 1.5;
   else if (drinkTime < 60)  timeMult = 1.25;
   else if (drinkTime > 120) timeMult = 0.75;
 
@@ -712,7 +753,9 @@ function scoreDrink(recipe, poured, drinkTime) {
   else if (score >= 40) base = 0.50;
   else base = 0.00;
 
-  const tip = Math.round(base * timeMult * 100) / 100;
+  let tip = base * timeMult;
+  if (peeked) tip = Math.max(0, tip - PEEK_COST);
+  tip = Math.round(tip * 100) / 100;
   return { tip, score };
 }
 
@@ -760,10 +803,15 @@ function serveDrink() {
   if (!customer) return;
 
   const drinkTime = G.drinkElapsed;
-  const result = scoreDrink(G.drink.recipe, G.drink.poured, drinkTime);
+  const result = scoreDrink(G.drink.recipe, G.drink.poured, drinkTime, G.drink.tier, G.drink.peeked);
   G.tips += result.tip;
   G.drinksServed++;
-  updateDial(result.score, drinkTime, false);
+  updateDial(result.score, drinkTime, G.drink.peeked);
+
+  // Familiarity: every served drink counts toward new → familiar → mastered
+  const rec = PROGRESS.drinks[G.drink.recipe.id] || (PROGRESS.drinks[G.drink.recipe.id] = { made: 0 });
+  rec.made++;
+  saveProgress();
 
   dom.barTips.textContent = '$' + G.tips.toFixed(2);
 
@@ -806,6 +854,8 @@ function resetCurrentDrink() {
   G.drink.layers = [];
   G.drink.garnishes = [];
   G.drink.activeIngredient = null;
+  G.drink.tier = 'new';
+  G.drink.peeked = false;
   G.drinkElapsed = 0;
 }
 
@@ -828,6 +878,8 @@ function endShift() {
   G.shiftEnded = true;
   stopTimer();
   stopPourRAF();
+  PROGRESS.shifts.push({ date: new Date().toISOString(), tips: Math.round(G.tips * 100) / 100, served: G.drinksServed });
+  saveProgress();
   dom.endTips.textContent   = `Total Tips: $${G.tips.toFixed(2)}`;
   dom.endServed.textContent = `Customers served: ${G.drinksServed}`;
   showScreen('end');
@@ -898,9 +950,11 @@ dom.btnStartOrder.addEventListener('pointerdown', (e) => {
   G.drinkElapsed = 0;
   G.shelf.selected = null;
   G.shelf.lastAdded = null;
+  G.drink.tier = tierOf(customer.drink.id);
+  G.drink.peeked = false;
   buildShelf();
   openShelf();
-  setTimeout(() => openRecipe(customer.drink), 50);
+  if (G.drink.tier === 'new') setTimeout(() => openRecipe(customer.drink), 50);
 });
 
 dom.barPause.addEventListener('pointerdown', (e) => { e.stopPropagation(); pauseToggle(); });
@@ -933,6 +987,14 @@ dom.btnPourOut.addEventListener('click', (e) => {
 });
 
 dom.shelfPause.addEventListener('pointerdown', (e) => { e.stopPropagation(); pauseToggle(); });
+
+// Peek at a familiar recipe — costs a little tip (once per drink)
+$('btn-recipe-peek').addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (!G.timerRunning || G.drink.tier !== 'familiar' || !G.drink.recipe) return;
+  G.drink.peeked = true;
+  openRecipe(G.drink.recipe);
+});
 
 dom.btnPour.addEventListener('click', (e) => {
   e.stopPropagation();

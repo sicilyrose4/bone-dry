@@ -319,8 +319,8 @@ html, body {
   width: auto;
   max-height: none;
   overflow: visible;
-  transform: none;
   display: inline-block;
+  /* keeps the slide-up transform from #recipe-card / .slide-up */
 }
 #overlay-recipe.recipe-image-mode #btn-recipe-close {
   position: absolute;
@@ -328,12 +328,11 @@ html, body {
   right: -3px;
   z-index: 60;
 }
+/* Drawn recipe card — 279x371 (Figma "vodka soda recipe 1") */
 #overlay-recipe.recipe-image-mode img.recipe-img {
   display: block;
-  width: auto;
-  height: auto;
-  max-height: 346px;
-  max-width: 540px;
+  width: 279px;
+  height: 371px;
   object-fit: contain;
 }
 .recipe-drink-name {
@@ -738,8 +737,9 @@ html, body {
 /* ═══════════════════════════════════════════
    SCREEN 5: END
 ═══════════════════════════════════════════ */
+/* Placeholder end screen (real design coming) — Figma colors only */
 #screen-end {
-  background: #000;
+  background: #040318;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -754,26 +754,43 @@ html, body {
 #end-tips {
   font-family: 'BarFont', sans-serif;
   font-size: 32px;
-  color: #00e26a;
+  color: #cccaf3;
 }
 #end-served {
   font-family: 'BarFont', sans-serif;
   font-size: 24px;
-  color: #fff;
+  color: #9d9cb6;
 }
 #btn-play-again {
-  background: #00e26a;
-  color: #000;
+  background: #cccaf3;
+  color: #040318;
   font-family: 'BarFontBold', sans-serif;
-  font-size: 28px;
+  font-size: 26px;
   border: none;
-  border-radius: 14px;
-  padding: 10px 32px;
+  border-radius: 12px;
+  padding: 8px 32px;
   cursor: pointer;
   margin-top: 8px;
   transition: transform 0.1s;
 }
 #btn-play-again:active { transform: scale(0.96); }
+
+/* Recipe peek — text placeholder in the HUD style until the icon arrives */
+#btn-recipe-peek {
+  position: absolute;
+  right: 140px;
+  top: 33px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  font-family: 'BarFontBold', sans-serif;
+  font-size: 18px;
+  line-height: normal;
+  color: #8e8e8e;
+  z-index: 10;
+}
 
 /* ─── PAUSE OVERLAY ──────────────────────────────────────────── */
 #pause-overlay {
