@@ -138,7 +138,7 @@ const G = {
   selectedIdx: null,
   lastDrinkId: null,
   drinksServed: 0,
-  shelf: { order: [], selected: null, lastAdded: null },
+  shelf: { order: [], selected: null, toast: null },
   drink: {
     forCustomer: null,   // index in G.customers
     recipe: null,
@@ -567,7 +567,7 @@ function buildShelf() {
 function toggleBottle(id) {
   if (G.screen !== 'shelf' || !G.timerRunning) return;
   G.shelf.selected = G.shelf.selected === id ? null : id;
-  G.shelf.lastAdded = null;
+  G.shelf.toast = null;
   renderShelf();
 }
 
@@ -584,18 +584,19 @@ function renderShelf() {
     dom.shelfTitle.classList.remove('ingredient');
   }
   dom.btnPour.style.display = sel ? 'block' : 'none';
-  const added = !sel && G.shelf.lastAdded;
+  // Confirmation: "WHISKEY ADDED ✓" / "GLASS EMPTIED ✓"
+  const added = !sel && G.shelf.toast;
   dom.shelfAdded.style.display = added ? 'flex' : 'none';
-  if (added) dom.shelfAddedText.textContent = `${INGREDIENTS[G.shelf.lastAdded].name.toUpperCase()} ADDED`;
+  if (added) dom.shelfAddedText.textContent = G.shelf.toast;
   if (added && !G.shelf.addedShown) {
-    // "WHISKEY ADDED ✓" fades out after ~1.5s
+    // fades out after ~1.5s
     G.shelf.addedShown = true;
     dom.shelfAdded.classList.remove('fading');
     clearTimeout(G.shelf.addedTimer);
     G.shelf.addedTimer = setTimeout(() => {
       dom.shelfAdded.classList.add('fading');
       G.shelf.addedTimer = setTimeout(() => {
-        G.shelf.lastAdded = null;
+        G.shelf.toast = null;
         G.shelf.addedShown = false;
         dom.shelfAdded.classList.remove('fading');
         dom.shelfAdded.style.display = 'none';
@@ -934,7 +935,7 @@ function initGame() {
   dom.counterDrinks.innerHTML = '';
   document.querySelectorAll('.bar-tip-float').forEach(e => e.remove());
   hideSpeechArea();
-  G.shelf = { order: [], selected: null, lastAdded: null };
+  G.shelf = { order: [], selected: null, toast: null };
   refreshBarControls();
   for (let i = 0; i < 3; i++) renderCustomer(i);
 
@@ -971,7 +972,7 @@ dom.btnStartOrder.addEventListener('pointerdown', (e) => {
   G.drink.activeIngredient = null;
   G.drinkElapsed = 0;
   G.shelf.selected = null;
-  G.shelf.lastAdded = null;
+  G.shelf.toast = null;
   G.drink.tier = tierOf(customer.drink.id);
   G.drink.peeked = false;
   buildShelf();
@@ -1004,7 +1005,8 @@ dom.btnPourOut.addEventListener('click', (e) => {
   G.drink.garnishes = [];
   G.drink.activeIngredient = null;
   G.shelf.selected = null;
-  G.shelf.lastAdded = null;
+  G.shelf.toast = 'GLASS EMPTIED';
+  G.shelf.addedShown = false;   // restart its fade timer
   renderShelf();
 });
 
@@ -1105,7 +1107,7 @@ function commitLiquidPour() {
       G.drink.poured.push({ id, oz });
     }
     G.drink.activeIngredient = id;
-    G.shelf.lastAdded = id;   // "WHISKEY ADDED ✓"
+    G.shelf.toast = `${INGREDIENTS[id].name.toUpperCase()} ADDED`;   // "WHISKEY ADDED ✓"
     G.shelf.addedShown = false; // restart its fade timer
   }
   G.pour.ozPoured = 0;
