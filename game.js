@@ -90,6 +90,7 @@ const SLOT_CX = [176, 399, 625];
 const COUNTER_TOP = 348;
 
 const SHIFT_SECONDS = 300;
+const CONFIRM_MS = 1200;   // how long "ADDED ✓" / "GLASS EMPTIED ✓" / "GARNISH REMOVED ✓" stay before fading
 
 /* ═══════════════════════════════════════════════════════════════
    PROGRESS — saved on this device between shifts
@@ -589,7 +590,7 @@ function renderShelf() {
   dom.shelfAdded.style.display = added ? 'flex' : 'none';
   if (added) dom.shelfAddedText.textContent = G.shelf.toast;
   if (added && !G.shelf.addedShown) {
-    // fades out after ~1.5s
+    // fades out after CONFIRM_MS
     G.shelf.addedShown = true;
     dom.shelfAdded.classList.remove('fading');
     clearTimeout(G.shelf.addedTimer);
@@ -601,7 +602,7 @@ function renderShelf() {
         dom.shelfAdded.classList.remove('fading');
         dom.shelfAdded.style.display = 'none';
       }, 400);
-    }, 1500);
+    }, CONFIRM_MS);
   } else if (!added) {
     clearTimeout(G.shelf.addedTimer);
     G.shelf.addedShown = false;
@@ -1270,7 +1271,7 @@ function placeSelectedGarnish() {
 
 $('garnish-target').addEventListener('click', (e) => { e.stopPropagation(); placeSelectedGarnish(); });
 
-// "GARNISH REMOVED ✓" — same look and 1.5s fade as the shelf confirmations
+// "GARNISH REMOVED ✓" — same look and fade as the shelf confirmations
 let garnishToastTimer = null;
 function hideGarnishToast() {
   clearTimeout(garnishToastTimer);
@@ -1286,7 +1287,7 @@ function flashGarnishToast(msg) {
   garnishToastTimer = setTimeout(() => {
     t.classList.add('fading');
     garnishToastTimer = setTimeout(hideGarnishToast, 400);
-  }, 1500);
+  }, CONFIRM_MS);
 }
 
 $('btn-remove-garnish').addEventListener('click', (e) => {
