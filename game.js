@@ -64,7 +64,7 @@ const RECIPE_IMAGES = {
 ═══════════════════════════════════════════════════════════════ */
 const ART = {
   barBackground: 'assets/bar/background.jpg',
-  barCounter:    'assets/bar/counter.png',
+  barCounter:    'assets/bar/counter-slate.png',   // slate indigo #3d3b70 (original purple: assets/bar/counter.png)
   glass:         'assets/glass-straight-on.png',
 };
 
