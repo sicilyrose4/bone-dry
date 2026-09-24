@@ -231,7 +231,7 @@ html, body {
 .counter-drink { position: absolute; transition: opacity 0.6s ease; }
 .counter-drink.leaving { opacity: 0; }
 
-/* Speech bubble — 222x61 rect, #353454, radius 13; tail from Figma (Vector 34).
+/* Speech bubble — 222x61 rect, #353454, radius 42 (renders as a pill, same as Figma); tail from Figma (Vector 34).
    Order text is lowercase to set it apart from the UI text. */
 #speech-area {
   position: absolute;
@@ -240,7 +240,7 @@ html, body {
   height: 61px;
   padding: 0 39px;
   background: #353454;
-  border-radius: 13px;
+  border-radius: 42px;
   z-index: 10;
   pointer-events: none;
   display: flex;
