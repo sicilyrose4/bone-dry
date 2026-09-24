@@ -250,7 +250,8 @@ function showScreen(name) {
   G.screen = name;
   Object.values(dom.screens).forEach(s => s.classList.remove('active'));
   if (dom.screens[name]) dom.screens[name].classList.add('active');
-  if (name !== 'shelf') { dom.recipeCard.classList.remove('slide-up'); dom.overlay.classList.remove('open'); dom.overlay.classList.remove('recipe-image-mode'); }
+  // Recipe card closes whenever you change screens
+  dom.recipeCard.classList.remove('slide-up'); dom.overlay.classList.remove('open'); dom.overlay.classList.remove('recipe-image-mode');
   updateTimerDisplays();
 }
 
@@ -544,8 +545,30 @@ function shuffleArray(arr) {
   return a;
 }
 
+// The last visible bottle must be cut off by the right edge (like the OJ in Figma)
+// so it's obvious the row scrolls. Bottles start at x=38 with 36px gaps.
+const SHELF_START_X = 38, SHELF_GAP = 36, SCREEN_W = 844;
+function edgeBottleVisible(order) {
+  let x = SHELF_START_X;
+  for (const id of order) {
+    const w = INGREDIENTS[id].shelf[0];
+    if (x < SCREEN_W && x + w > SCREEN_W) return (SCREEN_W - x) / w;   // fraction showing
+    x += w + SHELF_GAP;
+  }
+  return null; // edge fell in a gap
+}
+function shuffleShelfOrder() {
+  let order;
+  for (let tries = 0; tries < 500; tries++) {
+    order = shuffleArray(LIQUID_IDS);
+    const v = edgeBottleVisible(order);
+    if (v !== null && v >= 0.3 && v <= 0.75) break;
+  }
+  return order;
+}
+
 function buildShelf() {
-  G.shelf.order = shuffleArray(LIQUID_IDS);
+  G.shelf.order = shuffleShelfOrder();
   dom.shelfRow.innerHTML = '';
   dom.shelfRow.scrollLeft = 0;
   G.shelf.order.forEach(id => {
@@ -617,7 +640,7 @@ function renderShelf() {
     dom.shelfAdded.classList.remove('fading');
   }
   dom.btnToGarnish.disabled = !G.drink.poured.some(p => p.oz > 0);
-  $('btn-recipe-peek').style.display = G.drink.tier === 'familiar' ? 'block' : 'none';
+  updateRecipeButtons();
 }
 
 function openShelf() {
@@ -713,6 +736,7 @@ function openPourLiquid(ingredientId) {
   dom.screens.pour.classList.remove('is-pouring');
   renderPourLiquid();
   showScreen('pour');
+  updateRecipeButtons();
 }
 
 /* Pour RAF loop */
@@ -1027,13 +1051,19 @@ dom.btnPourOut.addEventListener('click', (e) => {
 
 dom.shelfPause.addEventListener('pointerdown', (e) => { e.stopPropagation(); pauseToggle(); });
 
-// Peek at a familiar recipe — costs a little tip (once per drink)
-$('btn-recipe-peek').addEventListener('click', (e) => {
-  e.stopPropagation();
-  if (!G.timerRunning || G.drink.tier !== 'familiar' || !G.drink.recipe) return;
-  G.drink.peeked = true;
+// Recipe icon (shelf, pour, garnish): new drinks re-open the recipe for free;
+// familiar drinks cost PEEK_COST (charged once per drink); mastered drinks have no icon.
+const RECIPE_BUTTON_IDS = ['btn-recipe-peek', 'btn-recipe-peek-pour', 'btn-recipe-peek-garnish'];
+function updateRecipeButtons() {
+  const show = G.drink.recipe && (G.drink.tier === 'new' || G.drink.tier === 'familiar');
+  RECIPE_BUTTON_IDS.forEach(id => { $(id).style.display = show ? 'block' : 'none'; });
+}
+RECIPE_BUTTON_IDS.forEach(id => $(id).addEventListener('pointerdown', (e) => {
+  e.stopPropagation();   // don't start a pour on the pour screen
+  if (!G.timerRunning || !G.drink.recipe || G.drink.tier === 'mastered') return;
+  if (G.drink.tier === 'familiar') G.drink.peeked = true;
   openRecipe(G.drink.recipe);
-});
+}));
 
 dom.btnPour.addEventListener('click', (e) => {
   e.stopPropagation();
@@ -1237,6 +1267,7 @@ function buildGarnishTray() {
 function openGarnishScreen() {
   G.garnishSel = null;
   hideGarnishToast();
+  updateRecipeButtons();
   showScreen('garnish');
   renderGarnishScreen();
 }
@@ -1355,7 +1386,7 @@ dom.pauseOverlay.addEventListener('pointerdown', (e) => {
 function allImagePaths() {
   const ui = ['speech-tail.svg?v=2','icon-restart.svg','arrow-bar.svg','shelf-line.svg','icon-check.svg','icon-back.svg',
               'pour-ticks.svg','tap-target.png','icon-settings.svg','select-outline-whiskey.svg','select-outline-cola.svg',
-              'select-outline-lime.svg','icon-recipe.svg'].map(f => `assets/ui/${f}`);
+              'select-outline-lime.svg','icon-recipe.svg','icon-recipe-light.svg'].map(f => `assets/ui/${f}`);
   return [
     ...Object.values(ART),
     ...CUSTOMER_IDS.flatMap(id => [customerImg(id, 'skeleton'), customerImg(id, 'selected')]),

@@ -877,11 +877,12 @@ html, body {
 }
 #btn-play-again:active { transform: scale(0.96); }
 
-/* Shelf HUD row (Figma 483:1652): timer · recipe icon · pause, 15px apart, centered at y=33 */
-#shelf-timer { left: 719px; }
-#shelf-pause { left: 785px; top: 13.5px; }   /* bars land at x=795 / 802 */
-/* Recipe peek icon — 21x21 at (759, 22.5); padded for a bigger tap target */
-#btn-recipe-peek {
+/* HUD row on every screen where ingredients go in (Figma 483:1652):
+   timer · recipe icon · pause, 15px apart, centered at y=33 */
+#shelf-timer, #pour-timer, #garnish-timer { left: 719px; top: 33px; }
+#shelf-pause, #pour-pause, #garnish-pause { left: 785px; top: 13.5px; }   /* bars land at x=795 / 802 */
+/* Recipe icon — 21x21 at (759, 22.5); padded for a bigger tap target */
+.recipe-peek {
   position: absolute;
   left: 751px;
   top: 14.5px;
@@ -893,7 +894,7 @@ html, body {
   cursor: pointer;
   z-index: 10;
 }
-#btn-recipe-peek img { display: block; width: 21px; height: 21px; }
+.recipe-peek img { display: block; width: 21px; height: 21px; }
 
 /* ─── PAUSE OVERLAY ──────────────────────────────────────────── */
 #pause-overlay {
