@@ -491,7 +491,7 @@ html, body {
   font-family: 'BarFont', sans-serif;
   font-size: 24px;
   line-height: normal;
-  color: #929292;          /* drink name */
+  color: #8e8e8e;          /* drink name — same gray as the rest of the top row */
   white-space: nowrap;
   pointer-events: none;
 }
@@ -663,7 +663,7 @@ html, body {
   z-index: 10;
 }
 .pour-back img { width: 24px; height: 24px; }
-.pour-timer { left: 748px; top: 33.5px; color: #fff; }
+.pour-timer { left: 748px; top: 33.5px; color: #8e8e8e; }   /* top row is all #8e8e8e */
 .light-pause {
   position: absolute;
   left: 790px;
@@ -675,7 +675,7 @@ html, body {
 .light-pause .pause-bar {
   width: 4px;
   height: 19px;
-  background: #d9d9d9;
+  background: #8e8e8e;
   border-radius: 1px;
 }
 #pour-instruction {
@@ -782,7 +782,7 @@ html, body {
   font-family: 'BarFont', sans-serif;
   font-size: 24px;
   line-height: normal;
-  color: #929292;
+  color: #8e8e8e;
   white-space: nowrap;
   pointer-events: none;
 }
