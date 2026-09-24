@@ -299,6 +299,7 @@ function pauseToggle() {
   if (G.shiftEnded) return;
   G.timerRunning = !G.timerRunning;
   dom.pauseOverlay.style.display = G.timerRunning ? 'none' : 'flex';
+  dom.game.classList.toggle('paused', !G.timerRunning);
 }
 
 function updateTimerDisplays() {
@@ -940,6 +941,7 @@ function initGame() {
   dom.pourGlass.src = ART.glass;
   dom.barTips.textContent = '$0.00';
   dom.pauseOverlay.style.display = 'none';
+  dom.game.classList.remove('paused');
   dom.counterDrinks.innerHTML = '';
   document.querySelectorAll('.bar-tip-float').forEach(e => e.remove());
   hideSpeechArea();
