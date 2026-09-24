@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>The Bar</title>
+  <title>Bone Dry</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -11,9 +11,29 @@
     <div id="game" touch-action="none">
 
       <!-- ═══════════════════════════════════════════
+           LOADING — Figma 463:1533 (bar tracks real image loading)
+      ═══════════════════════════════════════════ -->
+      <div id="screen-loading" class="screen active">
+        <img class="bd-logo loading-logo" src="assets/logo.png" alt="Bone Dry" />
+        <div id="loading-track"><div id="loading-fill"></div></div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════
+           HOME — Figma 463:1564
+      ═══════════════════════════════════════════ -->
+      <div id="screen-home" class="screen">
+        <img class="bd-logo home-logo" src="assets/logo.png" alt="Bone Dry" />
+        <button id="btn-start-shift">START SHIFT</button>
+        <!-- History / Drink Menu / Settings screens are still to be designed -->
+        <button id="btn-history" class="home-link">HISTORY</button>
+        <button id="btn-drink-menu" class="home-link">DRINK MENU</button>
+        <button id="btn-settings" aria-label="Settings"><img src="assets/ui/icon-settings.svg" alt="" /></button>
+      </div>
+
+      <!-- ═══════════════════════════════════════════
            SCREEN 1: BAR OVERVIEW
       ═══════════════════════════════════════════ -->
-      <div id="screen-bar" class="screen active">
+      <div id="screen-bar" class="screen">
         <!-- Background + counter art come from ART in game.js (swap them there) -->
         <img class="bar-bg" id="bar-bg" alt="" />
         <!-- Customer slots (left / center / right) -->

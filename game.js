@@ -173,6 +173,8 @@ const dom = {
   viewport:         $('viewport'),
   game:             $('game'),
   screens: {
+    loading:        $('screen-loading'),
+    home:           $('screen-home'),
     bar:            $('screen-bar'),
     shelf:          $('screen-shelf'),
     pour:           $('screen-pour'),
@@ -1270,10 +1272,42 @@ dom.pauseOverlay.addEventListener('pointerdown', (e) => {
 });
 
 /* ═══════════════════════════════════════════════════════════════
-   BOOT
+   BOOT — loading screen preloads every image, then home
 ═══════════════════════════════════════════════════════════════ */
+function allImagePaths() {
+  const ui = ['speech-tail.svg','icon-restart.svg','arrow-bar.svg','shelf-line.svg','icon-check.svg','icon-back.svg',
+              'pour-ticks.svg','tap-target.png','icon-settings.svg','select-outline-whiskey.svg','select-outline-cola.svg',
+              'select-outline-lime.svg'].map(f => `assets/ui/${f}`);
+  return [
+    ...Object.values(ART),
+    ...CUSTOMER_IDS.flatMap(id => [customerImg(id, 'skeleton'), customerImg(id, 'selected')]),
+    ...Object.keys(INGREDIENTS).map(ingPath),
+    ...Object.values(RECIPE_IMAGES),
+    ...ui,
+  ];
+}
+
+function preload(onProgress) {
+  const paths = allImagePaths();
+  const fonts = [document.fonts.load("28px 'BarFont'"), document.fonts.load("26px 'BarFontBold'")];
+  const total = paths.length + fonts.length;
+  let done = 0;
+  const tick = () => onProgress(++done / total);
+  const images = paths.map(src => new Promise(res => {
+    const img = new Image();
+    img.onload = img.onerror = () => { tick(); res(); };
+    img.src = src;
+  }));
+  return Promise.all([...images, ...fonts.map(f => f.then(tick, tick))]);
+}
+
+$('btn-start-shift').addEventListener('click', (e) => { e.stopPropagation(); initGame(); });
+
 window.addEventListener('DOMContentLoaded', () => {
   buildGarnishTray();
-  initGame();
+  showScreen('loading');
+  const fill = $('loading-fill');
+  preload(p => { fill.style.width = (382 * p) + 'px'; })
+    .then(() => setTimeout(() => showScreen('home'), 300));
 });
 

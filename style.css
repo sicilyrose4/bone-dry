@@ -85,6 +85,88 @@ html, body {
 }
 
 /* ═══════════════════════════════════════════
+   LOADING (463:1533) + HOME (463:1564)
+═══════════════════════════════════════════ */
+#screen-loading, #screen-home { background: #12111d; }
+.bd-logo { position: absolute; width: 306px; height: 214px; pointer-events: none; }
+.loading-logo { left: 269px; top: 53px; }
+.home-logo    { left: 116px; top: 88px; }
+
+#loading-track {
+  position: absolute;
+  left: 228px;
+  top: 319px;
+  width: 388px;
+  height: 17px;
+  background: #474658;
+  border-radius: 18px;
+}
+#loading-fill {
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 0;               /* grows to 382px as images load */
+  height: 11px;
+  background: #c5dc6f;
+  border-radius: 18px;
+  transition: width 0.15s ease;
+}
+
+#btn-start-shift {
+  position: absolute;
+  left: 534.5px;
+  top: 131px;
+  width: 205px;
+  height: 46px;
+  background: #918fb7;
+  border: none;
+  border-radius: 12px;
+  padding: 0;
+  cursor: pointer;
+  font-family: 'BarFontBold', sans-serif;
+  font-size: 26px;
+  line-height: normal;
+  color: #040318;
+}
+#btn-start-shift:active { transform: scale(0.96); }
+.home-link {
+  position: absolute;
+  left: 567px;
+  width: 141px;
+  height: 30px;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: 'BarFont', sans-serif;
+  font-size: 28px;
+  line-height: normal;
+  color: #c5c4db;
+  text-align: center;
+  white-space: nowrap;
+}
+#btn-history    { top: 203px; }
+#btn-drink-menu { top: 254px; }
+/* Gear is drawn in portrait in Figma, so it's turned -90° here */
+#btn-settings {
+  position: absolute;
+  left: 790px;
+  top: 24px;
+  width: 22.44px;
+  height: 21.84px;
+  background: none;
+  border: none;
+  padding: 0;
+}
+#btn-settings img {
+  position: absolute;
+  left: 0.3px;
+  top: -0.3px;
+  width: 21.84px;
+  height: 22.44px;
+  transform: rotate(-90deg);
+}
+
+/* ═══════════════════════════════════════════
    SCREEN 1: BAR  — values from Figma "Updated flow" bar frames
    (461:1408, 459:1276, 461:1361)
 ═══════════════════════════════════════════ */
