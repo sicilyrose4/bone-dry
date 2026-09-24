@@ -65,8 +65,6 @@ const CUSTOMERS = {
   pink:   { w:138, h:189, sel:{ x:-31.5, y:-12,  w:201, h:213 } },
   green:  { w:116, h:222, sel:{ x:-5.5,  y:-2,   w:127, h:226 } },
   orange: { w:101, h:223, sel:{ x:0,     y:-14.5,w:101, h:252 } },
-  // No Figma component yet — both images share a canvas height, so scaled to match and centered
-  yellow: { w:112, h:224, sel:{ x:-13,   y:0,    w:138, h:224 } },
 };
 const CUSTOMER_IDS = Object.keys(CUSTOMERS);
 const customerImg = (id, state) => `assets/customers/${id}-${state}.png`;
