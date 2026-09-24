@@ -85,144 +85,153 @@ html, body {
 }
 
 /* ═══════════════════════════════════════════
-   SCREEN 1: BAR
+   SCREEN 1: BAR  — values from Figma "Updated flow" bar frames
+   (461:1408, 459:1276, 461:1361)
 ═══════════════════════════════════════════ */
 #screen-bar {
   background: #000;
 }
 .bar-bg {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  left: -2px;
+  top: -57px;
+  width: 846px;
+  height: 588px;
   object-fit: cover;
-  object-position: center top;
-  top: -64px;
 }
 .counter {
   position: absolute;
-  bottom: 0;
   left: 0;
-  width: 100%;
-  height: 80px;
-  object-fit: cover;
+  top: 348px;
+  width: 850px;
+  height: 54px;
   z-index: 6;
 }
 
-/* Customer slots */
+/* Customer slots: positioned per customer in game.js (layoutCustomer) */
 .customer-slot {
   position: absolute;
-  bottom: 60px;
-  width: 200px;
-  height: 270px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
   z-index: 4;
   cursor: pointer;
-  transition: transform 0.5s ease;
+  transition: opacity 0.6s ease;
 }
-#slot-0 { left: calc(170px - 100px); }
-#slot-1 { left: calc(390px - 100px); }
-#slot-2 { left: calc(660px - 100px); }
-
 .customer-slot img {
-  max-height: 250px;
-  object-fit: contain;
+  position: absolute;
+  object-fit: cover;
   pointer-events: none;
-  transition: opacity 0.3s;
 }
-.customer-slot.selected img {
-}
-.customer-slot.entering {
-  transform: translateX(200px);
-  opacity: 0;
-}
-.customer-slot.slide-in {
-  animation: slideIn 0.5s ease forwards;
-}
-@keyframes slideIn {
-  from { transform: translateX(200px); opacity: 0; }
-  to   { transform: translateX(0);     opacity: 1; }
-}
-.customer-slot.slide-out {
-  animation: slideOut 0.5s ease forwards;
-}
-@keyframes slideOut {
-  from { transform: translateX(0);     opacity: 1; }
-  to   { transform: translateX(-200px); opacity: 0; }
+.customer-slot.leaving { opacity: 0; }
+.customer-slot.arriving { animation: customerIn 0.6s ease; }
+@keyframes customerIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
-/* Speech bubble — floats over the customer, tail points down */
+/* Served drink on the counter (glass + liquid), fades with its customer */
+#counter-drinks { position: absolute; inset: 0; pointer-events: none; z-index: 7; }
+.counter-drink { position: absolute; transition: opacity 0.6s ease; }
+.counter-drink.leaving { opacity: 0; }
+.counter-drink .cd-liquid { position: absolute; left: 4.33px; top: 12.1px; width: 39.5px; height: 50.27px; }
+.counter-drink .cd-glass  { position: absolute; left: 0; top: 0; width: 48.54px; height: 64.99px; }
+
+/* Speech bubble — 222x61 rect, #d9d9d9, radius 13; tail from Figma (Vector 34) */
 #speech-area {
   position: absolute;
-  width: auto;
-  max-width: 640px;
-  background: #fff;
-  border-radius: 14px;
-  padding: 10px 32px;
+  top: 38px;
+  min-width: 222px;
+  height: 61px;
+  padding: 0 37px;
+  background: #d9d9d9;
+  border-radius: 13px;
   z-index: 10;
   pointer-events: none;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.22);
-  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-/* Tail pointing DOWN toward the customer */
-#speech-area::after {
-  content: '';
+#speech-area .speech-tail {
   position: absolute;
-  bottom: -10px;
-  left: calc(50% + var(--tail-offset, 0px));
-  transform: translateX(-50%);
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  border-top: 10px solid #fff;
+  top: 51px;
+  left: var(--tail-left, 144px);
+  width: 30.5px;
+  height: 27.46px;
 }
 #speech-text {
   font-family: 'BarFont', sans-serif;
-  font-size: 16px;
+  font-size: 28px;
+  line-height: normal;
   color: #000;
-  line-height: 1.35;
   text-align: center;
+  white-space: nowrap;
 }
 
-/* Start order button */
+/* Start order button — 180x46 at (631,319), #cccaf3, radius 12 */
 #btn-start-order {
   position: absolute;
-  right: 24px;
-  bottom: 80px;
+  left: 631px;
+  top: 319px;
+  width: 180px;
+  height: 46px;
   z-index: 10;
-  background: #00e26a;
-  color: #000;
+  background: #cccaf3;
+  color: #040318;
   font-family: 'BarFontBold', sans-serif;
-  font-size: 20px;
+  font-size: 26px;
+  line-height: normal;
   border: none;
-  border-radius: 17px;
-  padding: 10px 22px;
+  border-radius: 12px;
+  padding: 0;
   cursor: pointer;
   white-space: nowrap;
-  transition: transform 0.1s, box-shadow 0.1s;
+  transition: transform 0.1s;
 }
-#btn-start-order:active {
-  transform: scale(0.96);
-}
+#btn-start-order:active { transform: scale(0.96); }
 
 /* Bar HUD */
-#bar-hud {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 14px;
-  z-index: 20;
-}
 #bar-tips {
+  position: absolute;
+  left: 30px;
+  top: 19px;
   font-family: 'BarFont', sans-serif;
   font-size: 28px;
+  line-height: normal;
   color: #fff;
-  text-shadow: 0 1px 4px rgba(0,0,0,0.7);
+  z-index: 20;
+}
+/* Pause: two 4x19 bars at x=800 / 807, y=22 (button padded for a bigger tap target) */
+#bar-pause {
+  position: absolute;
+  left: 790px;
+  top: 12px;
+  padding: 10px;
+  gap: 3px;
+  z-index: 20;
+}
+#bar-pause .pause-bar {
+  width: 4px;
+  height: 19px;
+  background: #d9d9d9;
+  border-radius: 1px;
+}
+
+/* Tip that floats up over a served customer — Bold 41px white */
+.bar-tip-float {
+  position: absolute;
+  top: 79px;
+  font-family: 'BarFontBold', sans-serif;
+  font-size: 41px;
+  line-height: normal;
+  color: #fff;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 30;
+  animation: barTipIn 0.25s ease forwards;
+  transition: opacity 0.6s ease;
+}
+.bar-tip-float.leaving { opacity: 0; }
+@keyframes barTipIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 /* ═══════════════════════════════════════════

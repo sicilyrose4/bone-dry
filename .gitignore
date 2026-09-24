@@ -1,3 +1,4 @@
 .DS_Store
 # source art (originals) — the game uses optimized copies in assets/
 Updated assets/
+.claude/

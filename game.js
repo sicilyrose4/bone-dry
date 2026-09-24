@@ -44,21 +44,56 @@ const DRINKS = [
 ];
 
 /* ═══════════════════════════════════════════════════════════════
+   ART — swap bar background / counter here
+═══════════════════════════════════════════════════════════════ */
+const ART = {
+  barBackground: 'assets/bar/background.jpg',
+  barCounter:    'assets/bar/counter.png',
+  glass:         'assets/glass-straight-on.png',
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   CUSTOMERS
+   Box size (skeleton) and the selected image's rect inside it come from
+   the Figma component sets on the "updates" page. `sink` lowers a
+   customer behind the counter (purple sits 23px lower in the bar frames).
+═══════════════════════════════════════════════════════════════ */
+const CUSTOMERS = {
+  red:    { w:102, h:224, sel:{ x:-11,   y:-5.5, w:124, h:235 } },
+  purple: { w:108, h:241, sel:{ x:-8,    y:1.5,  w:124, h:238 }, sink:23 },
+  lime:   { w:130, h:232, sel:{ x:-2.5,  y:0,    w:135, h:232 } },
+  pink:   { w:138, h:189, sel:{ x:-31.5, y:-12,  w:201, h:213 } },
+  green:  { w:116, h:222, sel:{ x:-5.5,  y:-2,   w:127, h:226 } },
+  orange: { w:101, h:223, sel:{ x:0,     y:-14.5,w:101, h:252 } },
+  // No Figma component yet — both images share a canvas height, so scaled to match and centered
+  yellow: { w:112, h:224, sel:{ x:-13,   y:0,    w:138, h:224 } },
+};
+const CUSTOMER_IDS = Object.keys(CUSTOMERS);
+const customerImg = (id, state) => `assets/customers/${id}-${state}.png`;
+
+// Slot centers (x) and counter top (y) from the bar frames
+const SLOT_CX = [176, 399, 625];
+const COUNTER_TOP = 348;
+
+const SHIFT_SECONDS = 300;
+
+/* ═══════════════════════════════════════════════════════════════
    GAME STATE
 ═══════════════════════════════════════════════════════════════ */
 const G = {
   screen: 'bar',
   tips: 0,
-  elapsed: 0,
-  orderStartTime: 0,
-  timerRunning: false,
-  timerInterval: null,
-  customers: [],    // [{type, drink, state:'skeleton'|'selected'|'happy', slot, el}]
+  shiftRemaining: SHIFT_SECONDS, // bar timer: counts down in the background
+  drinkElapsed: 0,               // per-drink timer: counts up, resets each order
+  shiftOver: false,              // timer hit 0 — finish the current drink, then end
+  timerRunning: false,           // false while paused
+  tickInterval: null,
+  nextArrivalIn: 1,              // seconds until the next customer walks up
+  dial: 0.15,                    // hidden difficulty: 0 = calm, 1 = rush
+  customers: [],    // [{type, drink, state:'skeleton'|'selected'|'served', slot, el}]
   selectedIdx: null,
-  drinkQueue: [],
-  drinkQueuePos: 0,
+  lastDrinkId: null,
   drinksServed: 0,
-  totalDrinks: 6,
   drink: {
     forCustomer: null,   // index in G.customers
     recipe: null,
@@ -99,6 +134,9 @@ const dom = {
   recipeContent:    $('recipe-content'),
   recipeClose:      $('btn-recipe-close'),
 
+  barBg:            $('bar-bg'),
+  barCounter:       $('bar-counter'),
+  counterDrinks:    $('counter-drinks'),
   barTips:          $('bar-tips'),
   barPause:         $('bar-pause'),
   speechArea:       $('speech-area'),
@@ -177,40 +215,46 @@ function formatTime(s) {
   return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
 }
 
+// One game clock drives the shift countdown, the per-drink timer and arrivals.
+const TICK = 0.1; // seconds
+
 function startTimer() {
-  if (G.timerInterval) clearInterval(G.timerInterval);
+  if (G.tickInterval) clearInterval(G.tickInterval);
   G.timerRunning = true;
-  G.timerInterval = setInterval(() => {
-    if (!G.timerRunning) return;
-    G.elapsed++;
-    updateTimerDisplays();
-  }, 1000);
+  G.tickInterval = setInterval(tick, TICK * 1000);
 }
 
 function stopTimer() {
   G.timerRunning = false;
-  if (G.timerInterval) { clearInterval(G.timerInterval); G.timerInterval = null; }
+  if (G.tickInterval) { clearInterval(G.tickInterval); G.tickInterval = null; }
+}
+
+function tick() {
+  if (!G.timerRunning || G.shiftEnded) return;
+
+  if (!G.shiftOver) {
+    G.shiftRemaining = Math.max(0, G.shiftRemaining - TICK);
+    if (G.shiftRemaining === 0) onShiftTimeUp();
+  }
+
+  if (G.drink.forCustomer !== null) G.drinkElapsed += TICK;
+
+  if (!G.shiftOver) {
+    G.nextArrivalIn -= TICK;
+    if (G.nextArrivalIn <= 0) trySpawnCustomer();
+  }
+
+  updateTimerDisplays();
 }
 
 function pauseToggle() {
   if (G.shiftEnded) return;
   G.timerRunning = !G.timerRunning;
-  if (G.timerRunning && !G.timerInterval) {
-    G.timerInterval = setInterval(() => {
-      if (!G.timerRunning) return;
-      G.elapsed++;
-      updateTimerDisplays();
-    }, 1000);
-  } else if (!G.timerRunning) {
-    clearInterval(G.timerInterval);
-    G.timerInterval = null;
-  }
   dom.pauseOverlay.style.display = G.timerRunning ? 'none' : 'flex';
 }
 
-
 function updateTimerDisplays() {
-  const t = formatTime(G.elapsed);
+  const t = formatTime(Math.floor(G.drinkElapsed));
   dom.shelfTimer.textContent = t;
   dom.pourTimer.textContent  = t;
 }
@@ -226,117 +270,138 @@ function showNotif(msg) {
   setTimeout(() => el.remove(), 1600);
 }
 
-const SLOT_CX = [170, 390, 660]; // center-X of each customer slot
-
 function showTipFloat(msg, slotIdx) {
+  // "$2" sits above the served customer (Figma: x = customer center - 16, y = 79)
   const el = document.createElement('div');
-  el.className = 'tip-float';
+  el.className = 'bar-tip-float';
   el.textContent = msg;
-  el.style.left = (SLOT_CX[slotIdx] || 420) + 'px';
-  dom.game.appendChild(el);
-  setTimeout(() => el.remove(), 2500);
+  el.style.left = (SLOT_CX[slotIdx] - 16) + 'px';
+  dom.screens.bar.appendChild(el);
+  return el;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DIFFICULTY DIAL
+   Calm open → rush builds as the player keeps up → eases off near the end.
+═══════════════════════════════════════════════════════════════ */
+const lerp = (a, b, t) => a + (b - a) * Math.max(0, Math.min(1, t));
+
+function effectiveDial() {
+  // Taper over the last minute so the shift ends on a win
+  const taper = Math.min(1, G.shiftRemaining / 60);
+  return G.dial * taper;
+}
+
+function scheduleNextArrival() {
+  const d = effectiveDial();
+  const base = lerp(16, 4, d);                     // seconds between arrivals
+  G.nextArrivalIn = base * (0.8 + Math.random() * 0.4);
+}
+
+function updateDial(score, drinkTime, peeked) {
+  // score 0–100, drinkTime in seconds
+  const accuracy = score / 100;
+  const speed = drinkTime < 30 ? 1 : drinkTime < 60 ? 0.6 : drinkTime < 120 ? 0.3 : 0;
+  const perf = 0.6 * accuracy + 0.25 * speed + 0.15 * (peeked ? 0 : 1);
+  G.dial = Math.max(0.1, Math.min(1, G.dial + 0.05 + (perf - 0.5) * 0.3));
 }
 
 /* ═══════════════════════════════════════════════════════════════
    CUSTOMER MANAGEMENT
 ═══════════════════════════════════════════════════════════════ */
-const CHAR_TYPES = ['green','pink','yellow'];
-const CHAR_IMGS = {
-  green:  { skeleton:'assets/characters/crop-green-skeleton.png',  selected:'assets/characters/crop-green-selected.png',  happy:'assets/characters/crop-green-happy.png' },
-  pink:   { skeleton:'assets/characters/crop-pink-skeleton.png',   selected:'assets/characters/crop-pink-selected.png',   happy:'assets/characters/crop-pink-selected.png' },
-  yellow: { skeleton:'assets/characters/crop-yellow-skeleton.png', selected:'assets/characters/crop-yellow-selected.png', happy:'assets/characters/crop-yellow-selected.png' },
-};
-
-function shuffleArray(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-function initDrinkQueue() {
-  const pool = shuffleArray(DRINKS);
-  // First drink is always vodka soda for the tutorial green customer
-  const vodkaSoda = DRINKS.find(d => d.id === 'vodka-soda');
-  G.drinkQueue = [vodkaSoda, ...pool, ...pool, ...pool];
-  G.drinkQueuePos = 0;
-}
-
-function nextDrink() {
-  const d = G.drinkQueue[G.drinkQueuePos % G.drinkQueue.length];
-  G.drinkQueuePos++;
+function pickDrink() {
+  const pool = DRINKS.filter(d => d.id !== G.lastDrinkId);
+  const d = pool[Math.floor(Math.random() * pool.length)];
+  G.lastDrinkId = d.id;
   return d;
 }
 
-function createCustomer(slot) {
-  const type = CHAR_TYPES[slot % 3];
-  const drink = nextDrink();
+function trySpawnCustomer() {
+  scheduleNextArrival();
+  // No new arrivals in the last 20s — they couldn't be served in time
+  if (G.shiftRemaining < 20) return;
+  const empty = [0, 1, 2].filter(i => !G.customers[i]);
+  if (!empty.length) return;
+  const present = G.customers.filter(Boolean).map(c => c.type);
+  const types = CUSTOMER_IDS.filter(t => !present.includes(t));
+  const slot = empty[Math.floor(Math.random() * empty.length)];
+  const type = types[Math.floor(Math.random() * types.length)];
+  createCustomer(slot, type);
+}
+
+function createCustomer(slot, type) {
   const el = document.getElementById(`slot-${slot}`);
-  const customer = { type, drink, state:'skeleton', slot, el };
+  const customer = { type, drink: pickDrink(), state: 'skeleton', slot, el };
   G.customers[slot] = customer;
   renderCustomer(slot);
+  el.classList.remove('leaving');
+  el.classList.add('arriving');
+  setTimeout(() => el.classList.remove('arriving'), 650);
   return customer;
 }
 
 function renderCustomer(slot) {
   const c = G.customers[slot];
-  if (!c) {
-    const el = document.getElementById(`slot-${slot}`);
-    if (el) el.innerHTML = '';
-    return;
-  }
-  const el = c.el;
+  const el = document.getElementById(`slot-${slot}`);
   el.innerHTML = '';
+  if (!c) { el.style.display = 'none'; return; }
+
+  const spec = CUSTOMERS[c.type];
+  el.style.display = 'block';
+  el.style.width  = spec.w + 'px';
+  el.style.height = spec.h + 'px';
+  el.style.left   = (SLOT_CX[slot] - spec.w / 2) + 'px';
+  el.style.top    = (COUNTER_TOP + (spec.sink || 0) - spec.h) + 'px';
+
   const img = document.createElement('img');
-  img.src = CHAR_IMGS[c.type][c.state];
   img.alt = c.type + ' customer';
-  if (c.type === 'green') img.style.transform = 'rotate(-6deg) translateY(9px)';
+  const showSelected = c.state === 'selected' || c.state === 'served';
+  const r = showSelected ? spec.sel : { x: 0, y: 0, w: spec.w, h: spec.h };
+  img.src = customerImg(c.type, showSelected ? 'selected' : 'skeleton');
+  img.style.left = r.x + 'px';
+  img.style.top = r.y + 'px';
+  img.style.width = r.w + 'px';
+  img.style.height = r.h + 'px';
   el.appendChild(img);
-  el.className = 'customer-slot';
-  if (c.state === 'selected') el.classList.add('selected');
 }
 
 function selectCustomer(slot) {
   if (G.shiftEnded) return;
-  const prev = G.selectedIdx;
-  // Deselect previous
-  if (prev !== null && prev !== slot && G.customers[prev]) {
-    G.customers[prev].state = 'skeleton';
-    renderCustomer(prev);
-  }
+  const c = G.customers[slot];
+  if (!c || c.state === 'served') return;
+
+  // Tapping the selected customer again deselects them
   if (slot === G.selectedIdx) {
-    // Toggle off
+    c.state = 'skeleton';
+    renderCustomer(slot);
     G.selectedIdx = null;
-    if (G.customers[slot]) { G.customers[slot].state = 'skeleton'; renderCustomer(slot); }
     hideSpeechArea();
     dom.btnStartOrder.style.display = 'none';
     return;
   }
+
+  const prev = G.selectedIdx;
+  if (prev !== null && G.customers[prev] && G.customers[prev].state === 'selected') {
+    G.customers[prev].state = 'skeleton';
+    renderCustomer(prev);
+  }
   G.selectedIdx = slot;
-  if (!G.customers[slot]) return;
-  G.customers[slot].state = 'selected';
+  c.state = 'selected';
   renderCustomer(slot);
-  showSpeechArea(G.customers[slot].drink.order, slot);
+  showSpeechArea(c.drink.name.toUpperCase(), slot);
   dom.btnStartOrder.style.display = 'block';
 }
 
 function showSpeechArea(text, slotIdx) {
-  const cx = SLOT_CX[slotIdx] ?? 422;
+  // Figma: bubble centered 41px left of the customer, tail 7.5px left of center
+  const cx = SLOT_CX[slotIdx];
   dom.speechText.textContent = text;
-  dom.speechArea.style.bottom = 'auto';
-  dom.speechArea.style.top = '50px';
-  dom.speechArea.style.display = 'block';
-
-  // Measure actual rendered width then center on customer
-  requestAnimationFrame(() => {
-    const bubbleW = dom.speechArea.offsetWidth;
-    const left = Math.min(Math.max(cx - bubbleW / 2, 8), 844 - bubbleW - 8);
-    const tailOffset = cx - left - bubbleW / 2;
-    dom.speechArea.style.left = left + 'px';
-    dom.speechArea.style.setProperty('--tail-offset', tailOffset + 'px');
-  });
+  dom.speechArea.style.display = 'flex';
+  const w = dom.speechArea.offsetWidth;
+  const left = Math.min(Math.max(cx - 41 - w / 2, 8), 844 - w - 8);
+  const tailLeft = Math.min(Math.max(cx - 7.5 - left, 13), w - 13 - 30.5);
+  dom.speechArea.style.left = left + 'px';
+  dom.speechArea.style.setProperty('--tail-left', tailLeft + 'px');
 }
 
 function hideSpeechArea() {
@@ -571,63 +636,93 @@ function scoreDrink(recipe, poured, drinkTime) {
   else base = 0.00;
 
   const tip = Math.round(base * timeMult * 100) / 100;
-  return { tip };
+  return { tip, score };
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LIQUID COLOR — blend of every liquid poured, weighted by ounces
+═══════════════════════════════════════════════════════════════ */
+function blendLiquids(poured) {
+  let total = 0, r = 0, g = 0, b = 0;
+  poured.forEach(p => {
+    const hex = p.oz && INGREDIENTS[p.id]?.color;
+    if (!hex) return;
+    const n = parseInt(hex.slice(1), 16);
+    r += (n >> 16 & 255) * p.oz; g += (n >> 8 & 255) * p.oz; b += (n & 255) * p.oz;
+    total += p.oz;
+  });
+  if (!total) return null;
+  const h = v => Math.round(v / total).toString(16).padStart(2, '0');
+  return `#${h(r)}${h(g)}${h(b)}`;
 }
 
 /* ═══════════════════════════════════════════════════════════════
    SERVE DRINK
 ═══════════════════════════════════════════════════════════════ */
+const SERVED_LINGER_MS = 2000; // customer stays ~2s, then fades
+const FADE_MS = 600;
+
+function putDrinkOnCounter(slot, poured) {
+  // Figma (461:1361): glass at customer center + 70, y = 293; liquid inset inside it
+  const el = document.createElement('div');
+  el.className = 'counter-drink';
+  el.style.left = (SLOT_CX[slot] + 70) + 'px';
+  el.style.top = '293px';
+  el.style.width = '48.54px';
+  el.style.height = '64.99px';
+  const color = blendLiquids(poured);
+  if (color) {
+    el.innerHTML = `<svg class="cd-liquid" viewBox="0 0 39.4984 50.2667" preserveAspectRatio="none">
+      <path d="M5.91766 36.5478C3.84362 29.5749 1.26241 11.6705 0.0142927 1.943C-0.118298 0.909626 0.688582 0 1.73043 0H37.7932C38.7921 0 39.5827 0.835523 39.4912 1.83022C38.6305 11.1869 35.0329 35.173 33.072 47.7153C32.9631 48.4114 32.4437 48.9713 31.7545 49.1173C22.349 51.1093 14.1169 50.1058 10.2746 49.1386C9.66077 48.9841 9.21132 48.4792 9.06296 47.8639C8.63973 46.1086 7.67664 42.4615 5.91766 36.5478Z" fill="${color}" fill-opacity="0.3"/></svg>`;
+  }
+  const glass = document.createElement('img');
+  glass.className = 'cd-glass';
+  glass.src = ART.glass;
+  glass.alt = '';
+  el.appendChild(glass);
+  dom.counterDrinks.appendChild(el);
+  return el;
+}
+
 function serveDrink() {
   if (G.drink.forCustomer === null) return;
   const customerIdx = G.drink.forCustomer;
   const customer = G.customers[customerIdx];
   if (!customer) return;
 
-  const drinkTime = G.orderStartTime ? (Date.now() - G.orderStartTime) / 1000 : 60;
+  const drinkTime = G.drinkElapsed;
   const result = scoreDrink(G.drink.recipe, G.drink.poured, drinkTime);
   G.tips += result.tip;
   G.drinksServed++;
+  updateDial(result.score, drinkTime, false);
 
-  // Update tip display
   dom.barTips.textContent = '$' + G.tips.toFixed(2);
 
-  // Show tip float above the served customer
-  showTipFloat(`+$${result.tip.toFixed(2)}`, customerIdx);
-
-  // Customer goes happy
-  customer.state = 'happy';
+  // Served customer keeps their "selected" look, drink lands on the counter, tip shows
+  customer.state = 'served';
   renderCustomer(customerIdx);
+  const drinkEl = putDrinkOnCounter(customerIdx, G.drink.poured);
+  const tipEl = showTipFloat(`$${result.tip % 1 === 0 ? result.tip : result.tip.toFixed(2)}`, customerIdx);
 
   hideSpeechArea();
   dom.btnStartOrder.style.display = 'none';
   G.selectedIdx = null;
-
-  // Reset drink
   resetCurrentDrink();
+  G.serving = (G.serving || 0) + 1;
 
-  // Check shift end
-  if (G.drinksServed >= G.totalDrinks) {
-    setTimeout(() => endShift(), 2000);
-    return;
-  }
-
-  // After delay customer leaves and new one arrives
   setTimeout(() => {
-    const slotEl = customer.el;
-    slotEl.classList.add('slide-out');
+    [customer.el, drinkEl, tipEl].forEach(e => e.classList.add('leaving'));
     setTimeout(() => {
-      G.customers[customerIdx] = null;
-      // Spawn new customer
-      setTimeout(() => {
-        createCustomer(customerIdx);
-        const newEl = G.customers[customerIdx]?.el;
-        if (newEl) {
-          newEl.classList.add('slide-in');
-          setTimeout(() => newEl.classList.remove('slide-in'), 600);
-        }
-      }, 300);
-    }, 500);
-  }, 3000);
+      drinkEl.remove();
+      tipEl.remove();
+      if (G.customers[customerIdx] === customer) {
+        G.customers[customerIdx] = null;
+        renderCustomer(customerIdx);
+      }
+      G.serving--;
+      maybeEndShift();
+    }, FADE_MS);
+  }, SERVED_LINGER_MS);
 
   showScreen('bar');
 }
@@ -640,11 +735,23 @@ function resetCurrentDrink() {
   G.drink.recipe = null;
   G.drink.poured = [];
   G.drink.activeIngredient = null;
+  G.drinkElapsed = 0;
 }
 
 /* ═══════════════════════════════════════════════════════════════
    END SHIFT
+   At 0:00 the player finishes the drink they're making, serves it,
+   gets the tip — then the shift ends.
 ═══════════════════════════════════════════════════════════════ */
+function onShiftTimeUp() {
+  G.shiftOver = true;
+  maybeEndShift();
+}
+
+function maybeEndShift() {
+  if (G.shiftOver && G.drink.forCustomer === null && !G.serving) endShift();
+}
+
 function endShift() {
   if (G.shiftEnded) return;
   G.shiftEnded = true;
@@ -661,32 +768,33 @@ function endShift() {
 function initGame() {
   G.screen = 'bar';
   G.tips = 0;
-  G.elapsed = 0;
-  G.orderStartTime = 0;
+  G.shiftRemaining = SHIFT_SECONDS;
+  G.shiftOver = false;
+  G.dial = 0.15;
+  G.nextArrivalIn = 1;
+  G.serving = 0;
   G.timerRunning = false;
   G.customers = [];
   G.selectedIdx = null;
-  G.drinkQueuePos = 0;
+  G.lastDrinkId = null;
   G.drinksServed = 0;
   G.shiftEnded = false;
   resetCurrentDrink();
 
+  dom.barBg.src = ART.barBackground;
+  dom.barCounter.src = ART.barCounter;
   dom.barTips.textContent = '$0.00';
   dom.pauseOverlay.style.display = 'none';
+  dom.counterDrinks.innerHTML = '';
+  document.querySelectorAll('.bar-tip-float').forEach(e => e.remove());
   hideSpeechArea();
   dom.btnStartOrder.style.display = 'none';
+  for (let i = 0; i < 3; i++) renderCustomer(i);
 
-  if (G.timerInterval) { clearInterval(G.timerInterval); G.timerInterval = null; }
   stopPourRAF();
-
-  initDrinkQueue();
-
-  // Populate 3 customers
-  for (let i = 0; i < 3; i++) createCustomer(i);
-
   showScreen('bar');
   updateTimerDisplays();
-  startTimer();
+  startTimer(); // first customer walks up after ~1s, the dial paces the rest
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -698,22 +806,21 @@ for (let i = 0; i < 3; i++) {
   const slot = document.getElementById(`slot-${i}`);
   slot.addEventListener('pointerdown', (e) => {
     e.stopPropagation();
-    if (G.screen !== 'bar' || G.shiftEnded) return;
-    if (!G.customers[i] || G.customers[i].state === 'happy') return;
+    if (G.screen !== 'bar' || G.shiftEnded || !G.timerRunning) return;
     selectCustomer(i);
   });
 }
 
 dom.btnStartOrder.addEventListener('pointerdown', (e) => {
   e.stopPropagation();
-  if (G.selectedIdx === null) return;
+  if (G.selectedIdx === null || !G.timerRunning) return;
   const customer = G.customers[G.selectedIdx];
   if (!customer) return;
   G.drink.forCustomer = G.selectedIdx;
   G.drink.recipe = customer.drink;
   G.drink.poured = [];
   G.drink.activeIngredient = null;
-  G.orderStartTime = Date.now();
+  G.drinkElapsed = 0;
   dom.shelfDrinkName.textContent = customer.drink.name.toUpperCase();
   openShelf();
   setTimeout(() => openRecipe(customer.drink), 50);
@@ -738,10 +845,15 @@ dom.recipeCard.addEventListener('pointerdown', e => e.stopPropagation());
 dom.btnPourOut.addEventListener('pointerdown', (e) => {
   e.stopPropagation();
   resetCurrentDrink();
+  if (G.selectedIdx !== null && G.customers[G.selectedIdx]) {
+    G.customers[G.selectedIdx].state = 'skeleton';
+    renderCustomer(G.selectedIdx);
+  }
   G.selectedIdx = null;
   hideSpeechArea();
   dom.btnStartOrder.style.display = 'none';
   showScreen('bar');
+  maybeEndShift();
 });
 
 dom.shelfPause.addEventListener('pointerdown', (e) => { e.stopPropagation(); pauseToggle(); });
@@ -1103,6 +1215,5 @@ dom.pauseOverlay.addEventListener('pointerdown', (e) => {
    BOOT
 ═══════════════════════════════════════════════════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
-  initDrinkQueue();
   initGame();
 });

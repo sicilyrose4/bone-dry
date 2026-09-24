@@ -14,27 +14,29 @@
            SCREEN 1: BAR OVERVIEW
       ═══════════════════════════════════════════ -->
       <div id="screen-bar" class="screen active">
-        <img class="bar-bg" src="assets/bg.jpg" alt="" />
-        <!-- Customer slots -->
+        <!-- Background + counter art come from ART in game.js (swap them there) -->
+        <img class="bar-bg" id="bar-bg" alt="" />
+        <!-- Customer slots (left / center / right) -->
         <div class="customer-slot" id="slot-0"></div>
         <div class="customer-slot" id="slot-1"></div>
         <div class="customer-slot" id="slot-2"></div>
         <!-- Counter -->
-        <img class="counter" src="assets/counter.png" alt="" />
-        <!-- Speech bubble area -->
+        <img class="counter" id="bar-counter" alt="" />
+        <!-- Served drinks sit on the counter here -->
+        <div id="counter-drinks"></div>
+        <!-- Speech bubble -->
         <div id="speech-area" style="display:none;">
           <div id="speech-text"></div>
+          <img class="speech-tail" src="assets/ui/speech-tail.svg" alt="" />
         </div>
         <!-- Start order button -->
         <button id="btn-start-order" style="display:none;">START ORDER</button>
         <!-- HUD -->
-        <div id="bar-hud">
-          <span id="bar-tips">$0.00</span>
-          <button id="bar-pause" class="pause-btn" aria-label="Pause">
-            <div class="pause-bar"></div>
-            <div class="pause-bar"></div>
-          </button>
-        </div>
+        <span id="bar-tips">$0.00</span>
+        <button id="bar-pause" class="pause-btn" aria-label="Pause">
+          <div class="pause-bar"></div>
+          <div class="pause-bar"></div>
+        </button>
       </div>
 
       <!-- ═══════════════════════════════════════════
