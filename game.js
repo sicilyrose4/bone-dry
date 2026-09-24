@@ -905,12 +905,17 @@ function maybeEndShift() {
   if (G.shiftOver && G.drink.forCustomer === null && !G.serving) endShift();
 }
 
-function endShift() {
+function endShift(early = false) {
   if (G.shiftEnded) return;
   G.shiftEnded = true;
   stopTimer();
   stopPourRAF();
-  PROGRESS.shifts.push({ date: new Date().toISOString(), tips: Math.round(G.tips * 100) / 100, served: G.drinksServed });
+  // Ending early from pause: the drink in progress (if any) is dropped
+  if (early) resetCurrentDrink();
+  dom.pauseOverlay.style.display = 'none';
+  dom.game.classList.remove('paused');
+  PROGRESS.shifts.push({ date: new Date().toISOString(), tips: Math.round(G.tips * 100) / 100, served: G.drinksServed,
+                         ...(early ? { endedEarly: true, secondsLeft: Math.ceil(G.shiftRemaining) } : {}) });
   saveProgress();
   dom.endTips.textContent   = `Total Tips: $${G.tips.toFixed(2)}`;
   dom.endServed.textContent = `Customers served: ${G.drinksServed}`;
@@ -1334,6 +1339,11 @@ dom.btnPlayAgain.addEventListener('pointerdown', (e) => {
 /* ═══════════════════════════════════════════════════════════════
    PAUSE OVERLAY click to unpause
 ═══════════════════════════════════════════════════════════════ */
+$('btn-end-shift').addEventListener('pointerdown', (e) => {
+  e.stopPropagation();
+  endShift(true);
+});
+
 dom.pauseOverlay.addEventListener('pointerdown', (e) => {
   e.stopPropagation();
   if (!G.timerRunning) pauseToggle();

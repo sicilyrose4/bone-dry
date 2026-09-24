@@ -907,7 +907,23 @@ html, body {
   font-size: 48px;
   color: #fff;
   letter-spacing: 4px;
+  flex-direction: column;
+  gap: 22px;
 }
+/* End the shift early — same filled style as POUR / DONE / START SHIFT */
+#btn-end-shift {
+  background: #918fb7;
+  color: #040318;
+  border: none;
+  border-radius: 12px;
+  padding: 8px 32px;
+  cursor: pointer;
+  font-family: 'BarFontBold', sans-serif;
+  font-size: 26px;
+  line-height: normal;
+  letter-spacing: normal;
+}
+#btn-end-shift:active { transform: scale(0.96); }
 
 /* ─── NOTIFICATIONS ──────────────────────────────────────────── */
 #notification-layer {
