@@ -31,6 +31,11 @@
         </div>
         <!-- Start order button -->
         <button id="btn-start-order" style="display:none;">START ORDER</button>
+        <!-- Shown instead of START ORDER while a drink is in progress -->
+        <button id="btn-back-to-pour" class="arrow-btn" style="display:none;">
+          <span>POUR</span>
+          <img class="flip" src="assets/ui/arrow-bar.svg" alt="" width="18" height="16" />
+        </button>
         <!-- HUD -->
         <span id="bar-tips">$0.00</span>
         <button id="bar-pause" class="pause-btn" aria-label="Pause">
@@ -55,79 +60,35 @@
       ═══════════════════════════════════════════ -->
       <div id="screen-shelf" class="screen">
         <!-- HUD -->
-        <div class="shelf-hud">
-          <button id="btn-pour-out" class="hud-left-btn">
-            <img src="assets/icon-restart.svg" alt="" width="24" height="24" />
-            <span>POUR OUT</span>
-          </button>
-          <span id="shelf-drink-name"></span>
-          <div class="hud-right">
-            <span id="shelf-timer">00:00</span>
-            <button id="shelf-pause" class="pause-btn" aria-label="Pause">
-              <div class="pause-bar"></div>
-              <div class="pause-bar"></div>
-            </button>
-          </div>
+        <button id="btn-pour-out" class="shelf-pour-out">
+          <img src="assets/ui/icon-restart.svg" alt="" width="24" height="24" />
+          <span>&nbsp;POUR OUT</span>
+        </button>
+        <span id="shelf-title"></span>
+        <span id="shelf-timer" class="drink-timer">00:00</span>
+        <button id="shelf-pause" class="pause-btn dim-pause" aria-label="Pause">
+          <div class="pause-bar"></div>
+          <div class="pause-bar"></div>
+        </button>
+
+        <!-- One swipeable row of bottles (order shuffles each round) -->
+        <div id="shelf-row"></div>
+        <img class="shelf-line" src="assets/ui/shelf-line.svg" alt="" />
+
+        <!-- Bottom controls -->
+        <button id="btn-to-bar" class="arrow-btn">
+          <img src="assets/ui/arrow-bar.svg" alt="" width="18" height="16" />
+          <span>BAR</span>
+        </button>
+        <button id="btn-pour" style="display:none;">POUR</button>
+        <div id="shelf-added" style="display:none;">
+          <span id="shelf-added-text"></span>
+          <img src="assets/ui/icon-check.svg" alt="" width="20" height="20" />
         </div>
-
-        <!-- Top shelf line -->
-        <div class="shelf-line top-shelf-line"></div>
-
-        <!-- Top shelf: 7 spirits/mixers -->
-        <div id="top-shelf" class="shelf-row">
-          <div class="shelf-item" data-id="vodka"><img src="assets/ingredients2/vodka.png" alt="Vodka" /></div>
-          <div class="shelf-item" data-id="tequila"><img src="assets/ingredients2/Tequila.png" alt="Tequila" /></div>
-          <div class="shelf-item" data-id="tonic-water"><img src="assets/ingredients2/Tonic water.png" alt="Tonic Water" /></div>
-          <div class="shelf-item" data-id="whiskey"><img src="assets/ingredients2/Whiskey.png" alt="Whiskey" /></div>
-          <div class="shelf-item" data-id="cola"><img src="assets/ingredients2/Cola.png" alt="Cola" /></div>
-          <div class="shelf-item" data-id="white-rum"><img src="assets/ingredients2/White Rum.png" alt="White Rum" /></div>
-          <div class="shelf-item" data-id="gin"><img src="assets/ingredients2/Gin.png" alt="Gin" /></div>
-        </div>
-
-        <!-- Bottom shelf line -->
-        <div class="shelf-line bottom-shelf-line"></div>
-
-        <!-- Bottom shelf: 7 juices/garnishes -->
-        <div id="bottom-shelf" class="shelf-row">
-          <div class="shelf-item" data-id="cranberry"><img src="assets/ingredients2/orange juice-1.png" alt="Cranberry" /></div>
-          <div class="shelf-item" data-id="oj"><img src="assets/ingredients2/orange juice.png" alt="OJ" /></div>
-          <div class="shelf-item" data-id="orange"><img src="assets/ingredients2/orange.png" alt="Orange" /></div>
-          <div class="shelf-item" data-id="mint"><img src="assets/ingredients2/limt.png" alt="Mint" /></div>
-          <div class="shelf-item" data-id="lemon"><img src="assets/ingredients2/lemon.png" alt="Lemon" /></div>
-          <div class="shelf-item" data-id="lime"><img src="assets/ingredients2/lime.png" alt="Lime" /></div>
-          <div class="shelf-item" data-id="cherry"><img src="assets/ingredients2/cherries.png" alt="Cherry" /></div>
-        </div>
-
-        <!-- Counter line -->
-        <div class="shelf-line counter-line"></div>
-
-        <!-- Counter: salt/sugar/ice left, glass+soda centered -->
-        <div id="shelf-counter">
-          <div id="counter-left-group">
-            <div class="counter-rim" id="rim-salt" data-id="salt">
-              <img src="assets/ingredients2/salt.png" alt="Salt" />
-              <span>SALT</span>
-            </div>
-            <div class="counter-rim" id="rim-sugar" data-id="sugar">
-              <img src="assets/ingredients2/sugar.png" alt="Sugar" />
-              <span>SUGAR</span>
-            </div>
-            <div class="counter-static" id="ice-display">
-              <img src="assets/ingredients2/ice.png" alt="Ice" />
-            </div>
-          </div>
-          <div id="counter-center-group">
-            <div class="shelf-item counter-bottle" data-id="soda-water">
-              <img src="assets/ingredients2/soda water.png" alt="Soda Water" />
-            </div>
-            <div class="counter-static" id="shelf-glass-icon">
-              <img src="assets/ingredients2/glass.png" alt="glass" />
-            </div>
-          </div>
-        </div>
-
-        <!-- Serve button -->
-        <button id="btn-serve">SERVE</button>
+        <button id="btn-to-garnish" class="arrow-btn" disabled>
+          <span>GARNISH</span>
+          <img class="flip" src="assets/ui/arrow-bar.svg" alt="" width="18" height="16" />
+        </button>
       </div>
 
       <!-- ═══════════════════════════════════════════

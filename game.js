@@ -3,45 +3,61 @@
 /* ═══════════════════════════════════════════════════════════════
    DATA
 ═══════════════════════════════════════════════════════════════ */
+// Liquids: `color` is the bottle's own line color (the art draws liquid as that
+// color, semi-transparent). `shelf` = display size on the shelf from Figma
+// (vodka isn't on the Figma shelf — sized at the same scale as the other bottles).
+// `outline` = hand-drawn selection outline from Figma, positioned relative to the bottle.
 const INGREDIENTS = {
-  vodka:         { name:'Vodka',         type:'spirit',  file:'vodka.png',             oz:1.5, color:'#c8e8ff' },
-  tequila:       { name:'Tequila',       type:'spirit',  file:'Tequila.png',           oz:1.5, color:'#ffe194' },
-  'tonic-water': { name:'Tonic Water',   type:'mixer',   file:'Tonic water.png',       oz:4,   color:'#e0f5ff' },
-  whiskey:       { name:'Whiskey',       type:'spirit',  file:'Whiskey.png',           oz:1.5, color:'#b8641a' },
-  cola:          { name:'Cola',          type:'mixer',   file:'Cola.png',              oz:4,   color:'#3d1a0a' },
-  'white-rum':   { name:'White Rum',     type:'spirit',  file:'White Rum.png',         oz:1.5, color:'#f0f0e8' },
-  gin:           { name:'Gin',           type:'spirit',  file:'Gin.png',               oz:1.5, color:'#c0e8c0' },
-  'soda-water':  { name:'Soda Water',    type:'mixer',   file:'soda water.png',        oz:4,   color:'#e8f8ff' },
-  oj:            { name:'Orange Juice',  type:'mixer',   file:'orange juice.png',      oz:4,   color:'#ff9d00' },
-  cranberry:     { name:'Cranberry',     type:'mixer',   file:'orange juice-1.png',    oz:4,   color:'#8b0030' },
-  orange:        { name:'Orange',        type:'garnish', file:'orange.png' },
-  mint:          { name:'Mint',          type:'garnish', file:'limt.png' },
-  lemon:         { name:'Lemon',         type:'garnish', file:'lemon.png' },
-  lime:          { name:'Lime',          type:'garnish', file:'lime.png' },
-  cherry:        { name:'Cherry',        type:'garnish', file:'cherries.png' },
-  salt:          { name:'Salt Rim',      type:'rim',     file:'salt.png' },
-  sugar:         { name:'Sugar Rim',     type:'rim',     file:'sugar.png' },
+  vodka:          { name:'Vodka',         type:'liquid',  file:'vodka.png',        color:'#6ce4f0', shelf:[53.1, 134.4] },
+  gin:            { name:'Gin',           type:'liquid',  file:'gin.png',          color:'#843cfc', shelf:[66.91, 163.664] },
+  tequila:        { name:'Tequila',       type:'liquid',  file:'tequila.png',      color:'#fc0cc0', shelf:[82.313, 128.396] },
+  whiskey:        { name:'Whiskey',       type:'liquid',  file:'whiskey.png',      color:'#fc783c', shelf:[62.036, 145.615],
+                    outline:{ src:'assets/ui/select-outline-whiskey.svg', x:-3.5, y:-3.4, w:70.05, h:151.51 } },
+  'white-rum':    { name:'White Rum',     type:'liquid',  file:'white-rum.png',    color:'#fc00c0', shelf:[56.916, 146.818] },
+  'triple-sec':   { name:'Triple Sec',    type:'liquid',  file:'triple-sec.png',   color:'#fc7830', shelf:[60.414, 198] },
+  'soda-water':   { name:'Soda Water',    type:'liquid',  file:'soda-water.png',   color:'#fcfcfc', shelf:[52.7, 133.137] },
+  'tonic-water':  { name:'Tonic Water',   type:'liquid',  file:'tonic-water.png',  color:'#6ce4f0', shelf:[46.535, 103.772] },
+  cola:           { name:'Cola',          type:'liquid',  file:'cola.png',         color:'#fc0048', shelf:[47.772, 79.512],
+                    outline:{ src:'assets/ui/select-outline-cola.svg', x:-2.7, y:-3.0, w:53.12, h:86.44 } },
+  'ginger-beer':  { name:'Ginger Beer',   type:'liquid',  file:'ginger-beer.png',  color:'#fce4b4', shelf:[46.928, 163.785] },
+  cranberry:      { name:'Cranberry Juice', type:'liquid', file:'cranberry.png',   color:'#f00048', shelf:[64.653, 126.043] },
+  oj:             { name:'Orange Juice',  type:'liquid',  file:'oj.png',           color:'#fc6000', shelf:[55.389, 111.184] },
+  'lime-juice':   { name:'Lime Juice',    type:'liquid',  file:'lime-juice.png',   color:'#0cd830', shelf:[49.177, 141.23] },
+  'simple-syrup': { name:'Simple Syrup',  type:'liquid',  file:'simple-syrup.png', color:'#fcd884', shelf:[47.177, 141.327] },
+  grenadine:      { name:'Grenadine',     type:'liquid',  file:'grenadine.png',    color:'#fc0c3c', shelf:[64.343, 132.593] },
+  lime:           { name:'Lime',          type:'garnish', file:'lime.png' },
+  lemon:          { name:'Lemon',         type:'garnish', file:'lemon.png' },
+  orange:         { name:'Orange',        type:'garnish', file:'orange.png' },
+  cherry:         { name:'Cherry',        type:'garnish', file:'cherry.png' },
+  mint:           { name:'Mint',          type:'garnish', file:'mint.png' },
 };
+const LIQUID_IDS = Object.keys(INGREDIENTS).filter(id => INGREDIENTS[id].type === 'liquid');
 
+// Approved menu (2026-09-24). Add a drink = add a line here.
 const DRINKS = [
-  { id:'screwdriver',     name:'Screwdriver',     base:'vodka',     order:"Can I get a Screwdriver?",         ingredients:[{id:'vodka',oz:1.5},{id:'oj',oz:4},{id:'orange',count:1}] },
-  { id:'vodka-soda',      name:'Vodka Soda',       base:'vodka',     order:"Vodka Soda with a lime, please!",  ingredients:[{id:'vodka',oz:1.5},{id:'soda-water',oz:4},{id:'lime',count:1}] },
-  { id:'vodka-tonic',     name:'Vodka Tonic',      base:'vodka',     order:"A Vodka Tonic please!",            ingredients:[{id:'vodka',oz:1.5},{id:'tonic-water',oz:4},{id:'lime',count:1}] },
-  { id:'cape-cod',        name:'Cape Cod',         base:'vodka',     order:"Cape Cod please!",                 ingredients:[{id:'vodka',oz:1.5},{id:'cranberry',oz:4},{id:'lime',count:1}] },
-  { id:'madras',          name:'Madras',           base:'vodka',     order:"Can I get a Madras?",              ingredients:[{id:'vodka',oz:1.5},{id:'cranberry',oz:2},{id:'oj',oz:2}] },
-  { id:'gin-tonic',       name:'Gin and Tonic',      base:'gin',       order:"Gin and Tonic for me!",            ingredients:[{id:'gin',oz:1.5},{id:'tonic-water',oz:4},{id:'lime',count:1}] },
-  { id:'gin-rickey',      name:'Gin Rickey',       base:'gin',       order:"Could I get a Gin Rickey?",        ingredients:[{id:'gin',oz:1.5},{id:'soda-water',oz:4},{id:'lime',count:1}] },
-  { id:'gin-juice',       name:'Gin and Juice',      base:'gin',       order:"Gin and Juice please!",            ingredients:[{id:'gin',oz:1.5},{id:'oj',oz:4}] },
-  { id:'tom-collins',     name:'Tom Collins',      base:'gin',       order:"Tom Collins please!",              ingredients:[{id:'gin',oz:1.5},{id:'soda-water',oz:4},{id:'lemon',count:1},{id:'sugar',count:1}] },
-  { id:'cuba-libre',      name:'Cuba Libre',       base:'white-rum', order:"Can I get a Cuba Libre?",          ingredients:[{id:'white-rum',oz:1.5},{id:'cola',oz:4},{id:'lime',count:1}] },
-  { id:'rum-punch',       name:'Rum Punch',        base:'white-rum', order:"Rum Punch for me!",                ingredients:[{id:'white-rum',oz:1.5},{id:'oj',oz:2},{id:'cranberry',oz:2},{id:'cherry',count:1}] },
-  { id:'mojito',          name:'Mojito',           base:'white-rum', order:"A Mojito please!",                 ingredients:[{id:'white-rum',oz:1.5},{id:'soda-water',oz:3},{id:'mint',count:1},{id:'lime',count:1},{id:'sugar',count:1}] },
-  { id:'margarita',       name:'Margarita',        base:'tequila',   order:"Margarita on the rocks!",          ingredients:[{id:'tequila',oz:1.5},{id:'lime',count:1},{id:'salt',count:1}] },
-  { id:'tequila-sunrise', name:'Tequila Sunrise',  base:'tequila',   order:"Can I get a Tequila Sunrise?",     ingredients:[{id:'tequila',oz:1.5},{id:'oj',oz:4},{id:'cherry',count:1}] },
-  { id:'jack-coke',       name:'Jack and Coke',      base:'whiskey',   order:"Jack and Coke please!",            ingredients:[{id:'whiskey',oz:1.5},{id:'cola',oz:4}] },
-  { id:'whiskey-sour',    name:'Whiskey Sour',     base:'whiskey',   order:"Could I get a Whiskey Sour?",      ingredients:[{id:'whiskey',oz:1.5},{id:'lemon',count:1},{id:'sugar',count:1},{id:'cherry',count:1}] },
-  { id:'mint-julep',      name:'Mint Julep',       base:'whiskey',   order:"Mint Julep please!",               ingredients:[{id:'whiskey',oz:1.5},{id:'mint',count:1},{id:'sugar',count:1}] },
+  { id:'vodka-soda',      name:'Vodka Soda',      ingredients:[{id:'vodka',oz:1.5},{id:'soda-water',oz:4},{id:'lime',count:1}] },
+  { id:'vodka-tonic',     name:'Vodka Tonic',     ingredients:[{id:'vodka',oz:1.5},{id:'tonic-water',oz:4},{id:'lime',count:1}] },
+  { id:'vodka-cranberry', name:'Vodka Cranberry', ingredients:[{id:'vodka',oz:1.5},{id:'cranberry',oz:4},{id:'lime',count:1}] },
+  { id:'screwdriver',     name:'Screwdriver',     ingredients:[{id:'vodka',oz:1.5},{id:'oj',oz:4},{id:'orange',count:1}] },
+  { id:'moscow-mule',     name:'Moscow Mule',     ingredients:[{id:'vodka',oz:1.5},{id:'ginger-beer',oz:4},{id:'lime-juice',oz:0.5},{id:'lime',count:1}] },
+  { id:'cosmopolitan',    name:'Cosmopolitan',    ingredients:[{id:'vodka',oz:1.5},{id:'triple-sec',oz:0.5},{id:'cranberry',oz:1},{id:'lime-juice',oz:0.5},{id:'lime',count:1}] },
+  { id:'gin-tonic',       name:'Gin and Tonic',   ingredients:[{id:'gin',oz:1.5},{id:'tonic-water',oz:4},{id:'lime',count:1}] },
+  { id:'gin-rickey',      name:'Gin Rickey',      ingredients:[{id:'gin',oz:1.5},{id:'lime-juice',oz:0.5},{id:'soda-water',oz:4},{id:'lime',count:1}] },
+  { id:'tom-collins',     name:'Tom Collins',     ingredients:[{id:'gin',oz:1.5},{id:'simple-syrup',oz:0.5},{id:'soda-water',oz:4},{id:'lemon',count:1}] },
+  { id:'cuba-libre',      name:'Cuba Libre',      ingredients:[{id:'white-rum',oz:1.5},{id:'cola',oz:4},{id:'lime',count:1}] },
+  { id:'rum-punch',       name:'Rum Punch',       ingredients:[{id:'white-rum',oz:1.5},{id:'oj',oz:2},{id:'cranberry',oz:2},{id:'grenadine',oz:0.5},{id:'cherry',count:1}] },
+  { id:'mojito',          name:'Mojito',          ingredients:[{id:'white-rum',oz:1.5},{id:'lime-juice',oz:0.5},{id:'simple-syrup',oz:0.5},{id:'soda-water',oz:3},{id:'mint',count:1},{id:'lime',count:1}] },
+  { id:'whiskey-coke',    name:'Whiskey Coke',    ingredients:[{id:'whiskey',oz:1.5},{id:'cola',oz:4},{id:'lime',count:1}] },
+  { id:'whiskey-ginger',  name:'Whiskey Ginger',  ingredients:[{id:'whiskey',oz:1.5},{id:'ginger-beer',oz:4},{id:'lemon',count:1}] },
+  { id:'margarita',       name:'Margarita',       ingredients:[{id:'tequila',oz:2},{id:'triple-sec',oz:1},{id:'lime-juice',oz:1},{id:'lime',count:1}] },
+  { id:'tequila-sunrise', name:'Tequila Sunrise', ingredients:[{id:'tequila',oz:1.5},{id:'oj',oz:4},{id:'grenadine',oz:0.5},{id:'orange',count:1},{id:'cherry',count:1}] },
+  { id:'ranch-water',     name:'Ranch Water',     ingredients:[{id:'tequila',oz:1.5},{id:'lime-juice',oz:0.5},{id:'soda-water',oz:4},{id:'lime',count:1}] },
 ];
+
+// Drawn recipe cards (user will add one per drink)
+const RECIPE_IMAGES = {
+  'vodka-soda': 'assets/vodka soda recipe.png',
+};
 
 /* ═══════════════════════════════════════════════════════════════
    ART — swap bar background / counter here
@@ -92,6 +108,7 @@ const G = {
   selectedIdx: null,
   lastDrinkId: null,
   drinksServed: 0,
+  shelf: { order: [], selected: null, lastAdded: null },
   drink: {
     forCustomer: null,   // index in G.customers
     recipe: null,
@@ -144,7 +161,14 @@ const dom = {
   shelfTimer:       $('shelf-timer'),
   shelfPause:       $('shelf-pause'),
   btnPourOut:       $('btn-pour-out'),
-  btnServe:         $('btn-serve'),
+  shelfRow:         $('shelf-row'),
+  shelfTitle:       $('shelf-title'),
+  btnPour:          $('btn-pour'),
+  shelfAdded:       $('shelf-added'),
+  shelfAddedText:   $('shelf-added-text'),
+  btnToBar:         $('btn-to-bar'),
+  btnToGarnish:     $('btn-to-garnish'),
+  btnBackToPour:    $('btn-back-to-pour'),
 
   pourTimer:        $('pour-timer'),
   pourPause:        $('pour-pause'),
@@ -172,7 +196,6 @@ const dom = {
 
   pauseOverlay:     $('pause-overlay'),
   notifLayer:       $('notification-layer'),
-  shelfDrinkName:   $('shelf-drink-name'),
 };
 
 /* ═══════════════════════════════════════════════════════════════
@@ -365,6 +388,8 @@ function renderCustomer(slot) {
 
 function selectCustomer(slot) {
   if (G.shiftEnded) return;
+  // While a drink is being made, customers can't be switched or deselected
+  if (G.drink.forCustomer !== null) return;
   const c = G.customers[slot];
   if (!c || c.state === 'served') return;
 
@@ -374,7 +399,7 @@ function selectCustomer(slot) {
     renderCustomer(slot);
     G.selectedIdx = null;
     hideSpeechArea();
-    dom.btnStartOrder.style.display = 'none';
+    refreshBarControls();
     return;
   }
 
@@ -387,7 +412,7 @@ function selectCustomer(slot) {
   c.state = 'selected';
   renderCustomer(slot);
   showSpeechArea(c.drink.name.toUpperCase(), slot);
-  dom.btnStartOrder.style.display = 'block';
+  refreshBarControls();
 }
 
 function showSpeechArea(text, slotIdx) {
@@ -413,10 +438,10 @@ function hideSpeechArea() {
 function openRecipe(drink) {
   dom.overlay.classList.add('open');
   dom.recipeContent.innerHTML = '';
-  if (drink.id === 'vodka-soda') {
+  if (RECIPE_IMAGES[drink.id]) {
     dom.overlay.classList.add('recipe-image-mode');
     const img = document.createElement('img');
-    img.src = 'assets/vodka soda recipe.png';
+    img.src = RECIPE_IMAGES[drink.id];
     img.className = 'recipe-img';
     dom.recipeContent.appendChild(img);
   } else {
@@ -461,32 +486,89 @@ function closeRecipe() {
 
 /* ═══════════════════════════════════════════════════════════════
    SHELF SCREEN
+   One swipeable row. Tap a bottle to select it (tap again to deselect),
+   POUR opens the pour screen. The order shuffles every new order.
 ═══════════════════════════════════════════════════════════════ */
+function ingPath(id) {
+  return `assets/ingredients-bd/${INGREDIENTS[id].file}`;
+}
+
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function buildShelf() {
+  G.shelf.order = shuffleArray(LIQUID_IDS);
+  dom.shelfRow.innerHTML = '';
+  dom.shelfRow.scrollLeft = 0;
+  G.shelf.order.forEach(id => {
+    const ing = INGREDIENTS[id];
+    const el = document.createElement('div');
+    el.className = 'shelf-bottle' + (ing.outline ? '' : ' traced');
+    el.dataset.id = id;
+    el.style.width = ing.shelf[0] + 'px';
+    el.style.height = ing.shelf[1] + 'px';
+    const img = document.createElement('img');
+    img.className = 'bottle';
+    img.src = ingPath(id);
+    img.alt = ing.name;
+    el.appendChild(img);
+    if (ing.outline) {
+      const o = document.createElement('img');
+      o.className = 'outline';
+      o.src = ing.outline.src;
+      o.alt = '';
+      Object.assign(o.style, { left: ing.outline.x + 'px', top: ing.outline.y + 'px', width: ing.outline.w + 'px', height: ing.outline.h + 'px' });
+      el.appendChild(o);
+    }
+    el.addEventListener('click', () => toggleBottle(id));
+    dom.shelfRow.appendChild(el);
+  });
+}
+
+function toggleBottle(id) {
+  if (G.screen !== 'shelf' || !G.timerRunning) return;
+  G.shelf.selected = G.shelf.selected === id ? null : id;
+  G.shelf.lastAdded = null;
+  renderShelf();
+}
+
+function renderShelf() {
+  const sel = G.shelf.selected;
+  dom.shelfRow.querySelectorAll('.shelf-bottle').forEach(el => {
+    el.classList.toggle('selected', el.dataset.id === sel);
+  });
+  if (sel) {
+    dom.shelfTitle.textContent = INGREDIENTS[sel].name.toUpperCase();
+    dom.shelfTitle.classList.add('ingredient');
+  } else {
+    dom.shelfTitle.textContent = G.drink.recipe ? G.drink.recipe.name.toUpperCase() : '';
+    dom.shelfTitle.classList.remove('ingredient');
+  }
+  dom.btnPour.style.display = sel ? 'block' : 'none';
+  const added = !sel && G.shelf.lastAdded;
+  dom.shelfAdded.style.display = added ? 'flex' : 'none';
+  if (added) dom.shelfAddedText.textContent = `${INGREDIENTS[G.shelf.lastAdded].name.toUpperCase()} ADDED`;
+  dom.btnToGarnish.disabled = !G.drink.poured.some(p => p.oz > 0);
+}
+
 function openShelf() {
   showScreen('shelf');
-  refreshShelfState();
-  renderActiveSlot();
+  renderShelf();
 }
 
-function refreshShelfState() {
-  // Mark shelf items that have already been added
-  const pouredIds = G.drink.poured.map(p => p.id);
-
-  document.querySelectorAll('#top-shelf .shelf-item, #bottom-shelf .shelf-item, .counter-bottle').forEach(el => {
-    const id = el.dataset.id;
-    el.classList.toggle('added', pouredIds.includes(id));
-  });
-  document.querySelectorAll('.counter-rim').forEach(el => {
-    const id = el.dataset.id;
-    el.classList.toggle('added', pouredIds.includes(id));
-  });
+/* Bar controls while an order exists: START ORDER before it starts,
+   POUR → (back to the drink) once it's in progress */
+function refreshBarControls() {
+  const inProgress = G.drink.forCustomer !== null;
+  dom.btnStartOrder.style.display = !inProgress && G.selectedIdx !== null ? 'block' : 'none';
+  dom.btnBackToPour.style.display = inProgress ? 'flex' : 'none';
 }
-
-function ingPath(id) {
-  return `assets/ingredients2/${INGREDIENTS[id].file}`;
-}
-
-function renderActiveSlot() { /* active slot removed per Figma */ }
 
 /* ═══════════════════════════════════════════════════════════════
    POUR SCREEN — LIQUID MODE
@@ -703,9 +785,9 @@ function serveDrink() {
   const tipEl = showTipFloat(`$${result.tip % 1 === 0 ? result.tip : result.tip.toFixed(2)}`, customerIdx);
 
   hideSpeechArea();
-  dom.btnStartOrder.style.display = 'none';
   G.selectedIdx = null;
   resetCurrentDrink();
+  refreshBarControls();
   G.serving = (G.serving || 0) + 1;
 
   setTimeout(() => {
@@ -786,7 +868,8 @@ function initGame() {
   dom.counterDrinks.innerHTML = '';
   document.querySelectorAll('.bar-tip-float').forEach(e => e.remove());
   hideSpeechArea();
-  dom.btnStartOrder.style.display = 'none';
+  G.shelf = { order: [], selected: null, lastAdded: null };
+  refreshBarControls();
   for (let i = 0; i < 3; i++) renderCustomer(i);
 
   stopPourRAF();
@@ -819,7 +902,9 @@ dom.btnStartOrder.addEventListener('pointerdown', (e) => {
   G.drink.poured = [];
   G.drink.activeIngredient = null;
   G.drinkElapsed = 0;
-  dom.shelfDrinkName.textContent = customer.drink.name.toUpperCase();
+  G.shelf.selected = null;
+  G.shelf.lastAdded = null;
+  buildShelf();
   openShelf();
   setTimeout(() => openRecipe(customer.drink), 50);
 });
@@ -840,191 +925,46 @@ dom.recipeCard.addEventListener('pointerdown', e => e.stopPropagation());
 /* ═══════════════════════════════════════════════════════════════
    EVENT WIRING — SHELF SCREEN
 ═══════════════════════════════════════════════════════════════ */
-dom.btnPourOut.addEventListener('pointerdown', (e) => {
+// POUR OUT empties the glass; you stay on the shelf with the same order
+dom.btnPourOut.addEventListener('click', (e) => {
   e.stopPropagation();
-  resetCurrentDrink();
-  if (G.selectedIdx !== null && G.customers[G.selectedIdx]) {
-    G.customers[G.selectedIdx].state = 'skeleton';
-    renderCustomer(G.selectedIdx);
-  }
-  G.selectedIdx = null;
-  hideSpeechArea();
-  dom.btnStartOrder.style.display = 'none';
-  showScreen('bar');
-  maybeEndShift();
+  if (!G.timerRunning) return;
+  G.drink.poured = [];
+  G.drink.activeIngredient = null;
+  G.shelf.selected = null;
+  G.shelf.lastAdded = null;
+  renderShelf();
 });
 
 dom.shelfPause.addEventListener('pointerdown', (e) => { e.stopPropagation(); pauseToggle(); });
 
-dom.btnServe.addEventListener('pointerdown', (e) => {
+dom.btnPour.addEventListener('click', (e) => {
   e.stopPropagation();
-  serveDrink();
+  if (!G.shelf.selected || !G.timerRunning) return;
+  openPourLiquid(G.shelf.selected);
+  startPourRAF();
 });
 
-/* ═══════════════════════════════════════════════════════════════
-   DRAG-AND-DROP — shelf ingredients → center drop zone
-═══════════════════════════════════════════════════════════════ */
-const dragState = {
-  active: false,
-  id: null,
-  ghost: null,
-  sourceEl: null,
-};
-
-const dropZoneEl = document.getElementById('counter-center-group');
-
-function startIngredientDrag(e, id, imgSrc, sourceEl) {
-  if (G.screen !== 'shelf') return;
-  dragState.active = true;
-  dragState.id = id;
-  dragState.sourceEl = sourceEl || null;
-
-  const ghost = document.createElement('img');
-  ghost.src = imgSrc;
-  ghost.className = 'drag-ghost';
-  dom.game.appendChild(ghost);
-  dragState.ghost = ghost;
-
-  dom.shelfDrinkName.textContent = INGREDIENTS[id]?.name?.toUpperCase() || '';
-  dom.shelfDrinkName.classList.add('dragging');
-
-  dropZoneEl.classList.add('drag-over');
-  moveDragGhost(e);
-}
-
-function moveDragGhost(e) {
-  if (!dragState.ghost) return;
-  const rect = dom.game.getBoundingClientRect();
-  const x = (e.clientX - rect.left) / scale;
-  const y = (e.clientY - rect.top) / scale;
-  dragState.ghost.style.left = x + 'px';
-  dragState.ghost.style.top = y + 'px';
-}
-
-function endIngredientDrag(e) {
-  if (!dragState.active) return;
-
-  const rect = dom.game.getBoundingClientRect();
-  const x = (e.clientX - rect.left) / scale;
-  const y = (e.clientY - rect.top) / scale;
-
-  // Check if released over drop zone
-  const dzRect = dropZoneEl.getBoundingClientRect();
-  const dx1 = (dzRect.left   - rect.left) / scale;
-  const dx2 = (dzRect.right  - rect.left) / scale;
-  const dy1 = (dzRect.top    - rect.top)  / scale;
-  const dy2 = (dzRect.bottom - rect.top)  / scale;
-  const dropped = x >= dx1 - 20 && x <= dx2 + 20 && y >= dy1 - 20 && y <= dy2 + 20;
-
-  if (dragState.ghost) { dragState.ghost.remove(); dragState.ghost = null; }
-  dropZoneEl.classList.remove('drag-over');
-
-  dom.shelfDrinkName.textContent = G.drink.recipe ? G.drink.recipe.name.toUpperCase() : '';
-  dom.shelfDrinkName.classList.remove('dragging');
-
-  const id = dragState.id;
-  dragState.active = false;
-  dragState.id = null;
-
-  if (dropped && G.screen === 'shelf') {
-    const ing = INGREDIENTS[id];
-    if (!ing) return;
-
-    // Swap: center shows dragged item, source slot shows old center item
-    const centerBottle = document.querySelector('#counter-center-group .counter-bottle');
-    if (centerBottle && dragState.sourceEl && dragState.sourceEl !== centerBottle) {
-      const oldCenterId  = centerBottle.dataset.id;
-      const oldCenterSrc = `assets/ingredients2/${INGREDIENTS[oldCenterId]?.file || ''}`;
-
-      // Source slot now holds old center item
-      dragState.sourceEl.dataset.id = oldCenterId;
-      const srcImg = dragState.sourceEl.querySelector('img');
-      if (srcImg && INGREDIENTS[oldCenterId]) srcImg.src = oldCenterSrc;
-
-      // Center now holds dragged item
-      centerBottle.dataset.id = id;
-      const ctrImg = centerBottle.querySelector('img');
-      if (ctrImg) ctrImg.src = `assets/ingredients2/${ing.file}`;
-    }
-
-    if (ing.type === 'garnish') {
-      openPourGarnish(id);
-    } else {
-      openPourLiquid(id);
-      startPourRAF();
-    }
-  }
-}
-
-// Wire drag onto all shelf items and the counter soda-water bottle
-document.querySelectorAll('#top-shelf .shelf-item, #bottom-shelf .shelf-item, .counter-bottle').forEach(el => {
-  el.addEventListener('pointerdown', (e) => {
-    e.stopPropagation();
-    if (G.screen !== 'shelf') return;
-    el.setPointerCapture(e.pointerId);
-    startIngredientDrag(e, el.dataset.id, el.querySelector('img').src, el);
-  });
-  el.addEventListener('pointermove', (e) => {
-    if (!dragState.active) return;
-    moveDragGhost(e);
-  });
-  el.addEventListener('pointerup',     (e) => { endIngredientDrag(e); });
-  el.addEventListener('pointercancel', () => {
-    if (dragState.ghost) { dragState.ghost.remove(); dragState.ghost = null; }
-    dropZoneEl.classList.remove('drag-over');
-    dom.shelfDrinkName.textContent = G.drink.recipe ? G.drink.recipe.name.toUpperCase() : '';
-    dom.shelfDrinkName.classList.remove('dragging');
-    dragState.active = false; dragState.id = null;
-  });
+// ← BAR keeps the drink in progress so the player can check the bar
+dom.btnToBar.addEventListener('click', (e) => {
+  e.stopPropagation();
+  G.shelf.selected = null;
+  showScreen('bar');
+  refreshBarControls();
 });
 
-// Rim items (salt/sugar) — drag to drop zone to apply
-document.querySelectorAll('.counter-rim').forEach(el => {
-  el.addEventListener('pointerdown', (e) => {
-    e.stopPropagation();
-    if (G.screen !== 'shelf') return;
-    el.setPointerCapture(e.pointerId);
-    startIngredientDrag(e, el.dataset.id, el.querySelector('img').src, el);
-  });
-  el.addEventListener('pointermove', (e) => {
-    if (!dragState.active) return;
-    moveDragGhost(e);
-  });
-  el.addEventListener('pointerup', (e) => {
-    if (!dragState.active) return;
-    const rect = dom.game.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / scale;
-    const y = (e.clientY - rect.top) / scale;
-    const dzRect = dropZoneEl.getBoundingClientRect();
-    const dropped = x >= (dzRect.left - rect.left)/scale - 20
-                 && x <= (dzRect.right - rect.left)/scale + 20
-                 && y >= (dzRect.top - rect.top)/scale - 20
-                 && y <= (dzRect.bottom - rect.top)/scale + 20;
+dom.btnToGarnish.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (dom.btnToGarnish.disabled || !G.timerRunning) return;
+  G.shelf.selected = null;
+  openGarnishScreen();
+});
 
-    if (dragState.ghost) { dragState.ghost.remove(); dragState.ghost = null; }
-    dropZoneEl.classList.remove('drag-over');
-    const id = dragState.id;
-    dragState.active = false; dragState.id = null;
-
-    if (dropped && G.screen === 'shelf') {
-      const existing = G.drink.poured.find(p => p.id === id);
-      if (!existing) {
-        G.drink.poured.push({ id, count: 1 });
-        G.drink.activeIngredient = id;
-        showNotif(`${INGREDIENTS[id].name} added`);
-      } else {
-        showNotif(`${INGREDIENTS[id].name} already added`);
-      }
-      refreshShelfState();
-    }
-  });
-  el.addEventListener('pointercancel', () => {
-    if (dragState.ghost) { dragState.ghost.remove(); dragState.ghost = null; }
-    dropZoneEl.classList.remove('drag-over');
-    dom.shelfDrinkName.textContent = G.drink.recipe ? G.drink.recipe.name.toUpperCase() : '';
-    dom.shelfDrinkName.classList.remove('dragging');
-    dragState.active = false; dragState.id = null;
-  });
+// Bar: POUR → returns to the drink in progress
+dom.btnBackToPour.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (G.drink.forCustomer === null) return;
+  openShelf();
 });
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1089,9 +1029,9 @@ function commitLiquidPour() {
       G.drink.poured.push({ id, oz });
     }
     G.drink.activeIngredient = id;
-    showNotif(`${INGREDIENTS[id].name} added`);
+    G.shelf.lastAdded = id;   // "WHISKEY ADDED ✓"
   }
-
+  G.shelf.selected = null;
   openShelf();
 }
 
@@ -1215,3 +1155,6 @@ dom.pauseOverlay.addEventListener('pointerdown', (e) => {
 window.addEventListener('DOMContentLoaded', () => {
   initGame();
 });
+
+// TEMP (replaced by the garnish screen in the next step)
+function openGarnishScreen() { serveDrink(); }

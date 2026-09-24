@@ -362,195 +362,183 @@ html, body {
 }
 
 /* ═══════════════════════════════════════════
-   SCREEN 3: SHELF
+   SCREEN 3: SHELF — Figma 453:396 (idle), 454:452 (bottle selected),
+   454:937 (ingredient added)
 ═══════════════════════════════════════════ */
-#screen-shelf { background: #000; }
+#screen-shelf { background: #040318; }
 
-.shelf-hud {
+.shelf-pour-out {
   position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 46px;
+  left: 35px;
+  top: 19px;
+  height: 24px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 14px;
-  z-index: 10;
-}
-#shelf-drink-name {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  font-family: 'BarFont', sans-serif;
-  font-size: 20px;
-  color: rgba(255,255,255,0.6);
-  letter-spacing: 0.08em;
-  pointer-events: none;
+  gap: 4px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: 'BarFontBold', sans-serif;
+  font-size: 18px;
+  line-height: normal;
+  color: #8e8e8e;
   white-space: nowrap;
-  transition: color 0.15s ease;
 }
-#shelf-drink-name.dragging {
-  color: rgba(255,255,255,1);
-}
+.shelf-pour-out img { width: 24px; height: 24px; }
 
-#shelf-timer, #pour-timer {
+#shelf-title {
+  position: absolute;
+  left: 422px;
+  top: 33.5px;
+  transform: translate(-50%, -50%);
+  font-family: 'BarFont', sans-serif;
+  font-size: 24px;
+  line-height: normal;
+  color: #929292;          /* drink name */
+  white-space: nowrap;
+  pointer-events: none;
+}
+#shelf-title.ingredient { color: #fff; }  /* selected bottle's name */
+
+.drink-timer {
+  position: absolute;
+  left: 744px;
+  top: 33px;
+  transform: translate(-50%, -50%);
   font-family: 'BarFont', sans-serif;
   font-size: 28px;
-  color: #fff;
-}
-
-/* Shelf lines — 30px margin each side */
-.shelf-line {
-  position: absolute;
-  left: 30px; right: 30px;
-  height: 1px;
-  background: rgba(255,255,255,0.35);
-  z-index: 2;
-}
-.top-shelf-line    { top: 150px; }
-.bottom-shelf-line { top: 272px; }
-.counter-line      { top: 372px; left: 0; right: 0; }
-
-/* Shelf rows — items start 21px inside shelf line edges */
-.shelf-row {
-  position: absolute;
-  left: 51px; right: 51px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-around;
-}
-#top-shelf    { top: 46px;  height: 104px; }
-#bottom-shelf { top: 152px; height: 120px; }
-
-.shelf-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  cursor: pointer;
-  border-radius: 6px;
-  transition: box-shadow 0.2s;
-}
-.shelf-item.added { }
-.shelf-item img   { pointer-events: none; }
-
-/* ─── INGREDIENT SIZES (consistent wherever they appear) ─────── */
-/* Spirits — tallest */
-[data-id="vodka"] img,
-[data-id="tequila"] img,
-[data-id="whiskey"] img,
-[data-id="white-rum"] img,
-[data-id="gin"] img             { height: 88px; width: auto; max-width: 80px; }
-
-/* Cans & water bottles */
-[data-id="cola"] img,
-[data-id="tonic-water"] img,
-[data-id="soda-water"] img      { height: 68px; width: auto; max-width: 80px; }
-
-/* Juice bottles */
-[data-id="cranberry"] img,
-[data-id="oj"] img              { height: 68px; width: auto; max-width: 80px; }
-
-/* Garnishes */
-[data-id="orange"] img,
-[data-id="mint"] img,
-[data-id="lemon"] img,
-[data-id="lime"] img,
-[data-id="cherry"] img          { height: 38px; width: auto; max-width: 60px; }
-
-/* Rim — salt & sugar */
-[data-id="salt"] img,
-[data-id="sugar"] img           { height: 24px; width: auto; }
-
-/* ─── DRAG GHOST ─────────────────────────────────────────────── */
-.drag-ghost {
-  position: absolute;
-  height: 80px;
-  width: auto;
-  max-width: 70px;
-  object-fit: contain;
+  line-height: normal;
+  color: #8e8e8e;
   pointer-events: none;
-  z-index: 300;
-  opacity: 0.88;
-  transform: translate(-50%, -50%);
 }
-
-/* Drop zone highlight when dragging */
-#counter-center-group.drag-over {
-  background: rgba(0,226,106,0.12);
-  border-radius: 14px;
-  outline: 2px dashed rgba(0,226,106,0.55);
-  padding: 8px 14px;
-}
-
-/* Counter area — two groups */
-#shelf-counter {
+.dim-pause {
   position: absolute;
-  top: 312px; bottom: 0;
-  left: 0; right: 0;
-}
-
-/* Left group: salt, sugar, ice — anchored to shelf left edge */
-#counter-left-group {
-  position: absolute;
-  left: 30px;
-  bottom: 12px;
-  display: flex;
-  align-items: flex-end;
-  gap: 18px;
-}
-
-/* Center group: soda water + glass — horizontally centered */
-#counter-center-group {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: 12px;
-  display: flex;
-  align-items: flex-end;
-  gap: 20px;
-}
-.counter-rim {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  cursor: pointer;
-  border-radius: 6px;
-  transition: box-shadow 0.2s;
+  left: 782px;
+  top: 14px;
+  padding: 10px;
   gap: 3px;
 }
-.counter-rim.added { }
-.counter-rim img {
-  height: 24px; width: auto;
+.dim-pause .pause-bar {
+  width: 4px;
+  height: 19px;
+  background: #8e8e8e;
+  border-radius: 1px;
 }
-.counter-rim span { display: none; }
-.counter-static { display: flex; align-items: flex-end; }
-#ice-display img      { height: 50px; width: auto; }
-#shelf-glass-icon img { height: 68px; width: auto; }
-.counter-bottle {
+
+/* Bottle row: starts at x=38, bottles bottom-aligned at y=282, 36px apart.
+   Extra 6px on top so selection outlines aren't clipped. */
+#shelf-row {
+  position: absolute;
+  left: 0;
+  top: 78px;
+  width: 844px;
+  height: 204px;
+  padding: 6px 38px 0 38px;
   display: flex;
   align-items: flex-end;
-  cursor: grab;
-  border-radius: 6px;
-  transition: box-shadow 0.2s;
+  gap: 36px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
 }
-.counter-bottle.added { }
-.counter-bottle img   { height: 68px; width: auto; pointer-events: none; }
+#shelf-row::-webkit-scrollbar { display: none; }
+.shelf-bottle {
+  position: relative;
+  flex: none;
+  cursor: pointer;
+}
+.shelf-bottle > img.bottle { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.shelf-bottle > img.outline { position: absolute; pointer-events: none; display: none; }
+.shelf-bottle.selected > img.outline { display: block; }
+/* Bottles without a hand-drawn outline get a traced one in the same color */
+.shelf-bottle.selected.traced > img.bottle {
+  filter:
+    drop-shadow(1.5px 0 0 #040318) drop-shadow(-1.5px 0 0 #040318)
+    drop-shadow(0 1.5px 0 #040318) drop-shadow(0 -1.5px 0 #040318)
+    drop-shadow(1px 0 0 #9e9ad1) drop-shadow(-1px 0 0 #9e9ad1)
+    drop-shadow(0 1px 0 #9e9ad1) drop-shadow(0 -1px 0 #9e9ad1);
+}
 
-/* Serve button */
-#btn-serve {
+.shelf-line {
   position: absolute;
-  right: 20px;
-  bottom: 22px;
-  background: #00e26a;
-  color: #000;
+  left: 0;
+  top: 283.25px;
+  width: 845.5px;
+  height: 1.5px;
+  pointer-events: none;
+}
+
+/* Outlined arrow buttons (← BAR, GARNISH →, POUR →) — 117x40, #45426a, radius 12 */
+.arrow-btn {
+  position: absolute;
+  width: 117px;
+  height: 40px;
+  border: 1.5px solid #45426a;
+  border-radius: 12px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0;
+  cursor: pointer;
   font-family: 'BarFontBold', sans-serif;
-  font-size: 26px;
+  font-size: 18px;
+  line-height: normal;
+  color: #9d9cb6;
+  white-space: nowrap;
+  z-index: 10;
+}
+.arrow-btn img { width: 18px; height: 16px; }
+.arrow-btn img.flip { transform: scaleX(-1); }
+.arrow-btn:disabled { opacity: 0.3; cursor: default; }
+#btn-to-bar     { left: 39px;  top: 324px; }
+#btn-to-garnish { left: 686px; top: 324px; }
+#btn-back-to-pour { left: 694px; top: 322px; }
+
+/* POUR — 120x38 at (362,323), #918fb7, radius 12 */
+#btn-pour {
+  position: absolute;
+  left: 362px;
+  top: 323px;
+  width: 120px;
+  height: 38px;
+  background: #918fb7;
   border: none;
   border-radius: 12px;
-  padding: 8px 22px;
+  padding: 0;
   cursor: pointer;
-  transition: transform 0.1s;
+  font-family: 'BarFontBold', sans-serif;
+  font-size: 26px;
+  line-height: normal;
+  color: #040318;
 }
-#btn-serve:active { transform: scale(0.96); }
+#btn-pour:active { transform: scale(0.96); }
+
+/* "WHISKEY ADDED ✓" — at (331,334), 201 wide */
+#shelf-added {
+  position: absolute;
+  left: 331px;
+  top: 334px;
+  width: 201px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  pointer-events: none;
+}
+#shelf-added-text {
+  font-family: 'BarFontBold', sans-serif;
+  font-size: 24px;
+  line-height: normal;
+  color: #cccaf3;
+  white-space: nowrap;
+}
+#shelf-added img { width: 20px; height: 20px; flex: none; }
 
 /* ═══════════════════════════════════════════
    SCREEN 4: POUR
