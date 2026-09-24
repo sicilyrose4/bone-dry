@@ -134,7 +134,7 @@ const G = {
   timerRunning: false,           // false while paused
   tickInterval: null,
   nextArrivalIn: 1,              // seconds until the next customer walks up
-  dial: 0.15,                    // hidden difficulty: 0 = calm, 1 = rush
+  dial: 0.35,                    // hidden difficulty: 0 = calm, 1 = rush (reset from PACE.startDial)
   customers: [],    // [{type, drink, state:'skeleton'|'selected'|'served', slot, el}]
   selectedIdx: null,
   lastDrinkId: null,
@@ -330,29 +330,35 @@ function showTipFloat(msg, slotIdx) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   DIFFICULTY DIAL
-   Calm open → rush builds as the player keeps up → eases off near the end.
+   DIFFICULTY DIAL — fast-paced: the bar fills quickly and keeps
+   refilling; the dial climbs with every drink, eases off only at the very end.
 ═══════════════════════════════════════════════════════════════ */
+const PACE = {
+  startDial:   0.35,  // difficulty at the start of a shift (0 calm … 1 rush)
+  calmGap:     4,     // seconds between customers at dial 0
+  rushGap:     1.5,   // seconds between customers at dial 1
+  refillGap:   1,     // when the bar is full, next customer steps up this soon after a spot opens
+  taperSecs:   30,    // ease off over the last N seconds
+  lastCallSecs:15,    // no new customers in the last N seconds
+};
 const lerp = (a, b, t) => a + (b - a) * Math.max(0, Math.min(1, t));
 
 function effectiveDial() {
-  // Taper over the last minute so the shift ends on a win
-  const taper = Math.min(1, G.shiftRemaining / 60);
+  const taper = Math.min(1, G.shiftRemaining / PACE.taperSecs);
   return G.dial * taper;
 }
 
 function scheduleNextArrival() {
-  const d = effectiveDial();
-  const base = lerp(16, 4, d);                     // seconds between arrivals
-  G.nextArrivalIn = base * (0.8 + Math.random() * 0.4);
+  const gap = lerp(PACE.calmGap, PACE.rushGap, effectiveDial());
+  G.nextArrivalIn = gap * (0.8 + Math.random() * 0.4);
 }
 
 function updateDial(score, drinkTime, peeked) {
-  // score 0–100, drinkTime in seconds
+  // score 0–100, drinkTime in seconds — every drink pushes the pace up; good ones push harder
   const accuracy = score / 100;
   const speed = drinkTime < 30 ? 1 : drinkTime < 60 ? 0.6 : drinkTime < 120 ? 0.3 : 0;
   const perf = 0.6 * accuracy + 0.25 * speed + 0.15 * (peeked ? 0 : 1);
-  G.dial = Math.max(0.1, Math.min(1, G.dial + 0.05 + (perf - 0.5) * 0.3));
+  G.dial = Math.max(0.2, Math.min(1, G.dial + 0.08 + (perf - 0.5) * 0.3));
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -372,11 +378,12 @@ function pickDrink() {
 }
 
 function trySpawnCustomer() {
-  scheduleNextArrival();
-  // No new arrivals in the last 20s — they couldn't be served in time
-  if (G.shiftRemaining < 20) return;
+  // Last call: nobody new near the end — they couldn't be served in time
+  if (G.shiftRemaining < PACE.lastCallSecs) { scheduleNextArrival(); return; }
   const empty = [0, 1, 2].filter(i => !G.customers[i]);
-  if (!empty.length) return;
+  // Bar full: check again shortly so a freed spot refills right away
+  if (!empty.length) { G.nextArrivalIn = PACE.refillGap; return; }
+  scheduleNextArrival();
   const present = G.customers.filter(Boolean).map(c => c.type);
   const types = CUSTOMER_IDS.filter(t => !present.includes(t));
   const slot = empty[Math.floor(Math.random() * empty.length)];
@@ -917,7 +924,7 @@ function initGame() {
   G.tips = 0;
   G.shiftRemaining = SHIFT_SECONDS;
   G.shiftOver = false;
-  G.dial = 0.15;
+  G.dial = PACE.startDial;
   G.nextArrivalIn = 1;
   G.serving = 0;
   G.timerRunning = false;
