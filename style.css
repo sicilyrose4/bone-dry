@@ -541,237 +541,132 @@ html, body {
 #shelf-added img { width: 20px; height: 20px; flex: none; }
 
 /* ═══════════════════════════════════════════
-   SCREEN 4: POUR
+   SCREEN 4: POUR — Figma 454:551 / 454:524 / 454:486 (whiskey), 454:707–802 (cola)
 ═══════════════════════════════════════════ */
-#screen-pour {
-  background: #000;
-}
+#screen-pour { background: #040318; }
 
-.pour-hud {
+.pour-back {
   position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 50px;
+  left: 19px;
+  top: 25px;
+  height: 24px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 14px;
+  gap: 4px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: 'BarFontBold', sans-serif;
+  font-size: 18px;
+  line-height: normal;
+  color: #8e8e8e;
   z-index: 10;
 }
-
-/* Liquid mode */
-#pour-liquid-mode {
+.pour-back img { width: 24px; height: 24px; }
+.pour-timer { left: 748px; top: 33.5px; color: #fff; }
+.light-pause {
   position: absolute;
-  inset: 0;
+  left: 790px;
+  top: 12px;
+  padding: 10px;
+  gap: 3px;
+  z-index: 10;
 }
-
-/* Bottle — paired with glass, centered together */
-.pour-bottle {
-  position: absolute;
-  left: 185px;
-  top: 45px;
-  height: 270px;
-  width: auto;
-  max-height: 270px;
-  object-fit: contain;
-  transform-origin: bottom center;
-  transition: transform 0.3s ease;
-  z-index: 5;
-  pointer-events: none;
-  image-rendering: auto;
+.light-pause .pause-bar {
+  width: 4px;
+  height: 19px;
+  background: #d9d9d9;
+  border-radius: 1px;
 }
-.pour-bottle.pouring {
-  /* rotate around bottom center, then translate up so cap clears the glass rim */
-  transform: translate(0, -187px) rotate(72deg);
-}
-
-/* Pour glass — paired with bottle, both centered ~422px */
-#pour-glass-container {
-  position: absolute;
-  width: 210px;
-  height: 260px;
-  left: 390px;
-  top: 55px;
-  z-index: 4;
-}
-#pour-glass-fill {
-  position: absolute;
-  bottom: 14px;
-  left: 25%;
-  width: 55%;
-  height: 0;
-  background: #c8e8ff;
-  z-index: 3;
-  border-radius: 0 0 6px 6px;
-  transition: background 0.3s;
-  /* trapezoid: wide at top, narrow at bottom to match glass taper */
-  clip-path: polygon(22% 100%, 84% 100%, 100% 0%, 0% 0%);
-}
-#pour-glass-outline {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: fill;
-  z-index: 5;
-  pointer-events: none;
-}
-#pour-glass-container.overpour #pour-glass-fill {
-  animation: redFlash 0.3s infinite;
-}
-@keyframes redFlash {
-  0%,100% { background-color: #c8e8ff; }
-  50%      { background-color: #ff4444; }
-}
-
-/* Measurement lines — inside glass container */
-#measure-lines {
-  position: absolute;
-  inset: 0;
-  z-index: 6;
-  pointer-events: none;
-}
-.measure-tick {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  left: 18%;
-  right: 5%;
-}
-/* tick positions: oz/8 * 180 + 14px from bottom */
-#tick-05 { bottom: 25px; }
-#tick-1  { bottom: 37px; }
-#tick-25 { bottom: 70px; }
-#tick-4  { bottom: 104px; }
-#tick-6  { bottom: 149px; }
-#tick-8  { bottom: 176px; }
-
-.tick-line {
-  flex-shrink: 0;
-  width: 28px;
-  height: 1px;
-  background: rgba(255,255,255,0.6);
-}
-.tick-label {
-  font-family: 'BarFontBold', sans-serif;
-  font-size: 11px;
-  color: rgba(255,255,255,0.75);
-  white-space: nowrap;
-}
-
-/* Pour instruction — above the glass */
 #pour-instruction {
   position: absolute;
-  left: 430px;
-  right: 14px;
-  top: 40px;
-  text-align: center;
-  font-family: 'BarFont', sans-serif;
-  font-size: 15px;
-  color: #8e8e8e;
-  pointer-events: none;
-  z-index: 6;
-}
-
-/* Garnish mode */
-#pour-garnish-mode {
-  position: absolute;
-  inset: 0;
-}
-#garnish-instruction {
-  position: absolute;
-  left: 0; right: 0;
-  top: 58px;
-  text-align: center;
-  font-family: 'BarFont', sans-serif;
-  font-size: 18px;
-  color: #8e8e8e;
-  pointer-events: none;
-  z-index: 6;
-}
-.garnish-drag-item {
-  position: absolute;
-  width: 80px;
-  height: 80px;
-  object-fit: contain;
-  cursor: grab;
-  z-index: 8;
-  touch-action: none;
-}
-.garnish-drag-item:active { cursor: grabbing; }
-
-#garnish-glass-container {
-  position: absolute;
-  width: 130px;
-  height: 200px;
-  left: calc(610px - 65px);
-  top: calc(195px - 100px);
-  z-index: 4;
-}
-#garnish-glass-fill {
-  position: absolute;
-  bottom: 10px;
-  left: 10%;
-  width: 80%;
-  height: 0;
-  background: #e8e8e8;
-  z-index: 3;
-  border-radius: 0 0 4px 4px;
-}
-#garnish-glass-outline {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: fill;
-  z-index: 5;
-  pointer-events: none;
-}
-#garnish-drop-zone {
-  position: absolute;
-  top: -20px;
-  left: -10px;
-  width: 150px;
-  height: 50px;
-  z-index: 6;
-  border-radius: 50%;
-  pointer-events: none;
-  /* subtle highlight */
-  background: rgba(0,226,106,0.08);
-  border: 1px dashed rgba(0,226,106,0.3);
-}
-#garnish-placed-layer {
-  position: absolute;
-  inset: 0;
-  z-index: 9;
-  pointer-events: none;
-}
-.placed-garnish {
-  position: absolute;
-  width: 36px;
-  height: 36px;
-  object-fit: contain;
+  left: 489.5px;
+  top: 77.5px;
   transform: translate(-50%, -50%);
+  font-family: 'BarFont', sans-serif;
+  font-size: 20px;
+  line-height: normal;
+  color: #9d9cb6;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
-/* Done button */
+/* Glass: 192x256 at (393,124) */
+#pour-glass {
+  position: absolute;
+  left: 393px;
+  top: 124px;
+  width: 192px;
+  height: 256px;
+  pointer-events: none;
+}
+/* Liquid: bands clipped to the glass interior (traced from the Figma liquid shapes).
+   0 oz sits at y=366, 28px per ounce, 8 oz at y=142. */
+#pour-liquid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  clip-path: polygon(406px 132px, 414px 192px, 426px 276px, 437.5px 331.5px, 441.5px 352px,
+                     447.5px 365.5px, 470px 369px, 510px 368.5px, 538px 366.5px, 546px 358.5px,
+                     551px 331.5px, 554px 276px, 566.5px 192px, 572.5px 132px);
+}
+.liquid-band { position: absolute; left: 0; width: 844px; }
+
+/* Measuring ticks: Figma "Frame 27" (drawn in portrait, so turned -90° here) */
+#pour-ticks {
+  position: absolute;
+  left: 327px;
+  top: 215px;
+  width: 211px;
+  height: 64px;
+  transform: rotate(-90deg);
+  pointer-events: none;
+}
+.tick-label {
+  position: absolute;
+  left: 469px;
+  height: 14px;
+  font-family: 'BarFontBold', sans-serif;
+  font-size: 16px;
+  line-height: 14px;
+  color: #fff;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Bottle — sized/placed per ingredient in game.js; tilts while pouring */
+.pour-bottle {
+  position: absolute;
+  object-fit: cover;
+  pointer-events: none;
+  transform-origin: center;
+  transition: transform 0.2s ease, left 0.2s ease, top 0.2s ease;
+}
+
 #btn-pour-done {
   position: absolute;
-  right: 24px;
-  bottom: 28px;
-  background: #00e26a;
-  color: #000;
-  font-family: 'BarFontBold', sans-serif;
-  font-size: 28px;
+  left: 690px;
+  top: 327px;
+  width: 121px;
+  height: 38px;
+  background: #918fb7;
   border: none;
   border-radius: 12px;
-  width: 110px;
-  height: 38px;
+  padding: 0;
   cursor: pointer;
+  font-family: 'BarFontBold', sans-serif;
+  font-size: 26px;
+  line-height: normal;
+  color: #040318;
   z-index: 10;
-  transition: transform 0.1s;
 }
 #btn-pour-done:active { transform: scale(0.96); }
+
+/* While holding: BACK, DONE and the instruction disappear (Figma 454:524) */
+#screen-pour.is-pouring #btn-back-to-shelf,
+#screen-pour.is-pouring #btn-pour-done,
+#screen-pour.is-pouring #pour-instruction { visibility: hidden; }
 
 /* ═══════════════════════════════════════════
    SCREEN 5: END

@@ -95,79 +95,30 @@
            SCREEN 4: POUR SCREEN
       ═══════════════════════════════════════════ -->
       <div id="screen-pour" class="screen">
-        <!-- HUD -->
-        <div class="pour-hud">
-          <button id="btn-back-to-shelf" class="hud-left-btn">
-            <img src="assets/icon-back.svg" alt="" width="24" height="24" />
-            <span>BACK</span>
-          </button>
-          <div class="hud-right">
-            <span id="pour-timer">05:00</span>
-            <button id="pour-pause" class="pause-btn" aria-label="Pause">
-              <div class="pause-bar"></div>
-              <div class="pause-bar"></div>
-            </button>
-          </div>
-        </div>
+        <!-- Figma 454:551 (idle), 454:524 (pouring), 454:486 (released) -->
+        <button id="btn-back-to-shelf" class="pour-back">
+          <img src="assets/ui/icon-back.svg" alt="" width="24" height="24" />
+          <span>BACK</span>
+        </button>
+        <span id="pour-timer" class="drink-timer pour-timer">00:00</span>
+        <button id="pour-pause" class="pause-btn light-pause" aria-label="Pause">
+          <div class="pause-bar"></div>
+          <div class="pause-bar"></div>
+        </button>
+        <div id="pour-instruction">HOLD ANYWHERE TO POUR</div>
 
-        <!-- Liquid mode -->
-        <div id="pour-liquid-mode">
-          <img id="pour-bottle-img" src="" alt="" class="pour-bottle" />
+        <img id="pour-glass" alt="" />
+        <!-- One band per pour, clipped to the inside of the glass -->
+        <div id="pour-liquid"></div>
+        <img id="pour-ticks" src="assets/ui/pour-ticks.svg" alt="" width="211" height="64" />
+        <span class="tick-label" data-oz="8">8 OZ</span>
+        <span class="tick-label" data-oz="6">6 OZ</span>
+        <span class="tick-label" data-oz="4">4 OZ</span>
+        <span class="tick-label" data-oz="2.5">2.5 OZ</span>
+        <span class="tick-label" data-oz="1">1 OZ</span>
+        <span class="tick-label" data-oz="0.5">0.5 OZ</span>
+        <img id="pour-bottle-img" src="" alt="" class="pour-bottle" />
 
-          <!-- Glass container -->
-          <div id="pour-glass-container">
-            <div id="pour-glass-fill"></div>
-            <!-- Measurement lines inside glass -->
-            <div id="measure-lines">
-              <div class="measure-tick" id="tick-8">
-                <div class="tick-line"></div>
-                <span class="tick-label">8 OZ</span>
-              </div>
-              <div class="measure-tick" id="tick-6">
-                <div class="tick-line"></div>
-                <span class="tick-label">6 OZ</span>
-              </div>
-              <div class="measure-tick" id="tick-4">
-                <div class="tick-line"></div>
-                <span class="tick-label">4 OZ</span>
-              </div>
-              <div class="measure-tick" id="tick-25">
-                <div class="tick-line"></div>
-                <span class="tick-label">2.5 OZ</span>
-              </div>
-              <div class="measure-tick" id="tick-1">
-                <div class="tick-line"></div>
-                <span class="tick-label">1 OZ</span>
-              </div>
-              <div class="measure-tick" id="tick-05">
-                <div class="tick-line"></div>
-                <span class="tick-label">0.5 OZ</span>
-              </div>
-            </div>
-            <img id="pour-glass-outline" src="assets/crop-glass-pour.png" alt="" />
-          </div>
-
-          <!-- Pour instruction -->
-          <div id="pour-instruction">HOLD ANYWHERE TO POUR</div>
-        </div>
-
-        <!-- Garnish mode -->
-        <div id="pour-garnish-mode" style="display:none;">
-          <div id="garnish-instruction">DRAG TO PLACE</div>
-          <img id="garnish-draggable" src="" alt="" class="garnish-drag-item" />
-
-          <!-- Placed garnishes layer -->
-          <div id="garnish-placed-layer"></div>
-
-          <!-- Glass -->
-          <div id="garnish-glass-container">
-            <div id="garnish-glass-fill"></div>
-            <img id="garnish-glass-outline" src="assets/crop-glass-pour.png" alt="" />
-            <div id="garnish-drop-zone"></div>
-          </div>
-        </div>
-
-        <!-- Done button -->
         <button id="btn-pour-done">DONE</button>
       </div>
 

@@ -11,13 +11,13 @@ const INGREDIENTS = {
   vodka:          { name:'Vodka',         type:'liquid',  file:'vodka.png',        color:'#6ce4f0', shelf:[53.1, 134.4] },
   gin:            { name:'Gin',           type:'liquid',  file:'gin.png',          color:'#843cfc', shelf:[66.91, 163.664] },
   tequila:        { name:'Tequila',       type:'liquid',  file:'tequila.png',      color:'#fc0cc0', shelf:[82.313, 128.396] },
-  whiskey:        { name:'Whiskey',       type:'liquid',  file:'whiskey.png',      color:'#fc783c', shelf:[62.036, 145.615],
+  whiskey:        { name:'Whiskey',       type:'liquid',  file:'whiskey.png',      color:'#ff8147', shelf:[62.036, 145.615],
                     outline:{ src:'assets/ui/select-outline-whiskey.svg', x:-3.5, y:-3.4, w:70.05, h:151.51 } },
   'white-rum':    { name:'White Rum',     type:'liquid',  file:'white-rum.png',    color:'#fc00c0', shelf:[56.916, 146.818] },
   'triple-sec':   { name:'Triple Sec',    type:'liquid',  file:'triple-sec.png',   color:'#fc7830', shelf:[60.414, 198] },
   'soda-water':   { name:'Soda Water',    type:'liquid',  file:'soda-water.png',   color:'#fcfcfc', shelf:[52.7, 133.137] },
   'tonic-water':  { name:'Tonic Water',   type:'liquid',  file:'tonic-water.png',  color:'#6ce4f0', shelf:[46.535, 103.772] },
-  cola:           { name:'Cola',          type:'liquid',  file:'cola.png',         color:'#fc0048', shelf:[47.772, 79.512],
+  cola:           { name:'Cola',          type:'liquid',  file:'cola.png',         color:'#f90049', shelf:[47.772, 79.512],
                     outline:{ src:'assets/ui/select-outline-cola.svg', x:-2.7, y:-3.0, w:53.12, h:86.44 } },
   'ginger-beer':  { name:'Ginger Beer',   type:'liquid',  file:'ginger-beer.png',  color:'#fce4b4', shelf:[46.928, 163.785] },
   cranberry:      { name:'Cranberry Juice', type:'liquid', file:'cranberry.png',   color:'#f00048', shelf:[64.653, 126.043] },
@@ -112,7 +112,8 @@ const G = {
   drink: {
     forCustomer: null,   // index in G.customers
     recipe: null,
-    poured: [],          // [{id, oz?, count?}]
+    poured: [],          // totals per ingredient [{id, oz?, count?}] — used for scoring
+    layers: [],          // every pour in order [{id, oz}] — drawn as bands in the glass
     activeIngredient: null,
   },
   pour: {
@@ -175,20 +176,9 @@ const dom = {
   btnBack:          $('btn-back-to-shelf'),
   btnDone:          $('btn-pour-done'),
 
-  liquidMode:       $('pour-liquid-mode'),
-  garnishMode:      $('pour-garnish-mode'),
   pourBottle:       $('pour-bottle-img'),
-  pourGlassCont:    $('pour-glass-container'),
-  pourGlassFill:    $('pour-glass-fill'),
-  pourInstruction:  $('pour-instruction'),
-  measureLines:     $('measure-lines'),
-
-  garnishDraggable: $('garnish-draggable'),
-  garnishPlacedLayer: $('garnish-placed-layer'),
-  garnishGlassCont: $('garnish-glass-container'),
-  garnishGlassFill: $('garnish-glass-fill'),
-  garnishDropZone:  $('garnish-drop-zone'),
-  garnishInstr:     $('garnish-instruction'),
+  pourGlass:        $('pour-glass'),
+  pourLiquid:       $('pour-liquid'),
 
   endTips:          $('end-tips'),
   endServed:        $('end-served'),
@@ -572,62 +562,82 @@ function refreshBarControls() {
 
 /* ═══════════════════════════════════════════════════════════════
    POUR SCREEN — LIQUID MODE
+   Hold anywhere to pour at 1 oz/sec; release to stop; DONE commits.
+   The glass reads the TOTAL level — every pour stacks as its own band.
 ═══════════════════════════════════════════════════════════════ */
+const MAX_OZ = 8;
+const OZ_ZERO_Y = 366;   // glass bottom (0 oz) — from Figma tick marks
+const PX_PER_OZ = 28;    // ticks are 14px apart, one per 0.5 oz
+const ozToY = oz => OZ_ZERO_Y - oz * PX_PER_OZ;
+
+// Bottle poses from Figma: idle box + tilted center/rotation.
+// Other bottles: idle = shelf size x3.08 standing at y=380 (like whiskey/cola),
+// tilted so the mouth lands where whiskey's/cola's do (~396, 62).
+const POUR_POSE = {
+  whiskey: { idle:{ x:87, y:-68, w:191, h:448 }, tilt:{ cx:182.5, cy:156,  rot:68.63 } },
+  cola:    { idle:{ x:95, y:87,  w:176, h:293 }, tilt:{ cx:258.6, cy:85.3, rot:75.8 } },
+};
+function pourPose(id) {
+  if (POUR_POSE[id]) return POUR_POSE[id];
+  const [sw, sh] = INGREDIENTS[id].shelf;
+  const w = sw * 3.079, h = sh * 3.079, rot = 72, r = rot * Math.PI / 180;
+  return {
+    idle: { x: 182.75 - w / 2, y: 380 - h, w, h },
+    tilt: { cx: 396 - (h / 2) * Math.sin(r), cy: 62 + (h / 2) * Math.cos(r), rot },
+  };
+}
+
+function setBottleTilt(tilted) {
+  const pose = pourPose(G.pour.ingredientId);
+  const { idle, tilt } = pose;
+  if (!tilted) { dom.pourBottle.style.transform = 'none'; return; }
+  const dx = tilt.cx - (idle.x + idle.w / 2);
+  const dy = tilt.cy - (idle.y + idle.h / 2);
+  dom.pourBottle.style.transform = `translate(${dx}px, ${dy}px) rotate(${tilt.rot}deg)`;
+}
+
+function hexToRgba(hex, a) {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${n >> 16 & 255}, ${n >> 8 & 255}, ${n & 255}, ${a})`;
+}
+
+// Stacked bands: every committed pour, plus the one in progress
+function renderPourLiquid() {
+  const layers = [...G.drink.layers];
+  if (G.pour.ozPoured > 0) layers.push({ id: G.pour.ingredientId, oz: G.pour.ozPoured });
+  dom.pourLiquid.innerHTML = '';
+  let total = 0;
+  layers.forEach((l, i) => {
+    const band = document.createElement('div');
+    band.className = 'liquid-band';
+    const bottom = i === 0 ? OZ_ZERO_Y + 6 : ozToY(total);   // first band fills the rounded bottom
+    total = Math.min(MAX_OZ, total + l.oz);
+    const top = ozToY(total);
+    band.style.top = top + 'px';
+    band.style.height = Math.max(0, bottom - top) + 'px';
+    band.style.background = hexToRgba(INGREDIENTS[l.id].color, 0.3);
+    dom.pourLiquid.appendChild(band);
+  });
+}
+
+function totalPouredOz() {
+  return G.drink.layers.reduce((s, l) => s + l.oz, 0);
+}
+
 function openPourLiquid(ingredientId) {
   G.pour.ingredientId = ingredientId;
   G.pour.mode = 'liquid';
   G.pour.ozPoured = 0;
   G.pour.pouring = false;
   G.pour.lastTick = 0;
+  G.pour.baselineOz = totalPouredOz();
 
-  // Carry over existing fill from previous pours this drink
-  const alreadyOz = G.drink.poured.reduce((s, p) => s + (p.oz || 0), 0);
-  G.pour.baselineOz = alreadyOz;
-
-  const ing = INGREDIENTS[ingredientId];
+  const { idle } = pourPose(ingredientId);
   dom.pourBottle.src = ingPath(ingredientId);
-  dom.pourBottle.classList.remove('pouring');
-  const existingFillH = Math.min((alreadyOz / 8) * 180, 180);
-  dom.pourGlassFill.style.height = existingFillH + 'px';
-  dom.pourGlassFill.style.background = ing.color || '#c8e8ff';
-  dom.pourGlassCont.classList.remove('overpour');
-
-  dom.pourInstruction.style.display = 'block';
-  dom.pourInstruction.textContent = 'HOLD ANYWHERE TO POUR';
-
-  dom.liquidMode.style.display = 'block';
-  dom.garnishMode.style.display = 'none';
-
-  showScreen('pour');
-}
-
-function openPourGarnish(ingredientId) {
-  G.pour.ingredientId = ingredientId;
-  G.pour.mode = 'garnish';
-  G.pour.garnishPlaced = [];
-  G.pour.dragging = false;
-
-  const ing = INGREDIENTS[ingredientId];
-  dom.garnishDraggable.src = ingPath(ingredientId);
-  dom.garnishDraggable.style.left = '140px';
-  dom.garnishDraggable.style.top  = '155px';
-  dom.garnishDraggable.style.transform = 'none';
-  dom.garnishDraggable.style.opacity = '1';
-
-  // Sync glass fill from any previously poured liquids
-  let totalOz = 0;
-  G.drink.poured.forEach(p => { if (p.oz) totalOz += p.oz; });
-  const fillH = Math.min((totalOz / 8) * 180, 180);
-  dom.garnishGlassFill.style.height = fillH + 'px';
-  // Use last liquid color or default
-  const lastLiquid = [...G.drink.poured].reverse().find(p => p.oz);
-  if (lastLiquid) dom.garnishGlassFill.style.background = INGREDIENTS[lastLiquid.id]?.color || '#c8e8ff';
-
-  dom.garnishPlacedLayer.innerHTML = '';
-
-  dom.liquidMode.style.display = 'none';
-  dom.garnishMode.style.display = 'block';
-
+  Object.assign(dom.pourBottle.style, { left: idle.x + 'px', top: idle.y + 'px', width: idle.w + 'px', height: idle.h + 'px' });
+  setBottleTilt(false);
+  dom.screens.pour.classList.remove('is-pouring');
+  renderPourLiquid();
   showScreen('pour');
 }
 
@@ -639,24 +649,9 @@ function pourLoop(now) {
     const dt = (now - G.pour.lastTick) / 1000;
     G.pour.lastTick = now;
     const rate = 1; // oz per second
-    G.pour.ozPoured += dt * rate;
-
-    const MAX_FILL = 8;
-    const targetOz = getTargetOz(G.pour.ingredientId);
-    const overLimit = (G.pour.baselineOz || 0) + targetOz * 1.5;
-    const totalOz = (G.pour.baselineOz || 0) + G.pour.ozPoured;
-
-    if (totalOz > overLimit) {
-      dom.pourGlassCont.classList.add('overpour');
-    } else {
-      dom.pourGlassCont.classList.remove('overpour');
-    }
-
-    G.pour.ozPoured = Math.min(G.pour.ozPoured, MAX_FILL);
-    const fillH = Math.min((totalOz / MAX_FILL) * 180, 180);
-    dom.pourGlassFill.style.height = fillH + 'px';
-
-    dom.pourInstruction.style.display = 'none';
+    // Past 8 oz the glass is full — the pour just stops
+    G.pour.ozPoured = Math.min(G.pour.ozPoured + dt * rate, MAX_OZ - G.pour.baselineOz);
+    renderPourLiquid();
   } else {
     G.pour.lastTick = 0;
   }
@@ -672,11 +667,10 @@ function stopPourRAF() {
   if (G.rafId) { cancelAnimationFrame(G.rafId); G.rafId = null; }
 }
 
-function getTargetOz(ingredientId) {
-  if (!G.drink.recipe) return 1.5;
-  const req = G.drink.recipe.ingredients.find(r => r.id === ingredientId);
-  return req?.oz || 1.5;
-}
+// Tick labels sit on their tick marks
+document.querySelectorAll('.tick-label').forEach(el => {
+  el.style.top = (ozToY(parseFloat(el.dataset.oz)) - 7) + 'px';
+});
 
 /* ═══════════════════════════════════════════════════════════════
    SCORING
@@ -814,6 +808,7 @@ function resetCurrentDrink() {
   G.drink.forCustomer = null;
   G.drink.recipe = null;
   G.drink.poured = [];
+  G.drink.layers = [];
   G.drink.activeIngredient = null;
   G.drinkElapsed = 0;
 }
@@ -863,6 +858,7 @@ function initGame() {
 
   dom.barBg.src = ART.barBackground;
   dom.barCounter.src = ART.barCounter;
+  dom.pourGlass.src = ART.glass;
   dom.barTips.textContent = '$0.00';
   dom.pauseOverlay.style.display = 'none';
   dom.counterDrinks.innerHTML = '';
@@ -900,6 +896,7 @@ dom.btnStartOrder.addEventListener('pointerdown', (e) => {
   G.drink.forCustomer = G.selectedIdx;
   G.drink.recipe = customer.drink;
   G.drink.poured = [];
+  G.drink.layers = [];
   G.drink.activeIngredient = null;
   G.drinkElapsed = 0;
   G.shelf.selected = null;
@@ -930,6 +927,7 @@ dom.btnPourOut.addEventListener('click', (e) => {
   e.stopPropagation();
   if (!G.timerRunning) return;
   G.drink.poured = [];
+  G.drink.layers = [];
   G.drink.activeIngredient = null;
   G.shelf.selected = null;
   G.shelf.lastAdded = null;
@@ -968,14 +966,14 @@ dom.btnBackToPour.addEventListener('click', (e) => {
 });
 
 /* ═══════════════════════════════════════════════════════════════
-   EVENT WIRING — POUR SCREEN (LIQUID)
+   EVENT WIRING — POUR SCREEN
 ═══════════════════════════════════════════════════════════════ */
 dom.btnBack.addEventListener('pointerdown', (e) => {
   e.stopPropagation();
-  // Return to shelf without recording
+  // Back to the shelf without recording this pour
   G.pour.pouring = false;
+  G.pour.ozPoured = 0;
   stopPourRAF();
-  dom.pourBottle.classList.remove('pouring');
   openShelf();
 });
 
@@ -983,45 +981,41 @@ dom.pourPause.addEventListener('pointerdown', (e) => { e.stopPropagation(); paus
 
 dom.btnDone.addEventListener('pointerdown', (e) => {
   e.stopPropagation();
-  if (G.pour.mode === 'liquid') {
-    commitLiquidPour();
-  } else {
-    commitGarnishPour();
-  }
+  commitLiquidPour();
 });
 
-// Pour: hold anywhere except buttons
+// Hold anywhere (except buttons) to pour
 dom.screens.pour.addEventListener('pointerdown', (e) => {
   if (G.screen !== 'pour' || G.pour.mode !== 'liquid') return;
-  if (e.target.closest('button, .hud-left-btn')) return;
+  if (e.target.closest('button')) return;
   if (!G.timerRunning) return;
   G.pour.pouring = true;
   G.pour.lastTick = 0;
-  dom.pourBottle.classList.add('pouring');
+  dom.screens.pour.classList.add('is-pouring');
+  setBottleTilt(true);
 });
 
 dom.screens.pour.addEventListener('pointerup', stopPouring);
 dom.screens.pour.addEventListener('pointercancel', stopPouring);
 
 function stopPouring() {
-  if (G.pour.mode !== 'liquid') return;
+  if (G.pour.mode !== 'liquid' || !G.pour.pouring) return;
   G.pour.pouring = false;
   G.pour.lastTick = 0;
-  dom.pourBottle.classList.remove('pouring');
-  if (G.pour.ozPoured === 0) {
-    dom.pourInstruction.style.display = 'block';
-  }
+  dom.screens.pour.classList.remove('is-pouring');
+  setBottleTilt(false);
 }
 
 function commitLiquidPour() {
   G.pour.pouring = false;
   stopPourRAF();
-  dom.pourBottle.classList.remove('pouring');
+  dom.screens.pour.classList.remove('is-pouring');
 
   const id = G.pour.ingredientId;
   const oz = parseFloat(G.pour.ozPoured.toFixed(2));
 
   if (oz > 0) {
+    G.drink.layers.push({ id, oz });
     const existing = G.drink.poured.find(p => p.id === id);
     if (existing) {
       existing.oz = (existing.oz || 0) + oz;
@@ -1031,105 +1025,8 @@ function commitLiquidPour() {
     G.drink.activeIngredient = id;
     G.shelf.lastAdded = id;   // "WHISKEY ADDED ✓"
   }
+  G.pour.ozPoured = 0;
   G.shelf.selected = null;
-  openShelf();
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   EVENT WIRING — POUR SCREEN (GARNISH / DRAG)
-═══════════════════════════════════════════════════════════════ */
-let garnishDragActive = false;
-let garnishDragStartX = 0, garnishDragStartY = 0;
-let garnishPosX = 140, garnishPosY = 155;
-
-dom.garnishDraggable.addEventListener('pointerdown', (e) => {
-  if (G.screen !== 'pour' || G.pour.mode !== 'garnish') return;
-  e.stopPropagation();
-  e.preventDefault();
-  dom.garnishDraggable.setPointerCapture(e.pointerId);
-  garnishDragActive = true;
-  const rect = dom.screens.pour.getBoundingClientRect();
-  const cx = (e.clientX - rect.left) / scale;
-  const cy = (e.clientY - rect.top) / scale;
-  // offset from center of image
-  const imgRect = dom.garnishDraggable.getBoundingClientRect();
-  const imgCx = (imgRect.left + imgRect.width/2 - rect.left) / scale;
-  const imgCy = (imgRect.top  + imgRect.height/2 - rect.top) / scale;
-  G.pour.dragOffsetX = cx - imgCx;
-  G.pour.dragOffsetY = cy - imgCy;
-});
-
-dom.garnishDraggable.addEventListener('pointermove', (e) => {
-  if (!garnishDragActive) return;
-  e.preventDefault();
-  const rect = dom.screens.pour.getBoundingClientRect();
-  const cx = (e.clientX - rect.left) / scale;
-  const cy = (e.clientY - rect.top)  / scale;
-  const nx = cx - G.pour.dragOffsetX;
-  const ny = cy - G.pour.dragOffsetY;
-  dom.garnishDraggable.style.left = (nx - 40) + 'px'; // 40 = half of 80px
-  dom.garnishDraggable.style.top  = (ny - 40) + 'px';
-});
-
-dom.garnishDraggable.addEventListener('pointerup', (e) => {
-  if (!garnishDragActive) return;
-  garnishDragActive = false;
-  dom.garnishDraggable.releasePointerCapture(e.pointerId);
-
-  const rect = dom.screens.pour.getBoundingClientRect();
-  const cx = (e.clientX - rect.left) / scale;
-  const cy = (e.clientY - rect.top)  / scale;
-
-  // Glass drop zone: glass is centered at x=610, top y = 195-100 = 95
-  const glassLeft = 610 - 65;
-  const glassTop  = 195 - 100;
-  const dropY = glassTop - 20; // slightly above glass top
-  const inZone = cx >= glassLeft - 10 && cx <= glassLeft + 150 && Math.abs(cy - dropY) < 50;
-
-  if (inZone) {
-    // Snap to glass rim
-    const snapX = cx < glassLeft + 65 ? cx : 610;
-    placeGarnish(snapX, glassTop - 10);
-    showNotif(`${INGREDIENTS[G.pour.ingredientId].name} added`);
-    // Reset draggable to start
-    dom.garnishDraggable.style.left = '140px';
-    dom.garnishDraggable.style.top  = '155px';
-  } else {
-    // Snap back
-    dom.garnishDraggable.style.left = '140px';
-    dom.garnishDraggable.style.top  = '155px';
-  }
-});
-
-dom.garnishDraggable.addEventListener('pointercancel', () => {
-  garnishDragActive = false;
-  dom.garnishDraggable.style.left = '140px';
-  dom.garnishDraggable.style.top  = '155px';
-});
-
-function placeGarnish(x, y) {
-  G.pour.garnishPlaced.push({ x, y });
-  const img = document.createElement('img');
-  img.src = ingPath(G.pour.ingredientId);
-  img.className = 'placed-garnish';
-  img.style.left = x + 'px';
-  img.style.top  = y + 'px';
-  dom.garnishPlacedLayer.appendChild(img);
-}
-
-function commitGarnishPour() {
-  const id = G.pour.ingredientId;
-  const count = G.pour.garnishPlaced.length;
-  if (count > 0) {
-    const existing = G.drink.poured.find(p => p.id === id);
-    if (existing) {
-      existing.count = (existing.count || 0) + count;
-    } else {
-      G.drink.poured.push({ id, count });
-    }
-    G.drink.activeIngredient = id;
-    showNotif(`${INGREDIENTS[id].name} added`);
-  }
   openShelf();
 }
 
