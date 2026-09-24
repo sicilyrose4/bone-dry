@@ -114,6 +114,7 @@ const G = {
     recipe: null,
     poured: [],          // totals per ingredient [{id, oz?, count?}] — used for scoring
     layers: [],          // every pour in order [{id, oz}] — drawn as bands in the glass
+    garnishes: [],       // placed on the drink [{id, spot}]
     activeIngredient: null,
   },
   pour: {
@@ -143,6 +144,7 @@ const dom = {
     bar:            $('screen-bar'),
     shelf:          $('screen-shelf'),
     pour:           $('screen-pour'),
+    garnish:        $('screen-garnish'),
     end:            $('screen-end'),
   },
   overlay:          $('overlay-recipe'),
@@ -268,6 +270,7 @@ function updateTimerDisplays() {
   const t = formatTime(Math.floor(G.drinkElapsed));
   dom.shelfTimer.textContent = t;
   dom.pourTimer.textContent  = t;
+  $('garnish-timer').textContent = t;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -736,24 +739,16 @@ function blendLiquids(poured) {
 const SERVED_LINGER_MS = 2000; // customer stays ~2s, then fades
 const FADE_MS = 600;
 
-function putDrinkOnCounter(slot, poured) {
-  // Figma (461:1361): glass at customer center + 70, y = 293; liquid inset inside it
+function putDrinkOnCounter(slot, poured, garnishes) {
+  // Figma 461:1361: glass 48.54 wide at customer center + 70, y = 293 —
+  // the garnish-screen drink scaled down (48.54 / 122.49)
   const el = document.createElement('div');
-  el.className = 'counter-drink';
+  el.className = 'counter-drink drink-view';
   el.style.left = (SLOT_CX[slot] + 70) + 'px';
   el.style.top = '293px';
-  el.style.width = '48.54px';
-  el.style.height = '64.99px';
-  const color = blendLiquids(poured);
-  if (color) {
-    el.innerHTML = `<svg class="cd-liquid" viewBox="0 0 39.4984 50.2667" preserveAspectRatio="none">
-      <path d="M5.91766 36.5478C3.84362 29.5749 1.26241 11.6705 0.0142927 1.943C-0.118298 0.909626 0.688582 0 1.73043 0H37.7932C38.7921 0 39.5827 0.835523 39.4912 1.83022C38.6305 11.1869 35.0329 35.173 33.072 47.7153C32.9631 48.4114 32.4437 48.9713 31.7545 49.1173C22.349 51.1093 14.1169 50.1058 10.2746 49.1386C9.66077 48.9841 9.21132 48.4792 9.06296 47.8639C8.63973 46.1086 7.67664 42.4615 5.91766 36.5478Z" fill="${color}" fill-opacity="0.3"/></svg>`;
-  }
-  const glass = document.createElement('img');
-  glass.className = 'cd-glass';
-  glass.src = ART.glass;
-  glass.alt = '';
-  el.appendChild(glass);
+  el.style.transformOrigin = '0 0';
+  el.style.transform = `scale(${48.54 / 122.49})`;
+  renderDrinkView(el, poured, garnishes);
   dom.counterDrinks.appendChild(el);
   return el;
 }
@@ -775,7 +770,7 @@ function serveDrink() {
   // Served customer keeps their "selected" look, drink lands on the counter, tip shows
   customer.state = 'served';
   renderCustomer(customerIdx);
-  const drinkEl = putDrinkOnCounter(customerIdx, G.drink.poured);
+  const drinkEl = putDrinkOnCounter(customerIdx, G.drink.poured, G.drink.garnishes);
   const tipEl = showTipFloat(`$${result.tip % 1 === 0 ? result.tip : result.tip.toFixed(2)}`, customerIdx);
 
   hideSpeechArea();
@@ -809,6 +804,7 @@ function resetCurrentDrink() {
   G.drink.recipe = null;
   G.drink.poured = [];
   G.drink.layers = [];
+  G.drink.garnishes = [];
   G.drink.activeIngredient = null;
   G.drinkElapsed = 0;
 }
@@ -897,6 +893,7 @@ dom.btnStartOrder.addEventListener('pointerdown', (e) => {
   G.drink.recipe = customer.drink;
   G.drink.poured = [];
   G.drink.layers = [];
+  G.drink.garnishes = [];
   G.drink.activeIngredient = null;
   G.drinkElapsed = 0;
   G.shelf.selected = null;
@@ -928,6 +925,7 @@ dom.btnPourOut.addEventListener('click', (e) => {
   if (!G.timerRunning) return;
   G.drink.poured = [];
   G.drink.layers = [];
+  G.drink.garnishes = [];
   G.drink.activeIngredient = null;
   G.shelf.selected = null;
   G.shelf.lastAdded = null;
@@ -1031,6 +1029,169 @@ function commitLiquidPour() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   GARNISH SCREEN
+   Tap a garnish (tap again to deselect) → a TAP circle appears where it goes
+   → tap it to place. REMOVE GARNISH clears them all. SERVE hands it over.
+═══════════════════════════════════════════════════════════════ */
+// Tray positions from Figma 454:1147 (center, unrotated box, rotation, mirrored)
+const GARNISH_TRAY = {
+  lemon:  { cx:228.32, cy:114.45, w:42.81, h:86.74, rot:-89.84 },
+  orange: { cx:228.01, cy:189.82, w:46.86, h:95.65, rot:-90.47 },
+  lime:   { cx:227.8,  cy:262.19, w:44.38, h:95.61, rot:-90, flip:true,
+            outline:{ src:'assets/ui/select-outline-lime.svg', cx:227.77, cy:261.48, w:102.53, h:51.04 } },
+  mint:   { cx:610.56, cy:135.5,  w:75.13, h:45,    rot:0 },
+  cherry: { cx:620.01, cy:228.51, w:32.02, h:67.03, rot:0 },
+};
+
+// Where a garnish lands, relative to the glass's top-left (glass is 122.49 x 164).
+// Rim slice = Figma 459:1230 (lime). Cherry/mint spots aren't designed yet.
+const RIM_SPOTS = [
+  { target:{ x:106, y:4 },  cx:108.29, cy:0.12, w:31.98, h:68.88, rot:125.81, flip:true },
+  { target:{ x:16,  y:4 },  cx:14.2,   cy:0.12, w:31.98, h:68.88, rot:-125.81 },   // 2nd slice: mirrored
+];
+const GARNISH_SPOTS = {
+  cherry: { target:{ x:61, y:45 }, cx:61, cy:45, w:23.05, h:48.26, rot:0 },   // drops into the drink
+  mint:   { target:{ x:45, y:20 }, cx:45, cy:20, w:54.1,  h:32.4,  rot:0 },   // floats on top
+};
+const RIM_GARNISHES = ['lime', 'lemon', 'orange'];
+
+function garnishSpot(id, placed) {
+  if (!RIM_GARNISHES.includes(id)) return GARNISH_SPOTS[id];
+  const rimUsed = placed.filter(g => RIM_GARNISHES.includes(g.id)).length;
+  return RIM_SPOTS[Math.min(rimUsed, RIM_SPOTS.length - 1)];
+}
+
+const LIQUID_PATH = 'M15.2349 92C9.81188 73.7941 3.01339 25.9849 0.0160161 2.24516C-0.134587 1.05236 0.796158 0 1.99843 0H98.1087C99.2614 0 100.176 0.963895 100.085 2.11295C98.3598 23.9369 88.5012 89.4568 83.4396 121.698C83.3135 122.501 82.7139 123.124 81.9206 123.302C56.3859 129.03 34.0433 125.913 24.8618 123.334C24.1586 123.137 23.6472 122.559 23.4847 121.847C22.6398 118.146 20.1902 108.635 15.2349 92Z';
+
+// Glass + one blended liquid color + placed garnishes (garnish screen and bar counter)
+function renderDrinkView(el, poured, garnishes) {
+  el.innerHTML = '';
+  const color = blendLiquids(poured);
+  if (color) {
+    el.insertAdjacentHTML('beforeend', `<svg class="dv-liquid" viewBox="0 0 100.091 126.534" preserveAspectRatio="none"><path d="${LIQUID_PATH}" fill="${color}" fill-opacity="0.3"/></svg>`);
+  }
+  const glass = document.createElement('img');
+  glass.className = 'dv-glass';
+  glass.src = ART.glass;
+  glass.alt = '';
+  el.appendChild(glass);
+  garnishes.forEach(g => {
+    const img = document.createElement('img');
+    img.className = 'dv-garnish';
+    img.src = ingPath(g.id);
+    img.alt = '';
+    const p = g.spot;
+    Object.assign(img.style, { left: (p.cx - p.w / 2) + 'px', top: (p.cy - p.h / 2) + 'px', width: p.w + 'px', height: p.h + 'px',
+      transform: `rotate(${p.rot}deg)${p.flip ? ' scaleY(-1)' : ''}` });
+    el.appendChild(img);
+  });
+}
+
+function buildGarnishTray() {
+  const tray = $('garnish-tray');
+  tray.innerHTML = '';
+  Object.entries(GARNISH_TRAY).forEach(([id, t]) => {
+    const r = t.rot * Math.PI / 180;
+    const bw = Math.abs(t.w * Math.cos(r)) + Math.abs(t.h * Math.sin(r));
+    const bh = Math.abs(t.w * Math.sin(r)) + Math.abs(t.h * Math.cos(r));
+    const el = document.createElement('div');
+    el.className = 'tray-garnish' + (t.outline ? '' : ' traced');
+    el.dataset.id = id;
+    Object.assign(el.style, { left: (t.cx - bw / 2) + 'px', top: (t.cy - bh / 2) + 'px', width: bw + 'px', height: bh + 'px' });
+    const img = document.createElement('img');
+    img.className = 'g';
+    img.src = ingPath(id);
+    img.alt = INGREDIENTS[id].name;
+    Object.assign(img.style, { inset: 'auto', left: (bw - t.w) / 2 + 'px', top: (bh - t.h) / 2 + 'px', width: t.w + 'px', height: t.h + 'px',
+      transform: `rotate(${t.rot}deg)${t.flip ? ' scaleY(-1)' : ''}` });
+    el.appendChild(img);
+    if (t.outline) {
+      const o = document.createElement('img');
+      o.className = 'outline';
+      o.src = t.outline.src;
+      o.alt = '';
+      const ox = t.outline.cx - t.outline.w / 2 - (t.cx - bw / 2);
+      const oy = t.outline.cy - t.outline.h / 2 - (t.cy - bh / 2);
+      Object.assign(o.style, { left: ox + 'px', top: oy + 'px', width: t.outline.w + 'px', height: t.outline.h + 'px' });
+      el.appendChild(o);
+    }
+    el.addEventListener('click', () => toggleGarnish(id));
+    tray.appendChild(el);
+  });
+}
+
+function openGarnishScreen() {
+  G.garnishSel = null;
+  showScreen('garnish');
+  renderGarnishScreen();
+}
+
+function toggleGarnish(id) {
+  if (G.screen !== 'garnish' || !G.timerRunning) return;
+  if (G.drink.garnishes.some(g => g.id === id)) return; // already on the drink
+  G.garnishSel = G.garnishSel === id ? null : id;
+  renderGarnishScreen();
+}
+
+function renderGarnishScreen() {
+  const sel = G.garnishSel;
+  document.querySelectorAll('.tray-garnish').forEach(el => el.classList.toggle('selected', el.dataset.id === sel));
+  const title = $('garnish-title');
+  if (sel) {
+    title.textContent = INGREDIENTS[sel].name.toUpperCase();
+    title.classList.add('ingredient');
+  } else {
+    title.textContent = G.drink.recipe ? G.drink.recipe.name.toUpperCase() : '';
+    title.classList.remove('ingredient');
+  }
+  renderDrinkView($('garnish-drink'), G.drink.poured, G.drink.garnishes);
+
+  const target = $('garnish-target');
+  if (sel) {
+    const spot = garnishSpot(sel, G.drink.garnishes);
+    target.style.left = (355 + spot.target.x - 31) + 'px';
+    target.style.top = (120 + spot.target.y - 31) + 'px';
+    target.style.display = 'block';
+  } else {
+    target.style.display = 'none';
+  }
+}
+
+function placeSelectedGarnish() {
+  const id = G.garnishSel;
+  if (!id || !G.timerRunning) return;
+  G.drink.garnishes.push({ id, spot: garnishSpot(id, G.drink.garnishes) });
+  G.drink.poured.push({ id, count: 1 });
+  G.garnishSel = null;
+  renderGarnishScreen();
+}
+
+$('garnish-target').addEventListener('click', (e) => { e.stopPropagation(); placeSelectedGarnish(); });
+
+$('btn-remove-garnish').addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (!G.timerRunning) return;
+  G.drink.garnishes = [];
+  G.drink.poured = G.drink.poured.filter(p => INGREDIENTS[p.id].type !== 'garnish');
+  G.garnishSel = null;
+  renderGarnishScreen();
+});
+
+$('btn-garnish-to-pour').addEventListener('click', (e) => {
+  e.stopPropagation();
+  G.garnishSel = null;
+  openShelf();
+});
+
+$('btn-serve').addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (!G.timerRunning) return;
+  serveDrink();
+});
+
+$('garnish-pause').addEventListener('pointerdown', (e) => { e.stopPropagation(); pauseToggle(); });
+
+/* ═══════════════════════════════════════════════════════════════
    EVENT WIRING — END SCREEN
 ═══════════════════════════════════════════════════════════════ */
 dom.btnPlayAgain.addEventListener('pointerdown', (e) => {
@@ -1050,8 +1211,7 @@ dom.pauseOverlay.addEventListener('pointerdown', (e) => {
    BOOT
 ═══════════════════════════════════════════════════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
+  buildGarnishTray();
   initGame();
 });
 
-// TEMP (replaced by the garnish screen in the next step)
-function openGarnishScreen() { serveDrink(); }

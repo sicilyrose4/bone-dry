@@ -123,6 +123,42 @@
       </div>
 
       <!-- ═══════════════════════════════════════════
+           SCREEN 5: GARNISH — Figma 454:1119 / 454:1147 / 459:1230
+      ═══════════════════════════════════════════ -->
+      <div id="screen-garnish" class="screen">
+        <button id="btn-remove-garnish" class="shelf-pour-out remove-garnish">
+          <img src="assets/ui/icon-restart.svg" alt="" width="24" height="24" />
+          <span>REMOVE GARNISH</span>
+        </button>
+        <span id="garnish-title"></span>
+        <span id="garnish-timer" class="drink-timer pour-timer">00:00</span>
+        <button id="garnish-pause" class="pause-btn light-pause" aria-label="Pause">
+          <div class="pause-bar"></div>
+          <div class="pause-bar"></div>
+        </button>
+
+        <img class="shelf-line" src="assets/ui/shelf-line.svg" alt="" />
+        <!-- Glass + blended drink + placed garnishes -->
+        <div id="garnish-drink" class="drink-view"></div>
+        <!-- Garnish tray (built in game.js) -->
+        <div id="garnish-tray"></div>
+        <!-- Tap target appears once a garnish is selected -->
+        <button id="garnish-target" style="display:none;" aria-label="Place garnish">
+          <img src="assets/ui/tap-target.png" alt="" />
+          <span>TAP</span>
+        </button>
+
+        <button id="btn-garnish-to-pour" class="arrow-btn">
+          <img src="assets/ui/arrow-bar.svg" alt="" width="18" height="16" />
+          <span>POUR</span>
+        </button>
+        <button id="btn-serve" class="arrow-btn">
+          <span>SERVE</span>
+          <img class="flip" src="assets/ui/arrow-bar.svg" alt="" width="18" height="16" />
+        </button>
+      </div>
+
+      <!-- ═══════════════════════════════════════════
            SCREEN 5: SHIFT END
       ═══════════════════════════════════════════ -->
       <div id="screen-end" class="screen">
