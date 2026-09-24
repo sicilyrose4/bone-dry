@@ -877,22 +877,23 @@ html, body {
 }
 #btn-play-again:active { transform: scale(0.96); }
 
-/* Recipe peek — text placeholder in the HUD style until the icon arrives */
+/* Shelf HUD row (Figma 483:1652): timer · recipe icon · pause, 15px apart, centered at y=33 */
+#shelf-timer { left: 719px; }
+#shelf-pause { left: 785px; top: 13.5px; }   /* bars land at x=795 / 802 */
+/* Recipe peek icon — 21x21 at (759, 22.5); padded for a bigger tap target */
 #btn-recipe-peek {
   position: absolute;
-  right: 140px;
-  top: 33px;
-  transform: translateY(-50%);
+  left: 751px;
+  top: 14.5px;
+  width: 37px;
+  height: 37px;
+  padding: 8px;
   background: none;
   border: none;
-  padding: 4px;
   cursor: pointer;
-  font-family: 'BarFontBold', sans-serif;
-  font-size: 18px;
-  line-height: normal;
-  color: #8e8e8e;
   z-index: 10;
 }
+#btn-recipe-peek img { display: block; width: 21px; height: 21px; }
 
 /* ─── PAUSE OVERLAY ──────────────────────────────────────────── */
 #pause-overlay {
