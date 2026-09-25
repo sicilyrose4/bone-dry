@@ -255,7 +255,7 @@ html, body {
    Order text is lowercase to set it apart from the UI text.
    Above the customer at y=45 (tail down), or on the counter at y=311 (tail up)
    when "above" would touch the tips / pause. */
-#speech-area {
+#speech-area, .speech-bubble {
   position: absolute;
   top: 45px;                      /* bottom edge stays at y=93 */
   height: 48px;
@@ -267,8 +267,11 @@ html, body {
   justify-content: center;
 }
 #speech-area.below { top: 311px; }
-#speech-canvas { position: absolute; pointer-events: none; }
-#speech-text {
+#speech-canvas, .speech-bubble canvas { position: absolute; pointer-events: none; }
+/* Reaction after serving: fades in with the tip, fades out with the customer */
+.speech-bubble.reaction { animation: barTipIn 0.25s ease; transition: opacity 0.6s ease; }
+.speech-bubble.reaction.leaving { opacity: 0; }
+#speech-text, .speech-bubble .speech-text {
   z-index: 1;                     /* above the drawn bubble */
   position: relative;
   font-family: 'BarFontBold', sans-serif;
@@ -330,6 +333,8 @@ html, body {
   transition: opacity 0.6s ease;
 }
 .bar-tip-float.leaving { opacity: 0; }
+/* With a reaction bubble over the customer, the tip sits beside it, level with the bubble */
+.bar-tip-float.with-reaction { top: 43px; }
 @keyframes barTipIn {
   from { opacity: 0; }
   to   { opacity: 1; }

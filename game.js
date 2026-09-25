@@ -99,6 +99,22 @@ const CUSTOMERS = {
 };
 // Bubble on the counter, under the customer (Figma: orange example) — tail points up
 const BUBBLE_BELOW = { dx:38.5, tail:-17.5 };
+
+// How customers order (user, 2026-09-24) — same four for everyone, one picked per customer
+const ORDER_LINES = ['{drink} please', '{drink}', 'one {drink}', 'just a {drink}'];
+const orderLine = drink => ORDER_LINES[Math.floor(Math.random() * ORDER_LINES.length)].replace('{drink}', drink.name.toLowerCase());
+
+// What each customer says after being served (user-approved, 2026-09-24). Kept vague on
+// purpose — a hint, not a breakdown. Max 4 words; never "alcohol" or "drunk".
+// Mood comes from scoreDrink(): perfect / good / strong / weak / sweet / off / bad / slow.
+const REACTIONS = {
+  red:    { perfect:'perfect, thank you!', good:'mm, lovely!', strong:'ooh, a little strong', weak:'a bit weak', sweet:'ooh, very sweet', off:'not quite right…', bad:'is this mine?', slow:'that took a while' },
+  purple: { perfect:'splendid, thank you', good:"that'll do nicely", strong:"goodness, that's strong", weak:'rather weak', sweet:'a touch sweet', off:'not quite right', bad:'in my day…', slow:'took your time' },
+  lime:   { perfect:'yooo perfect', good:'solid, thanks', strong:'woah. strong.', weak:'kinda weak ngl', sweet:'dang, sweet', off:'hm, not quite', bad:'bro, what?', slow:'finally lol' },
+  pink:   { perfect:'okay, you ate', good:'not bad', strong:'heavy hand much?', weak:'forget something?', sweet:'too sweet, babe', off:'this is not it', bad:'absolutely not', slow:'took you long enough' },
+  green:  { perfect:'yeah. perfect.', good:'fine. thanks.', strong:'strong.', weak:'weak.', sweet:'too sweet.', off:'not right.', bad:'no.', slow:'about time.' },
+  orange: { perfect:'perfect!! thank you!', good:'yay, thanks!', strong:'whoa, strong!', weak:'kinda weak?', sweet:'sooo sweet', off:'not quite right…', bad:'oh no…', slow:'finally, yay!' },
+};
 const CUSTOMER_IDS = Object.keys(CUSTOMERS);
 const customerImg = (id, state) => `assets/customers/${id}-${state}.png`;
 
@@ -411,7 +427,8 @@ function trySpawnCustomer() {
 
 function createCustomer(slot, type) {
   const el = document.getElementById(`slot-${slot}`);
-  const customer = { type, drink: pickDrink(), state: 'skeleton', slot, el };
+  const drink = pickDrink();
+  const customer = { type, drink, line: orderLine(drink), state: 'skeleton', slot, el };
   G.customers[slot] = customer;
   renderCustomer(slot);
   el.classList.remove('leaving');
@@ -470,36 +487,63 @@ function selectCustomer(slot) {
   G.selectedIdx = slot;
   c.state = 'selected';
   renderCustomer(slot);
-  showSpeechArea(c.drink.name.toLowerCase(), slot);   // orders are lowercase (Figma 459:1276)
+  showSpeechArea(c.line, slot);   // orders are lowercase (Figma 459:1276)
   refreshBarControls();
 }
 
 function showSpeechArea(text, slotIdx) {
+  placeBubble(dom.speechArea, dom.speechText, dom.speechCanvas, text, slotIdx, true);
+  // The order bubble wins: clear any reaction bubble it would cover
+  const box = dom.speechArea.getBoundingClientRect();
+  document.querySelectorAll('.speech-bubble.reaction').forEach(r => {
+    const o = r.getBoundingClientRect();
+    if (o.left < box.right && o.right > box.left && o.top < box.bottom && o.bottom > box.top) r.remove();
+  });
+}
+
+// Lay out one A6 bubble over a customer. `mayGoBelow`: the order bubble drops onto the
+// counter when "above" would touch the tips / pause (never for the far-right customer);
+// reaction bubbles slide sideways instead, since the served drink sits on the counter.
+function placeBubble(area, textEl, canvas, text, slotIdx, mayGoBelow) {
   const c = G.customers[slotIdx];
   const style = CUSTOMERS[c.type].bubble;
   const cx = SLOT_CX[slotIdx];
-  const area = dom.speechArea;
-  dom.speechText.textContent = text;
+  textEl.textContent = text;
   area.style.setProperty('--bubble-text', style.bg);   // A6: text in the outline color
   area.classList.remove('below');
   area.style.display = 'flex';
   const w = area.offsetWidth;
   const clampLeft = l => Math.min(Math.max(l, 8), 844 - w - 8);
 
-  // Above the customer, unless that would touch the tips or pause at the top.
-  // The far-right customer's bubble always stays above (START ORDER is below them).
   let left = clampLeft(cx + style.dx - w / 2);
   let tailX = cx + style.tail;
-  if (slotIdx !== 2 && bubbleHitsTopRow(left, w)) {
-    area.classList.add('below');
-    left = clampLeft(cx + BUBBLE_BELOW.dx - w / 2);
-    tailX = cx + BUBBLE_BELOW.tail;
+  if (bubbleHitsTopRow(left, w)) {
+    if (mayGoBelow && slotIdx !== 2) {
+      area.classList.add('below');
+      left = clampLeft(cx + BUBBLE_BELOW.dx - w / 2);
+      tailX = cx + BUBBLE_BELOW.tail;
+    } else if (!mayGoBelow) {
+      const GAP = 10, minLeft = 30 + dom.barTips.offsetWidth + GAP, maxLeft = 800 - GAP - w;
+      left = Math.min(Math.max(left, minLeft), maxLeft);
+    }
   }
   // `tail` offsets were measured for Figma's 30.5px tail — keep the same center for the narrower one
   tailX += (30.5 - BUBBLE_TAIL_W) / 2;
   const tailLeft = Math.min(Math.max(tailX - left, 14), w - 14 - BUBBLE_TAIL_W);
   area.style.left = left + 'px';
-  drawChalkBubble(dom.speechCanvas, w, area.offsetHeight, tailLeft, style.bg, area.classList.contains('below'), c.type.length);
+  drawChalkBubble(canvas, w, area.offsetHeight, tailLeft, style.bg, area.classList.contains('below'), c.type.length);
+}
+
+// Reaction after serving: the customer's A6 bubble with their line for this mood
+function showReaction(slotIdx, mood) {
+  const line = REACTIONS[G.customers[slotIdx].type]?.[mood];
+  if (!line) return null;
+  const area = document.createElement('div');
+  area.className = 'speech-bubble reaction';
+  area.innerHTML = '<div class="speech-text"></div><canvas aria-hidden="true"></canvas>';
+  dom.screens.bar.appendChild(area);
+  placeBubble(area, area.firstChild, area.lastChild, line, slotIdx, false);
+  return area;
 }
 
 /* Speech bubble style "A6" (user, 2026-09-24): dark fill, chalky outline in the
@@ -1024,24 +1068,34 @@ document.querySelectorAll('.tick-label').forEach(el => {
 /* ═══════════════════════════════════════════════════════════════
    SCORING
 ═══════════════════════════════════════════════════════════════ */
+// For the customer's reaction: which pours make a drink taste strong / sweet
+const SPIRIT_IDS = new Set(['vodka', 'gin', 'tequila', 'whiskey', 'white-rum']);
+const SWEET_IDS  = new Set(['simple-syrup', 'grenadine', 'triple-sec']);
+
 function scoreDrink(recipe, poured, drinkTime, tier, peeked) {
   let score = 100;
   const reqIds = recipe.ingredients.map(r => r.id);
   const pouredIds = poured.map(p => p.id);
+  let wrongOrMissing = false, amountsOff = false;
+  let spirit = 0, sweet = 0, mixer = 0;   // oz over (+) / under (−) the recipe, by kind
 
   pouredIds.forEach(id => {
-    if (!reqIds.includes(id)) score -= 35;
+    if (!reqIds.includes(id)) { score -= 35; wrongOrMissing = true; }
   });
 
   recipe.ingredients.forEach(req => {
     const actual = poured.find(p => p.id === req.id);
-    if (!actual) { score -= 30; return; }
+    if (!actual) { score -= 30; wrongOrMissing = true; return; }
     if (req.count && (actual.count || 0) !== req.count) score -= 10;  // e.g. 2 limes when they asked for 1
     if (req.oz) {
-      const diff = Math.abs((actual.oz || 0) - req.oz);
+      const delta = (actual.oz || 0) - req.oz, diff = Math.abs(delta);
       if (diff > 1.5)       score -= 20;
       else if (diff > 0.75) score -= 12;
       else if (diff > 0.3)  score -= 5;
+      if (diff > 0.75) amountsOff = true;
+      if (SPIRIT_IDS.has(req.id)) spirit += delta;
+      else if (SWEET_IDS.has(req.id)) sweet += delta;
+      else mixer += delta;
     }
   });
 
@@ -1063,7 +1117,19 @@ function scoreDrink(recipe, poured, drinkTime, tier, peeked) {
   let tip = base * timeMult;
   if (peeked) tip = Math.max(0, tip - PEEK_COST);
   tip = Math.round(tip * 100) / 100;
-  return { tip, score };
+
+  // Mood for the reaction — the biggest reason behind the tip, said vaguely
+  let mood;
+  if (base === 0)          mood = 'bad';
+  else if (wrongOrMissing) mood = 'off';
+  else if (amountsOff) {
+    const strength = spirit - mixer;   // more spirit or less mixer → strong
+    const taste = { strong: strength, weak: -strength, sweet };
+    mood = Object.keys(taste).reduce((a, b) => taste[b] > taste[a] ? b : a);
+  }
+  else if (timeMult < 1)   mood = 'slow';
+  else                     mood = score >= 95 ? 'perfect' : 'good';
+  return { tip, score, mood };
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1086,7 +1152,7 @@ function blendLiquids(poured) {
 /* ═══════════════════════════════════════════════════════════════
    SERVE DRINK
 ═══════════════════════════════════════════════════════════════ */
-const SERVED_LINGER_MS = 2000; // customer stays ~2s, then fades
+const SERVED_LINGER_MS = 3500; // customer stays ~3.5s (time to read their reaction), then fades
 const FADE_MS = 600;
 
 function putDrinkOnCounter(slot, poured, garnishes) {
@@ -1126,19 +1192,27 @@ function serveDrink() {
   customer.state = 'served';
   renderCustomer(customerIdx);
   const drinkEl = putDrinkOnCounter(customerIdx, G.drink.poured, G.drink.garnishes);
-  const tipEl = showTipFloat(`$${result.tip % 1 === 0 ? result.tip : result.tip.toFixed(2)}`, customerIdx);
-
   hideSpeechArea();
+  showScreen('bar');   // before measuring the reaction bubble (hidden screens measure 0)
+  const tipEl = showTipFloat(`$${result.tip % 1 === 0 ? result.tip : result.tip.toFixed(2)}`, customerIdx);
+  const reactionEl = showReaction(customerIdx, result.mood);
+  if (reactionEl) {
+    // The reaction takes the spot over their head — the tip sits beside it instead
+    tipEl.classList.add('with-reaction');
+    const right = reactionEl.offsetLeft + reactionEl.offsetWidth + 12;
+    tipEl.style.left = (right + tipEl.offsetWidth <= 790 ? right : reactionEl.offsetLeft - 12 - tipEl.offsetWidth) + 'px';
+  }
   G.selectedIdx = null;
   resetCurrentDrink();
   refreshBarControls();
   G.serving = (G.serving || 0) + 1;
 
   setTimeout(() => {
-    [customer.el, drinkEl, tipEl].forEach(e => e.classList.add('leaving'));
+    [customer.el, drinkEl, tipEl, reactionEl].forEach(e => e && e.classList.add('leaving'));
     setTimeout(() => {
       drinkEl.remove();
       tipEl.remove();
+      if (reactionEl) reactionEl.remove();
       if (G.customers[customerIdx] === customer) {
         G.customers[customerIdx] = null;
         renderCustomer(customerIdx);
@@ -1147,8 +1221,6 @@ function serveDrink() {
       maybeEndShift();
     }, FADE_MS);
   }, SERVED_LINGER_MS);
-
-  showScreen('bar');
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1223,7 +1295,7 @@ function initGame() {
   dom.pauseOverlay.style.display = 'none';
   dom.game.classList.remove('paused');
   dom.counterDrinks.innerHTML = '';
-  document.querySelectorAll('.bar-tip-float').forEach(e => e.remove());
+  document.querySelectorAll('.bar-tip-float, .speech-bubble.reaction').forEach(e => e.remove());
   hideSpeechArea();
   G.shelf = { order: [], selected: null, toast: null };
   refreshBarControls();
