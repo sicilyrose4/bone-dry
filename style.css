@@ -335,6 +335,7 @@ html, body {
 .bar-tip-float.leaving { opacity: 0; }
 /* With a reaction bubble over the customer, the tip sits beside it, level with the bubble */
 .bar-tip-float.with-reaction { top: 43px; }
+.bar-tip-float.pending { visibility: hidden; animation: none; }   /* waits for the reaction */
 @keyframes barTipIn {
   from { opacity: 0; }
   to   { opacity: 1; }

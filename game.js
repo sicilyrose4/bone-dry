@@ -1152,6 +1152,7 @@ function blendLiquids(poured) {
 /* ═══════════════════════════════════════════════════════════════
    SERVE DRINK
 ═══════════════════════════════════════════════════════════════ */
+const TIP_AFTER_REACTION_MS = 1000; // tip appears this long after the reaction bubble
 const SERVED_LINGER_MS = 3500; // customer stays ~3.5s (time to read their reaction), then fades
 const FADE_MS = 600;
 
@@ -1186,8 +1187,6 @@ function serveDrink() {
   rec.made++;
   saveProgress();
 
-  dom.barTips.textContent = '$' + G.tips.toFixed(2);
-
   // Served customer keeps their "selected" look, drink lands on the counter, tip shows
   customer.state = 'served';
   renderCustomer(customerIdx);
@@ -1201,7 +1200,14 @@ function serveDrink() {
     tipEl.classList.add('with-reaction');
     const right = reactionEl.offsetLeft + reactionEl.offsetWidth + 12;
     tipEl.style.left = (right + tipEl.offsetWidth <= 790 ? right : reactionEl.offsetLeft - 12 - tipEl.offsetWidth) + 'px';
+    // The customer speaks first; the tip follows a beat later, like it's their answer
+    tipEl.classList.add('pending');
   }
+  const tipsNow = G.tips;
+  setTimeout(() => {
+    tipEl.classList.remove('pending');
+    if (G.customers[customerIdx] === customer) dom.barTips.textContent = '$' + tipsNow.toFixed(2);
+  }, reactionEl ? TIP_AFTER_REACTION_MS : 0);
   G.selectedIdx = null;
   resetCurrentDrink();
   refreshBarControls();
