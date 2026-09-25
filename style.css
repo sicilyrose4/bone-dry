@@ -809,13 +809,22 @@ html, body {
 .tray-garnish { position: absolute; cursor: pointer; pointer-events: auto; }
 .tray-garnish > img.g { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
 .tray-garnish > img.outline { position: absolute; display: none; pointer-events: none; }
-.tray-garnish.selected > img.outline { display: block; }
-.tray-garnish.selected.traced > img.g {
-  filter:
-    drop-shadow(1.5px 0 0 #040318) drop-shadow(-1.5px 0 0 #040318)
-    drop-shadow(0 1.5px 0 #040318) drop-shadow(0 -1.5px 0 #040318)
-    drop-shadow(1px 0 0 #9e9ad1) drop-shadow(-1px 0 0 #9e9ad1)
-    drop-shadow(0 1px 0 #9e9ad1) drop-shadow(0 -1px 0 #9e9ad1);
+/* Selected garnish: no outline — it rocks slowly side to side (±5° over 1.6s, same rhythm as bottles) */
+.tray-garnish.selected { animation: garnishSway 1.6s linear infinite; }
+@keyframes garnishSway {
+  0%   { transform: rotate(0deg); }
+  12.5%{ transform: rotate(3.5deg); }
+  25%  { transform: rotate(5deg); }
+  37.5%{ transform: rotate(3.5deg); }
+  50%  { transform: rotate(0deg); }
+  62.5%{ transform: rotate(-3.5deg); }
+  75%  { transform: rotate(-5deg); }
+  87.5%{ transform: rotate(-3.5deg); }
+  100% { transform: rotate(0deg); }
+}
+#game.paused .tray-garnish.selected { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .tray-garnish.selected { animation: none; transform: rotate(4deg); }
 }
 
 /* TAP target — 62x62 dashed circle, "TAP" Regular 20 #9d9cb6 */
