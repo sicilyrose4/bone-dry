@@ -739,28 +739,20 @@ function hexToRgba(hex, a) {
 
 /* Hand-drawn liquid details (style "C", matching the bottle art):
    a drawn surface line on top of each liquid, bubble outlines in fizzy ones,
-   a soft shine streak down the left side, all with a chalky grain. */
+   a soft shine streak down the side, all with a chalky grain.
+   Drawn on a <canvas> — Safari chokes on SVG noise filters redrawn every frame. */
 const FIZZY_IDS = new Set(['soda-water', 'tonic-water', 'cola', 'ginger-beer']);
 const WAVE_FIZZY = { amp: 2.6, cycles: 2.2 };
 const WAVE_STILL = { amp: 0.8, cycles: 1.2 };
-let chalkSeq = 0;
+const SHINE = 'rgba(255,255,255,0.41)', SHINE_DIM = 'rgba(255,255,255,0.33)';
 
-// Chalky grain filter (fractal noise knocks out bits of each stroke)
-function chalkFilterSVG(id, box) {
-  const region = box ? `filterUnits="userSpaceOnUse" x="${box[0]}" y="${box[1]}" width="${box[2]}" height="${box[3]}"` : 'x="-10%" y="-10%" width="120%" height="120%"';
-  return `<filter id="${id}" ${region}><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="5" result="n"/>` +
-    `<feColorMatrix in="n" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1.5 0" result="g"/>` +
-    `<feComposite in="SourceGraphic" in2="g" operator="in"/></filter>`;
-}
-
-function wavePath(x0, x1, y, { amp, cycles }) {
-  const steps = 28;
-  let d = '';
+function wavePoints(x0, x1, y, { amp, cycles }) {
+  const steps = 28, pts = [];
   for (let k = 0; k <= steps; k++) {
     const t = k / steps;
-    d += `${k ? 'L' : 'M'}${(x0 + (x1 - x0) * t).toFixed(1)} ${(y + amp * Math.sin(t * cycles * 2 * Math.PI)).toFixed(1)}`;
+    pts.push([x0 + (x1 - x0) * t, y + amp * Math.sin(t * cycles * 2 * Math.PI)]);
   }
-  return d;
+  return pts;
 }
 
 // Tiny seeded random so bubbles stay put while the glass fills
@@ -769,10 +761,56 @@ function seededRandom(seed) {
   return () => (s = (s * 9301 + 49297) % 233280) / 233280;
 }
 
+// Chalky grain: a tile of random alpha that knocks bits out of every stroke
+let grainTileCanvas = null;
+function grainTile() {
+  if (grainTileCanvas) return grainTileCanvas;
+  const n = 128, c = document.createElement('canvas');
+  c.width = c.height = n;
+  const ctx = c.getContext('2d'), img = ctx.createImageData(n, n);
+  for (let y = 0; y < n; y += 2) for (let x = 0; x < n; x += 2) {
+    const a = 90 + Math.random() * 165;
+    for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) img.data[((y + dy) * n + x + dx) * 4 + 3] = a;
+  }
+  ctx.putImageData(img, 0, 0);
+  return (grainTileCanvas = c);
+}
+
+// Strokes (lines / circles) onto a canvas covering box [x, y, w, h] in the caller's coordinates
+function drawLiquidDetail(canvas, [bx, by, bw, bh], strokes) {
+  const dpr = Math.min(3, window.devicePixelRatio || 1);
+  const W = Math.ceil(bw * dpr), H = Math.ceil(bh * dpr);
+  if (canvas.width !== W) canvas.width = W;
+  if (canvas.height !== H) canvas.height = H;
+  canvas.style.width = bw + 'px';
+  canvas.style.height = bh + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.clearRect(0, 0, W, H);
+  if (!strokes.length) return;
+  ctx.setTransform(dpr, 0, 0, dpr, -bx * dpr, -by * dpr);
+  ctx.lineCap = ctx.lineJoin = 'round';
+  strokes.forEach(st => {
+    ctx.strokeStyle = st.color;
+    ctx.lineWidth = st.width;
+    ctx.beginPath();
+    if (st.r) ctx.arc(st.x, st.y, st.r, 0, 2 * Math.PI);
+    else st.pts.forEach(([x, y], k) => k ? ctx.lineTo(x, y) : ctx.moveTo(x, y));
+    ctx.stroke();
+  });
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalCompositeOperation = 'destination-in';
+  ctx.fillStyle = ctx.createPattern(grainTile(), 'repeat');
+  ctx.fillRect(0, 0, W, H);
+  ctx.globalCompositeOperation = 'source-over';
+}
+
 // Inside walls of the pour glass (same trace as the #pour-liquid clip-path)
 const TICK_LABEL_OZ = [8, 6, 4, 2.5, 1.5];   // the oz labels printed on the pour glass
 const POUR_WALL_L = [[406,132],[414,192],[426,276],[437.5,331.5],[441.5,352],[447.5,365.5]];
 const POUR_WALL_R = [[572.5,132],[566.5,192],[554,276],[551,331.5],[546,358.5],[538,366.5]];
+const POUR_DETAIL_BOX = [390, 110, 200, 270];   // matches .liquid-detail in style.css
 function wallX(wall, y) {
   if (y <= wall[0][1]) return wall[0][0];
   for (let i = 1; i < wall.length; i++) {
@@ -783,11 +821,13 @@ function wallX(wall, y) {
 }
 
 // Stacked bands: every committed pour, plus the one in progress
+let pourDetailCanvas = null;
 function renderPourLiquid() {
   const layers = [...G.drink.layers];
   if (G.pour.ozPoured > 0) layers.push({ id: G.pour.ingredientId, oz: G.pour.ozPoured });
   dom.pourLiquid.innerHTML = '';
-  let total = 0, detail = '';
+  let total = 0;
+  const strokes = [];
   layers.forEach((l, i) => {
     const band = document.createElement('div');
     band.className = 'liquid-band';
@@ -817,24 +857,27 @@ function renderPourLiquid() {
         const onLabel = TICK_LABEL_OZ.some(oz => Math.abs(ozToY(oz) - y) < r + 8 && x - r < 514);
         if (onLabel || placed.some(([px, py]) => Math.hypot(px - x, py - y) < 22)) continue;
         placed.push([x, y]);
-        detail += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="none" stroke="${color}" stroke-width="2.6"/>`;
+        strokes.push({ x, y, r, color, width: 2.6 });
       }
     }
     // Surface line on top of this layer
-    detail += `<path d="${wavePath(wallX(POUR_WALL_L, top) + 8, wallX(POUR_WALL_R, top) - 8, top, fizzy ? WAVE_FIZZY : WAVE_STILL)}" fill="none" stroke="${color}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`;
+    strokes.push({ pts: wavePoints(wallX(POUR_WALL_L, top) + 8, wallX(POUR_WALL_R, top) - 8, top, fizzy ? WAVE_FIZZY : WAVE_STILL), color, width: 4 });
   });
-  if (!detail) return;
 
   // Shine streak down the side of the whole drink (right side here — the ticks sit on the left)
   const top = ozToY(total), y1 = top + 18, len = Math.min(60, (356 - y1) * 0.6);
-  const shineX = y => (wallX(POUR_WALL_R, y) - 13).toFixed(1);
-  if (len >= 12) {
+  const shineX = y => wallX(POUR_WALL_R, y) - 13;
+  if (strokes.length && len >= 12) {
     const y2 = y1 + len, y3 = y2 + 12, y4 = y3 + 10;
-    detail += `<path d="M${shineX(y1)} ${y1}L${shineX(y2)} ${y2}" stroke="rgba(255,255,255,0.41)" stroke-width="3.5" stroke-linecap="round"/>`;
-    if (y4 < 350) detail += `<path d="M${shineX(y3)} ${y3}L${shineX(y4)} ${y4}" stroke="rgba(255,255,255,0.33)" stroke-width="3.5" stroke-linecap="round"/>`;
+    strokes.push({ pts: [[shineX(y1), y1], [shineX(y2), y2]], color: SHINE, width: 3.5 });
+    if (y4 < 350) strokes.push({ pts: [[shineX(y3), y3], [shineX(y4), y4]], color: SHINE_DIM, width: 3.5 });
   }
-  dom.pourLiquid.insertAdjacentHTML('beforeend',
-    `<svg class="liquid-detail" width="844" height="390" viewBox="0 0 844 390">${chalkFilterSVG('chalk-pour', [390, 110, 200, 270])}<g filter="url(#chalk-pour)">${detail}</g></svg>`);
+  if (!pourDetailCanvas) {
+    pourDetailCanvas = document.createElement('canvas');
+    pourDetailCanvas.className = 'liquid-detail';
+  }
+  drawLiquidDetail(pourDetailCanvas, POUR_DETAIL_BOX, strokes);
+  dom.pourLiquid.appendChild(pourDetailCanvas);
 }
 
 function totalPouredOz() {
@@ -1328,31 +1371,35 @@ const LIQUID_PATH = 'M15.2349 92C9.81188 73.7941 3.01339 25.9849 0.0160161 2.245
 // Bubble outlines for a mixed drink (liquid-shape coords); fizzier drinks show more of them
 const MIXED_BUBBLES = [[0.30,0.20,2.4],[0.66,0.16,1.5],[0.50,0.45,2.9],[0.74,0.52,1.8],[0.30,0.62,1.5],[0.58,0.78,1.1],[0.40,0.88,1.4]];
 
-// One blended liquid in the hand-drawn style: fill, surface line, bubbles, shine
-function mixedLiquidSVG(poured, color) {
+// One blended liquid in the hand-drawn style: surface line, bubbles, shine (on top of the fill)
+function mixedLiquidStrokes(poured, color) {
   const totalOz = poured.reduce((s, p) => s + (p.oz || 0), 0);
   const fizzyShare = poured.reduce((s, p) => s + (FIZZY_IDS.has(p.id) ? p.oz || 0 : 0), 0) / totalOz;
-  const id = 'chalk-dv-' + (++chalkSeq);
-  let detail = '';
+  const strokes = [];
   if (fizzyShare > 0) {
     MIXED_BUBBLES.slice(0, Math.max(3, Math.round(MIXED_BUBBLES.length * Math.min(1, fizzyShare * 1.4)))).forEach(([fx, fy, r]) => {
-      const y = 11 + 104 * fy, x = 13 + 68 * fx - (y - 9) * 0.05;
-      detail += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" fill="none" stroke="${color}" stroke-width="1.2"/>`;
+      const y = 11 + 104 * fy;
+      strokes.push({ x: 13 + 68 * fx - (y - 9) * 0.05, y, r, color, width: 1.2 });
     });
   }
   const wave = fizzyShare > 0 ? { amp: 1.1, cycles: 2.2 } : { amp: 0.45, cycles: 1.2 };
-  detail += `<path d="${wavePath(6, 83, 3.2, wave)}" fill="none" stroke="${color}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>`;
-  detail += `<path d="M13 13L16 39" stroke="rgba(255,255,255,0.41)" stroke-width="1.8" stroke-linecap="round"/>` +
-            `<path d="M18 47L19 52" stroke="rgba(255,255,255,0.33)" stroke-width="1.8" stroke-linecap="round"/>`;
-  return `<svg class="dv-liquid" viewBox="0 0 100.091 126.534" preserveAspectRatio="none">${chalkFilterSVG(id)}` +
-    `<path d="${LIQUID_PATH}" fill="${color}" fill-opacity="0.3"/><g filter="url(#${id})">${detail}</g></svg>`;
+  strokes.push({ pts: wavePoints(6, 83, 3.2, wave), color, width: 1.9 });
+  strokes.push({ pts: [[13, 13], [16, 39]], color: SHINE, width: 1.8 });
+  strokes.push({ pts: [[18, 47], [19, 52]], color: SHINE_DIM, width: 1.8 });
+  return strokes;
 }
 
 // Glass + one blended liquid color + placed garnishes (garnish screen and bar counter)
 function renderDrinkView(el, poured, garnishes) {
   el.innerHTML = '';
   const color = blendLiquids(poured);
-  if (color) el.insertAdjacentHTML('beforeend', mixedLiquidSVG(poured, color));
+  if (color) {
+    el.insertAdjacentHTML('beforeend', `<svg class="dv-liquid" viewBox="0 0 100.091 126.534" preserveAspectRatio="none"><path d="${LIQUID_PATH}" fill="${color}" fill-opacity="0.3"/></svg>`);
+    const detail = document.createElement('canvas');
+    detail.className = 'dv-liquid';
+    drawLiquidDetail(detail, [0, 0, 100.091, 126.534], mixedLiquidStrokes(poured, color));
+    el.appendChild(detail);
+  }
   const glass = document.createElement('img');
   glass.className = 'dv-glass';
   glass.src = ART.glass;
