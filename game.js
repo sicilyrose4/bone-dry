@@ -531,9 +531,9 @@ function openRecipe(drink) {
       const line = document.createElement('div');
       line.className = 'recipe-ingredient';
       if (ing.oz) {
-        line.textContent = `* ${ingData.name} — ${ing.oz} oz`;
+        line.textContent = `${ingData.name} — ${ing.oz} oz`;
       } else {
-        line.textContent = `* ${ingData.name}`;
+        line.textContent = `${ingData.name}`;
       }
       dom.recipeContent.appendChild(line);
     });
