@@ -671,7 +671,7 @@ function renderShelf() {
     dom.shelfTitle.textContent = G.drink.recipe ? G.drink.recipe.name.toUpperCase() : '';
     dom.shelfTitle.classList.remove('ingredient');
   }
-  dom.btnPour.style.display = sel ? 'block' : 'none';
+  dom.btnPour.style.display = sel ? '' : 'none';
   // Confirmation: "WHISKEY ADDED ✓" / "GLASS EMPTIED ✓"
   const added = !sel && G.shelf.toast;
   dom.shelfAdded.style.display = added ? 'flex' : 'none';
@@ -708,7 +708,7 @@ function openShelf() {
    POUR → (back to the drink) once it's in progress */
 function refreshBarControls() {
   const inProgress = G.drink.forCustomer !== null;
-  dom.btnStartOrder.style.display = !inProgress && G.selectedIdx !== null ? 'block' : 'none';
+  dom.btnStartOrder.style.display = !inProgress && G.selectedIdx !== null ? '' : 'none';
   dom.btnBackToPour.style.display = inProgress ? 'flex' : 'none';
 }
 

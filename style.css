@@ -55,6 +55,29 @@ html, body {
 }
 .screen.active { display: block; }
 
+/* ─── BUTTON COMPONENT SET — Figma 502:1951 ─────────────────────
+   Primary (486:1660): #cccaf3, 54 tall, 24px sides.
+   Secondary (486:1724): #918fb7, 40 tall, 34px sides.
+   Both hug their label: Bar Font Bold 26, #040318, radius 12.
+   Back / forward navigation (486:1665 / 486:1687) = .arrow-btn below. */
+.btn-primary, .btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: 'BarFontBold', sans-serif;
+  font-size: 26px;
+  line-height: normal;
+  color: #040318;
+  white-space: nowrap;
+  transition: transform 0.1s;
+}
+.btn-primary   { background: #cccaf3; height: 54px; padding: 0 24px; }
+.btn-secondary { background: #918fb7; height: 40px; padding: 0 34px; }
+.btn-primary:active, .btn-secondary:active { transform: scale(0.96); }
+
 /* ─── SHARED HUD ELEMENTS ────────────────────────────────────── */
 .pause-btn {
   background: transparent;
@@ -118,23 +141,14 @@ html, body {
   transition: width 0.15s ease;
 }
 
+/* Secondary button, centered where the Figma home frame puts it (center 637, 154) */
 #btn-start-shift {
   position: absolute;
-  left: 534.5px;
-  top: 131px;
-  width: 205px;
-  height: 46px;
-  background: #918fb7;
-  border: none;
-  border-radius: 12px;
-  padding: 0;
-  cursor: pointer;
-  font-family: 'BarFontBold', sans-serif;
-  font-size: 26px;
-  line-height: normal;
-  color: #040318;
+  left: 637px;
+  top: 134px;
+  transform: translateX(-50%);
 }
-#btn-start-shift:active { transform: scale(0.96); }
+#btn-start-shift:active { transform: translateX(-50%) scale(0.96); }
 .home-link {
   position: absolute;
   left: 567px;
@@ -275,26 +289,13 @@ html, body {
 }
 
 /* Start order button — 194x54 at (617,311), #cccaf3, radius 12 (Figma 483:1656) */
+/* Primary button — right edge at x=811 (Figma 483:1656) */
 #btn-start-order {
   position: absolute;
-  left: 617px;
+  right: 33px;
   top: 311px;
-  width: 194px;
-  height: 54px;
   z-index: 10;
-  background: #cccaf3;
-  color: #040318;
-  font-family: 'BarFontBold', sans-serif;
-  font-size: 26px;
-  line-height: normal;
-  border: none;
-  border-radius: 12px;
-  padding: 0;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: transform 0.1s;
 }
-#btn-start-order:active { transform: scale(0.96); }
 
 /* Bar HUD */
 #bar-tips {
@@ -560,24 +561,14 @@ html, body {
 /* On the bar art the outlined style is too faint — filled like START ORDER */
 #btn-back-to-pour { left: 694px; top: 318px; background: #cccaf3; border-color: #cccaf3; color: #040318; }
 
-/* POUR — 120x38 at (362,323), #918fb7, radius 12 */
+/* POUR — secondary button, centered at x=422 like the Figma shelf frame */
 #btn-pour {
   position: absolute;
-  left: 362px;
-  top: 323px;
-  width: 120px;
-  height: 38px;
-  background: #918fb7;
-  border: none;
-  border-radius: 12px;
-  padding: 0;
-  cursor: pointer;
-  font-family: 'BarFontBold', sans-serif;
-  font-size: 26px;
-  line-height: normal;
-  color: #040318;
+  left: 422px;
+  top: 322px;
+  transform: translateX(-50%);
 }
-#btn-pour:active { transform: scale(0.96); }
+#btn-pour:active { transform: translateX(-50%) scale(0.96); }
 
 /* "WHISKEY ADDED ✓" — at (331,334), 201 wide */
 #shelf-added, #garnish-toast {
@@ -708,24 +699,13 @@ html, body {
   transition: transform 0.2s ease, left 0.2s ease, top 0.2s ease;
 }
 
+/* DONE — secondary button, right edge at x=811 */
 #btn-pour-done {
   position: absolute;
-  left: 690px;
-  top: 327px;
-  width: 121px;
-  height: 38px;
-  background: #918fb7;
-  border: none;
-  border-radius: 12px;
-  padding: 0;
-  cursor: pointer;
-  font-family: 'BarFontBold', sans-serif;
-  font-size: 26px;
-  line-height: normal;
-  color: #040318;
+  right: 33px;
+  top: 326px;
   z-index: 10;
 }
-#btn-pour-done:active { transform: scale(0.96); }
 
 /* While holding: BACK, DONE and the instruction disappear (Figma 454:524) */
 #screen-pour.is-pouring #btn-back-to-shelf,
@@ -841,19 +821,7 @@ html, body {
   font-size: 24px;
   color: #9d9cb6;
 }
-#btn-play-again {
-  background: #cccaf3;
-  color: #040318;
-  font-family: 'BarFontBold', sans-serif;
-  font-size: 26px;
-  border: none;
-  border-radius: 12px;
-  padding: 8px 32px;
-  cursor: pointer;
-  margin-top: 8px;
-  transition: transform 0.1s;
-}
-#btn-play-again:active { transform: scale(0.96); }
+#btn-play-again { margin-top: 8px; }   /* primary button */
 
 /* HUD row on every screen where ingredients go in (Figma 483:1652):
    timer · recipe icon · pause, 15px apart, centered at y=33 */
@@ -890,20 +858,8 @@ html, body {
   flex-direction: column;
   gap: 22px;
 }
-/* End the shift early — same filled style as POUR / DONE / START SHIFT */
-#btn-end-shift {
-  background: #918fb7;
-  color: #040318;
-  border: none;
-  border-radius: 12px;
-  padding: 8px 32px;
-  cursor: pointer;
-  font-family: 'BarFontBold', sans-serif;
-  font-size: 26px;
-  line-height: normal;
-  letter-spacing: normal;
-}
-#btn-end-shift:active { transform: scale(0.96); }
+/* End the shift early — secondary button (like POUR / DONE / START SHIFT) */
+#btn-end-shift { letter-spacing: normal; }
 
 /* ─── NOTIFICATIONS ──────────────────────────────────────────── */
 #notification-layer {

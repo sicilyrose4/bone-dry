@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#12111d" />
   <title>Bone Dry</title>
-  <link rel="stylesheet" href="style.css?v=4" />
+  <link rel="stylesheet" href="style.css?v=5" />
 </head>
 <body>
   <div id="viewport">
@@ -30,7 +30,7 @@
       ═══════════════════════════════════════════ -->
       <div id="screen-home" class="screen">
         <img class="bd-logo home-logo" src="assets/logo.png" alt="Bone Dry" />
-        <button id="btn-start-shift">START SHIFT</button>
+        <button id="btn-start-shift" class="btn-secondary">START SHIFT</button>
         <!-- History / Drink Menu / Settings screens are still to be designed -->
         <button id="btn-history" class="home-link">HISTORY</button>
         <button id="btn-drink-menu" class="home-link">DRINK MENU</button>
@@ -60,7 +60,7 @@
           </svg>
         </div>
         <!-- Start order button -->
-        <button id="btn-start-order" style="display:none;">START ORDER</button>
+        <button id="btn-start-order" class="btn-primary" style="display:none;">START ORDER</button>
         <!-- Shown instead of START ORDER while a drink is in progress -->
         <button id="btn-back-to-pour" class="arrow-btn" style="display:none;">
           <span>POUR</span>
@@ -118,7 +118,7 @@
           <img src="assets/ui/arrow-bar.svg" alt="" width="18" height="16" />
           <span>BAR</span>
         </button>
-        <button id="btn-pour" style="display:none;">POUR</button>
+        <button id="btn-pour" class="btn-secondary" style="display:none;">POUR</button>
         <div id="shelf-added" style="display:none;">
           <span id="shelf-added-text"></span>
           <img src="assets/ui/icon-check.svg" alt="" width="20" height="20" />
@@ -159,7 +159,7 @@
         <span class="tick-label" data-oz="1.5">1.5 OZ</span>
         <img id="pour-bottle-img" src="" alt="" class="pour-bottle" />
 
-        <button id="btn-pour-done">DONE</button>
+        <button id="btn-pour-done" class="btn-secondary">DONE</button>
       </div>
 
       <!-- ═══════════════════════════════════════════
@@ -212,14 +212,14 @@
         <h1 id="end-title">SHIFT OVER</h1>
         <p id="end-tips">Total Tips: $0.00</p>
         <p id="end-served">Customers served: 0</p>
-        <button id="btn-play-again">PLAY AGAIN</button>
+        <button id="btn-play-again" class="btn-primary">PLAY AGAIN</button>
       </div>
 
       <!-- Pause overlay -->
       <div id="pause-overlay" style="display:none;">
         <span>PAUSED</span>
         <!-- Tap anywhere else to resume -->
-        <button id="btn-end-shift">END SHIFT</button>
+        <button id="btn-end-shift" class="btn-secondary">END SHIFT</button>
       </div>
 
       <!-- Notification layer -->
@@ -228,6 +228,6 @@
     </div><!-- #game -->
   </div><!-- #viewport -->
 
-  <script src="game.js?v=3"></script>
+  <script src="game.js?v=5"></script>
 </body>
 </html>
