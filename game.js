@@ -54,10 +54,8 @@ const DRINKS = [
   { id:'ranch-water',     name:'Ranch Water',     ingredients:[{id:'tequila',oz:1.5},{id:'lime-juice',oz:0.5},{id:'soda-water',oz:4},{id:'lime',count:1}] },
 ];
 
-// Drawn recipe cards (user will add one per drink)
-const RECIPE_IMAGES = {
-  'vodka-soda': 'assets/vodka soda recipe.png',
-};
+// How garnish amounts read on the recipe card
+const GARNISH_UNITS = { lime:'slice', lemon:'slice', orange:'slice', mint:'sprig', cherry:'' };
 
 /* ═══════════════════════════════════════════════════════════════
    ART — swap bar background / counter here
@@ -188,8 +186,6 @@ const dom = {
   },
   overlay:          $('overlay-recipe'),
   recipeCard:       $('recipe-card'),
-  recipeContent:    $('recipe-content'),
-  recipeClose:      $('btn-recipe-close'),
 
   barBg:            $('bar-bg'),
   barCounter:       $('bar-counter'),
@@ -255,7 +251,7 @@ function showScreen(name) {
   Object.values(dom.screens).forEach(s => s.classList.remove('active'));
   if (dom.screens[name]) dom.screens[name].classList.add('active');
   // Recipe card closes whenever you change screens
-  dom.recipeCard.classList.remove('slide-up'); dom.overlay.classList.remove('open'); dom.overlay.classList.remove('recipe-image-mode');
+  dom.recipeCard.classList.remove('slide-up'); dom.overlay.classList.remove('open');
   updateTimerDisplays();
 }
 
@@ -503,54 +499,57 @@ function hideSpeechArea() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   RECIPE OVERLAY
+   RECIPE CARD — Figma 502:1932
 ═══════════════════════════════════════════════════════════════ */
-function openRecipe(drink) {
-  dom.overlay.classList.add('open');
-  dom.recipeContent.innerHTML = '';
-  if (RECIPE_IMAGES[drink.id]) {
-    dom.overlay.classList.add('recipe-image-mode');
-    const img = document.createElement('img');
-    img.src = RECIPE_IMAGES[drink.id];
-    img.className = 'recipe-img';
-    dom.recipeContent.appendChild(img);
-  } else {
-    dom.overlay.classList.remove('recipe-image-mode');
-    const nameEl = document.createElement('div');
-    nameEl.className = 'recipe-drink-name';
-    nameEl.textContent = drink.name;
-    dom.recipeContent.appendChild(nameEl);
+// Scratchy's E is drawn small: every E is set 8px bigger than the rest of the title
+function scratchyHTML(text, size) {
+  return [...text].map(ch => ch.toUpperCase() === 'E'
+    ? `<span style="font-size:${size + 8}px">${ch}</span>` : ch).join('');
+}
 
-    const hr = document.createElement('div');
-    hr.className = 'recipe-hr';
-    hr.style.cssText = 'width:100%;border:none;border-top:1.5px solid #ccc;margin-bottom:12px;';
-    dom.recipeContent.appendChild(hr);
-
-    drink.ingredients.forEach(ing => {
-      const ingData = INGREDIENTS[ing.id];
-      const line = document.createElement('div');
-      line.className = 'recipe-ingredient';
-      if (ing.oz) {
-        line.textContent = `${ingData.name} — ${ing.oz} oz`;
-      } else {
-        line.textContent = `${ingData.name}`;
-      }
-      dom.recipeContent.appendChild(line);
-    });
+function recipeLine(ing) {
+  const name = INGREDIENTS[ing.id].name.toLowerCase();
+  let amount;
+  if (ing.oz) amount = `${ing.oz} oz`;
+  else {
+    const unit = GARNISH_UNITS[ing.id] ?? '';
+    amount = unit ? `${ing.count} ${unit}${ing.count > 1 ? 's' : ''}` : `${ing.count}`;
   }
-  // Animate slide up
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      dom.recipeCard.classList.add('slide-up');
-    });
+  return `<div><span class="ing">${name}</span> - ${amount}</div>`;
+}
+
+function openRecipe(drink) {
+  // Title: shrink to fit 260px if the name is long (E stays +8px)
+  const title = $('recipe-title');
+  let size = 45;
+  title.innerHTML = scratchyHTML(drink.name.toUpperCase(), size);
+  title.style.fontSize = size + 'px';
+  dom.overlay.classList.add('open');           // needs layout to measure
+  while (title.scrollWidth > 260 && size > 26) {
+    size -= 1;
+    title.style.fontSize = size + 'px';
+    title.innerHTML = scratchyHTML(drink.name.toUpperCase(), size);
+  }
+  // Ingredients: 28px as designed; smaller when a recipe has more lines
+  const list = $('recipe-list');
+  const n = drink.ingredients.length;
+  list.style.fontSize = (n <= 3 ? 28 : n === 4 ? 25 : n === 5 ? 21 : 19) + 'px';
+  list.innerHTML = drink.ingredients.map(recipeLine).join('');
+  // Mini drink: what the finished drink should look like
+  const poured = drink.ingredients.filter(i => i.oz).map(i => ({ id: i.id, oz: i.oz }));
+  const garnishes = [];
+  drink.ingredients.filter(i => i.count).forEach(i => {
+    for (let k = 0; k < i.count; k++) garnishes.push({ id: i.id, spot: garnishSpot(i.id, garnishes) });
   });
+  renderDrinkView($('recipe-drink'), poured, garnishes);
+
+  requestAnimationFrame(() => requestAnimationFrame(() => dom.recipeCard.classList.add('slide-up')));
 }
 
 function closeRecipe() {
   dom.recipeCard.classList.remove('slide-up');
   setTimeout(() => {
-    dom.overlay.classList.remove('open');
-    dom.overlay.classList.remove('recipe-image-mode');
+    if (!dom.recipeCard.classList.contains('slide-up')) dom.overlay.classList.remove('open');
   }, 350);
 }
 
@@ -1049,15 +1048,13 @@ dom.btnStartOrder.addEventListener('pointerdown', (e) => {
 dom.barPause.addEventListener('pointerdown', (e) => { e.stopPropagation(); pauseToggle(); });
 
 /* ═══════════════════════════════════════════════════════════════
-   EVENT WIRING — RECIPE OVERLAY
+   EVENT WIRING — RECIPE CARD
 ═══════════════════════════════════════════════════════════════ */
-dom.recipeClose.addEventListener('pointerdown', (e) => {
+// No X in the design — tapping anywhere closes the card
+dom.overlay.addEventListener('pointerdown', (e) => {
   e.stopPropagation();
   closeRecipe();
-  // Already on shelf screen — no redirect needed
 });
-
-dom.recipeCard.addEventListener('pointerdown', e => e.stopPropagation());
 
 /* ═══════════════════════════════════════════════════════════════
    EVENT WIRING — SHELF SCREEN
@@ -1413,19 +1410,18 @@ dom.pauseOverlay.addEventListener('pointerdown', (e) => {
 function allImagePaths() {
   const ui = ['icon-restart.svg','arrow-bar.svg','shelf-line.svg','icon-check.svg','icon-back.svg',
               'pour-ticks.svg','tap-target.png','icon-settings.svg','select-outline-whiskey.svg','select-outline-cola.svg',
-              'select-outline-lime.svg','icon-recipe.svg'].map(f => `assets/ui/${f}`);
+              'select-outline-lime.svg','icon-recipe.svg','recipe-underline.svg'].map(f => `assets/ui/${f}`);
   return [
     ...Object.values(ART),
     ...CUSTOMER_IDS.flatMap(id => [customerImg(id, 'skeleton'), customerImg(id, 'selected')]),
     ...Object.keys(INGREDIENTS).map(ingPath),
-    ...Object.values(RECIPE_IMAGES),
     ...ui,
   ];
 }
 
 function preload(onProgress) {
   const paths = allImagePaths();
-  const fonts = [document.fonts.load("28px 'BarFont'"), document.fonts.load("26px 'BarFontBold'")];
+  const fonts = [document.fonts.load("28px 'BarFont'"), document.fonts.load("26px 'BarFontBold'"), document.fonts.load("45px 'Scratchy'")];
   const total = paths.length + fonts.length;
   let done = 0;
   const tick = () => onProgress(++done / total);

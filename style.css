@@ -4,6 +4,10 @@
   src: url('assets/fonts/TheBarFont-Regular.otf');
 }
 @font-face {
+  font-family: 'Scratchy';                 /* user's handwriting font (Calligraphr) — recipe titles */
+  src: url('assets/fonts/Scratchy-Regular.otf');
+}
+@font-face {
   font-family: 'BarFontBold';
   src: url('assets/fonts/ThBarFont_Bold-Regular.otf');
 }
@@ -341,130 +345,56 @@ html, body {
 }
 
 /* ═══════════════════════════════════════════
-   OVERLAY: RECIPE
+   OVERLAY: RECIPE CARD — Figma 502:1932 (on 453:396)
+   300x334 card at (272,62), runs just past the bottom edge; no dimming behind it.
 ═══════════════════════════════════════════ */
 #overlay-recipe {
   position: absolute;
   inset: 0;
   z-index: 50;
   display: none;
-  align-items: center;
-  justify-content: center;
 }
-#overlay-recipe.open {
-  display: flex;
-}
-#recipe-backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.55);
-}
+#overlay-recipe.open { display: block; }
 #recipe-card {
-  position: relative;
-  z-index: 51;
-  background: #fff;
-  border: 2px solid #ddd;
+  position: absolute;
+  left: 272px;
+  top: 62px;
+  width: 300px;
+  height: 334px;
+  padding: 37px 20px 0;
+  background: #2b2a45;
   border-radius: 12px;
-  width: 500px;
-  max-height: 356px;
-  overflow: hidden;
-  padding: 20px 24px 16px;
-  transform: translateY(100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateY(340px);
   transition: transform 0.35s ease;
-  display: flex;
-  flex-direction: column;
 }
-#recipe-card.slide-up {
-  transform: translateY(0);
-}
-#btn-recipe-close {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: #ff5a5a;
-  color: #fff;
-  border: none;
-  cursor: pointer;
-  font-family: 'BarFont', sans-serif;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 52;
-  line-height: 1;
-}
-#recipe-content {
-  flex: 1;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-#recipe-content img.recipe-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-/* Vodka-soda: full PNG, no card, anchored to bottom */
-#overlay-recipe.recipe-image-mode {
-  align-items: center;
-  justify-content: center;
-}
-#overlay-recipe.recipe-image-mode #recipe-backdrop {
-  background: rgba(0,0,0,0.5);
-}
-/* Card shrink-wraps the image; X sits on its top-right corner */
-#overlay-recipe.recipe-image-mode #recipe-card {
-  position: relative;
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  padding: 0;
-  width: auto;
-  max-height: none;
-  overflow: visible;
-  display: inline-block;
-  /* keeps the slide-up transform from #recipe-card / .slide-up */
-}
-#overlay-recipe.recipe-image-mode #btn-recipe-close {
-  position: absolute;
-  top: -6px;
-  right: -3px;
-  z-index: 60;
-}
-/* Drawn recipe card — 279x371 (Figma "vodka soda recipe 1") */
-#overlay-recipe.recipe-image-mode img.recipe-img {
-  display: block;
-  width: 279px;
-  height: 371px;
-  object-fit: contain;
-}
-.recipe-drink-name {
-  font-family: 'BarFontBold', sans-serif;
-  font-size: 32px;
-  color: #000;
+#recipe-card.slide-up { transform: translateY(0); }
+/* Title — Scratchy 45px; every E is 8px bigger (the font's E is drawn small) */
+#recipe-title {
+  width: 260px;
+  font-family: 'Scratchy', 'BarFontBold', sans-serif;
+  font-size: 45px;
+  line-height: normal;
+  color: #cccaf3;
   text-align: center;
-  margin-bottom: 10px;
-  padding-right: 24px; /* avoid close btn overlap */
+  white-space: nowrap;
 }
-.recipe-hr {
-  width: 100%;
-  border: none;
-  border-top: 1.5px solid #ccc;
-  margin-bottom: 12px;
-}
-.recipe-ingredient {
+#recipe-underline { width: 264.48px; height: 13.46px; margin-top: -0.6px; flex: none; }
+#recipe-list {
+  margin-top: 13px;
   font-family: 'BarFont', sans-serif;
-  font-size: 21px;
-  color: #000;
+  font-size: 28px;
+  line-height: 1.32;
+  color: #cccaf3;           /* amounts */
   text-align: center;
-  margin-bottom: 5px;
-  width: 100%;
+  white-space: nowrap;
 }
+#recipe-list .ing { color: #edecff; }   /* ingredient names */
+/* Mini drink: the garnish-screen glass at 37px wide */
+#recipe-drink-wrap { margin-top: 13px; width: 37.03px; height: 59.5px; flex: none; position: relative; }
+#recipe-drink { position: absolute; left: 0; top: 9.97px; transform-origin: 0 0; transform: scale(0.3023); }
 
 /* ═══════════════════════════════════════════
    SCREEN 3: SHELF — Figma 453:396 (idle), 454:452 (bottle selected),
