@@ -501,10 +501,18 @@ function hideSpeechArea() {
 /* ═══════════════════════════════════════════════════════════════
    RECIPE CARD — Figma 502:1932
 ═══════════════════════════════════════════════════════════════ */
-// Scratchy's E is drawn small: every E is set 8px bigger than the rest of the title
+// Scratchy rules (user): its E is drawn small, so every E is 8px bigger than the rest,
+// and the letter right before an E sits a little tighter (-2.25px at 45px = 5% of the size).
 function scratchyHTML(text, size) {
-  return [...text].map(ch => ch.toUpperCase() === 'E'
-    ? `<span style="font-size:${size + 8}px">${ch}</span>` : ch).join('');
+  const chars = [...text];
+  return chars.map((ch, i) => {
+    const isE = ch.toUpperCase() === 'E';
+    const beforeE = chars[i + 1] && chars[i + 1].toUpperCase() === 'E' && ch !== ' ';
+    const style = [];
+    if (isE) style.push(`font-size:${size + 8}px`);
+    if (beforeE) style.push(`letter-spacing:${-(size * 0.05).toFixed(2)}px`);
+    return style.length ? `<span style="${style.join(';')}">${ch}</span>` : ch;
+  }).join('');
 }
 
 function recipeLine(ing) {
