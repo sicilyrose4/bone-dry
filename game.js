@@ -126,24 +126,27 @@ const SHIFT_SECONDS = 300;
 const CONFIRM_MS = 1200;   // how long "ADDED ✓" / "GLASS EMPTIED ✓" / "GARNISH REMOVED ✓" stay before fading
 
 /* ═══════════════════════════════════════════════════════════════
-   PROGRESS — saved on this device between shifts
-   Familiarity: never made → recipe shows automatically;
-   made 1–2x (familiar) → hidden, can peek for a tip cost; 3+ (mastered) → no peek.
+   PROGRESS
+   Familiarity (user, 2026-09-25 — prototype rules): the first time a drink comes up,
+   its recipe opens by itself and re-opening it is free ("new"). After that ("familiar")
+   the recipe is always one tap away, but every peek costs PEEK_COST (after a confirm).
+   No "mastered" tier. Which drinks you've made is NOT saved — it starts over every time
+   the app opens, so a class demo plays like a first time. Shift history is still saved.
 ═══════════════════════════════════════════════════════════════ */
 const SAVE_KEY = 'boneDry.progress.v1';
-const PEEK_COST = 0.50;   // tip lost for peeking at a familiar recipe
+const PEEK_COST = 0.50;   // tip lost for each peek at a familiar recipe
 
 function loadProgress() {
   try {
     const p = JSON.parse(localStorage.getItem(SAVE_KEY));
-    if (p && p.drinks) return { drinks: p.drinks, shifts: p.shifts || [] };
+    if (p) return { drinks: {}, shifts: p.shifts || [] };
   } catch (e) { /* no saved progress yet */ }
   return { drinks: {}, shifts: [] };
 }
 const PROGRESS = loadProgress();
 
 function saveProgress() {
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify(PROGRESS)); } catch (e) { /* storage unavailable */ }
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify({ shifts: PROGRESS.shifts })); } catch (e) { /* storage unavailable */ }
 }
 
 function timesMade(drinkId) {
@@ -151,8 +154,7 @@ function timesMade(drinkId) {
 }
 
 function tierOf(drinkId) {
-  const n = timesMade(drinkId);
-  return n === 0 ? 'new' : n <= 2 ? 'familiar' : 'mastered';
+  return timesMade(drinkId) === 0 ? 'new' : 'familiar';
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -179,8 +181,8 @@ const G = {
     poured: [],          // totals per ingredient [{id, oz?, count?}] — used for scoring
     layers: [],          // every pour in order [{id, oz}] — drawn as bands in the glass
     garnishes: [],       // placed on the drink [{id, spot}]
-    tier: 'new',         // new | familiar | mastered (when the order started)
-    peeked: false,       // looked at the recipe on a familiar drink
+    tier: 'new',         // new | familiar (when the order started)
+    peeks: 0,            // paid peeks at the recipe on a familiar drink
     activeIngredient: null,
   },
   pour: {
@@ -399,9 +401,9 @@ function updateDial(score, drinkTime, peeked) {
    CUSTOMER MANAGEMENT
 ═══════════════════════════════════════════════════════════════ */
 function pickDrink() {
-  // Calm → mostly new/familiar drinks; as the dial climbs, mastered drinks show up more
+  // Calm → more new drinks; as the dial climbs, drinks you've already made show up more
   const d = effectiveDial();
-  const weight = { new: 0.6 * (1 - d) + 0.1, familiar: 1, mastered: 0.3 + 1.2 * d };
+  const weight = { new: 0.6 * (1 - d) + 0.1, familiar: 0.8 + 0.7 * d };
   const pool = DRINKS.filter(x => x.id !== G.lastDrinkId);
   const total = pool.reduce((sum, x) => sum + weight[tierOf(x.id)], 0);
   let r = Math.random() * total;
@@ -1072,7 +1074,7 @@ document.querySelectorAll('.tick-label').forEach(el => {
 const SPIRIT_IDS = new Set(['vodka', 'gin', 'tequila', 'whiskey', 'white-rum']);
 const SWEET_IDS  = new Set(['simple-syrup', 'grenadine', 'triple-sec']);
 
-function scoreDrink(recipe, poured, drinkTime, tier, peeked) {
+function scoreDrink(recipe, poured, drinkTime, tier, peeks) {
   let score = 100;
   const reqIds = recipe.ingredients.map(r => r.id);
   const pouredIds = poured.map(p => p.id);
@@ -1115,7 +1117,7 @@ function scoreDrink(recipe, poured, drinkTime, tier, peeked) {
   else base = 0.00;
 
   let tip = base * timeMult;
-  if (peeked) tip = Math.max(0, tip - PEEK_COST);
+  tip = Math.max(0, tip - PEEK_COST * peeks);
   tip = Math.round(tip * 100) / 100;
 
   // Mood for the reaction — the biggest reason behind the tip, said vaguely
@@ -1177,12 +1179,12 @@ function serveDrink() {
   if (!customer) return;
 
   const drinkTime = G.drinkElapsed;
-  const result = scoreDrink(G.drink.recipe, G.drink.poured, drinkTime, G.drink.tier, G.drink.peeked);
+  const result = scoreDrink(G.drink.recipe, G.drink.poured, drinkTime, G.drink.tier, G.drink.peeks);
   G.tips += result.tip;
   G.drinksServed++;
-  updateDial(result.score, drinkTime, G.drink.peeked);
+  updateDial(result.score, drinkTime, G.drink.peeks > 0);
 
-  // Familiarity: every served drink counts toward new → familiar → mastered
+  // Familiarity: every served drink counts toward new → familiar (this session only)
   const rec = PROGRESS.drinks[G.drink.recipe.id] || (PROGRESS.drinks[G.drink.recipe.id] = { made: 0 });
   rec.made++;
   saveProgress();
@@ -1240,7 +1242,7 @@ function resetCurrentDrink() {
   G.drink.garnishes = [];
   G.drink.activeIngredient = null;
   G.drink.tier = 'new';
-  G.drink.peeked = false;
+  G.drink.peeks = 0;
   G.drinkElapsed = 0;
 }
 
@@ -1342,7 +1344,7 @@ dom.btnStartOrder.addEventListener('pointerdown', (e) => {
   G.shelf.selected = null;
   G.shelf.toast = null;
   G.drink.tier = tierOf(customer.drink.id);
-  G.drink.peeked = false;
+  G.drink.peeks = 0;
   buildShelf();
   openShelf();
   if (G.drink.tier === 'new') setTimeout(() => openRecipe(customer.drink), 50);
@@ -1378,19 +1380,34 @@ dom.btnPourOut.addEventListener('click', (e) => {
 
 dom.shelfPause.addEventListener('pointerdown', (e) => { e.stopPropagation(); pauseToggle(); });
 
-// Recipe icon (shelf, pour, garnish): new drinks re-open the recipe for free;
-// familiar drinks cost PEEK_COST (charged once per drink); mastered drinks have no icon.
+// Recipe icon (shelf, pour, garnish) — always there while a drink is in progress.
+// New drink: re-open for free. Familiar drink: every peek costs PEEK_COST, after a confirm.
 const RECIPE_BUTTON_IDS = ['btn-recipe-peek', 'btn-recipe-peek-pour', 'btn-recipe-peek-garnish'];
 function updateRecipeButtons() {
-  const show = G.drink.recipe && (G.drink.tier === 'new' || G.drink.tier === 'familiar');
-  RECIPE_BUTTON_IDS.forEach(id => { $(id).style.display = show ? 'block' : 'none'; });
+  RECIPE_BUTTON_IDS.forEach(id => { $(id).style.display = G.drink.recipe ? 'block' : 'none'; });
 }
 RECIPE_BUTTON_IDS.forEach(id => $(id).addEventListener('pointerdown', (e) => {
   e.stopPropagation();   // don't start a pour on the pour screen
-  if (!G.timerRunning || !G.drink.recipe || G.drink.tier === 'mastered') return;
-  if (G.drink.tier === 'familiar') G.drink.peeked = true;
-  openRecipe(G.drink.recipe);
+  if (!G.timerRunning || !G.drink.recipe) return;
+  if (G.drink.tier === 'new') openRecipe(G.drink.recipe);
+  else openPeekConfirm();
 }));
+
+// Peek confirm — PLACEHOLDER look until the user's overlay design arrives
+function openPeekConfirm() {
+  $('peek-confirm-text').textContent = `peek at the recipe for $${PEEK_COST.toFixed(2)}?`;
+  $('peek-confirm').style.display = 'flex';
+}
+function closePeekConfirm() { $('peek-confirm').style.display = 'none'; }
+$('btn-peek-yes').addEventListener('click', (e) => {
+  e.stopPropagation();
+  closePeekConfirm();
+  if (!G.drink.recipe) return;
+  G.drink.peeks++;
+  openRecipe(G.drink.recipe);
+});
+$('btn-peek-no').addEventListener('click', (e) => { e.stopPropagation(); closePeekConfirm(); });
+$('peek-confirm').addEventListener('pointerdown', (e) => { if (e.target.id === 'peek-confirm') closePeekConfirm(); });
 
 dom.btnPour.addEventListener('click', (e) => {
   e.stopPropagation();

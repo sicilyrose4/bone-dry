@@ -858,6 +858,33 @@ html, body {
 /* End the shift early — secondary button (like POUR / DONE / START SHIFT) */
 #btn-end-shift { letter-spacing: normal; }
 
+/* Peek confirm — PLACEHOLDER (user will provide the overlay design).
+   Dim layer + recipe-card navy box + component buttons, nothing invented. */
+#peek-confirm {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  background: rgba(4, 3, 24, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#peek-confirm-box {
+  background: #2b2a45;
+  border-radius: 12px;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+#peek-confirm-text {
+  font-family: 'BarFontBold', sans-serif;
+  font-size: 26px;
+  color: #edecff;
+}
+.peek-confirm-row { display: flex; gap: 16px; }
+
 /* ─── NOTIFICATIONS ──────────────────────────────────────────── */
 #notification-layer {
   position: absolute;
