@@ -33,6 +33,17 @@ const INGREDIENTS = {
 };
 const LIQUID_IDS = Object.keys(INGREDIENTS).filter(id => INGREDIENTS[id].type === 'liquid');
 
+// Shelf heights (user, 2026-09-24): every hard alcohol stands as tall as the gin,
+// every other liquid as tall as the orange juice. Width follows each bottle's own art.
+// (`shelf` above stays the Figma size — the pour screen still sizes bottles from it.)
+const HARD_ALCOHOL_IDS = new Set(['vodka', 'gin', 'tequila', 'whiskey', 'white-rum', 'triple-sec']);
+const SHELF_H_HARD = INGREDIENTS.gin.shelf[1], SHELF_H_OTHER = INGREDIENTS.oj.shelf[1];
+function shelfSize(id) {
+  const [w, h] = INGREDIENTS[id].shelf;
+  const H = HARD_ALCOHOL_IDS.has(id) ? SHELF_H_HARD : SHELF_H_OTHER;
+  return [w * H / h, H];
+}
+
 // Approved menu (2026-09-24). Add a drink = add a line here.
 const DRINKS = [
   { id:'vodka-soda',      name:'Vodka Soda',      ingredients:[{id:'vodka',oz:1.5},{id:'soda-water',oz:4},{id:'lime',count:1}] },
@@ -590,7 +601,7 @@ const SHELF_START_X = 38, SHELF_GAP = 36, SCREEN_W = 844;
 function edgeBottleVisible(order) {
   let x = SHELF_START_X;
   for (const id of order) {
-    const w = INGREDIENTS[id].shelf[0];
+    const [w] = shelfSize(id);
     if (x < SCREEN_W && x + w > SCREEN_W) return (SCREEN_W - x) / w;   // fraction showing
     x += w + SHELF_GAP;
   }
@@ -615,8 +626,9 @@ function buildShelf() {
     const el = document.createElement('div');
     el.className = 'shelf-bottle' + (ing.outline ? '' : ' traced');
     el.dataset.id = id;
-    el.style.width = ing.shelf[0] + 'px';
-    el.style.height = ing.shelf[1] + 'px';
+    const [w, h] = shelfSize(id), k = h / ing.shelf[1];
+    el.style.width = w + 'px';
+    el.style.height = h + 'px';
     const img = document.createElement('img');
     img.className = 'bottle';
     img.src = ingPath(id);
@@ -627,7 +639,7 @@ function buildShelf() {
       o.className = 'outline';
       o.src = ing.outline.src;
       o.alt = '';
-      Object.assign(o.style, { left: ing.outline.x + 'px', top: ing.outline.y + 'px', width: ing.outline.w + 'px', height: ing.outline.h + 'px' });
+      Object.assign(o.style, { left: ing.outline.x * k + 'px', top: ing.outline.y * k + 'px', width: ing.outline.w * k + 'px', height: ing.outline.h * k + 'px' });
       el.appendChild(o);
     }
     el.addEventListener('click', () => toggleBottle(id));
