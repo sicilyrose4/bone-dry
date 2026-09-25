@@ -249,17 +249,17 @@ html, body {
 .counter-drink { position: absolute; transition: opacity 0.6s ease; }
 .counter-drink.leaving { opacity: 0; }
 
-/* Speech bubble — 50 tall, 30px side padding, radius 16, colors per customer (Figma 486:1923 "speech bubble styles").
+/* Speech bubble — style "A6" (user, 2026-09-24): dark fill, chalky outline + text in the
+   customer's color (Figma 486:1923 colors), radius 6, short straight tail — drawn on
+   #speech-canvas by drawChalkBubble() in game.js. 48 tall (never taller than START ORDER).
    Order text is lowercase to set it apart from the UI text.
-   Above the customer at y=43 (tail down), or on the counter at y=311 (tail up)
+   Above the customer at y=45 (tail down), or on the counter at y=311 (tail up)
    when "above" would touch the tips / pause. */
 #speech-area {
   position: absolute;
-  top: 43px;                      /* bottom edge stays at y=93, same as the Figma bubble */
-  height: 50px;                   /* no taller than START ORDER (194x54) — wider is fine (user, 2026-09-24) */
-  padding: 0 30px;
-  background: var(--bubble-bg, #9d9cb6);
-  border-radius: 16px;            /* softly rounded, not a pill */
+  top: 45px;                      /* bottom edge stays at y=93 */
+  height: 48px;
+  padding: 0 24px;
   z-index: 10;
   pointer-events: none;
   display: flex;
@@ -267,19 +267,10 @@ html, body {
   justify-content: center;
 }
 #speech-area.below { top: 311px; }
-#speech-area .speech-tail {
-  position: absolute;
-  top: 40px;                      /* above: hangs off the bottom, tip down */
-  left: var(--tail-left, 144px);
-  width: 30.5px;
-  height: 27.46px;
-  fill: var(--bubble-bg, #9d9cb6);
-}
-#speech-area.below .speech-tail {
-  top: -22.46px;                  /* below: sticks up from the top, tip up (Figma Vector 36, rotated 180°) */
-  transform: scaleY(-1);
-}
+#speech-canvas { position: absolute; pointer-events: none; }
 #speech-text {
+  z-index: 1;                     /* above the drawn bubble */
+  position: relative;
   font-family: 'BarFontBold', sans-serif;
   font-size: 28px;
   line-height: normal;

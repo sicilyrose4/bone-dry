@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#12111d" />
   <title>Bone Dry</title>
-  <link rel="stylesheet" href="style.css?v=5" />
+  <link rel="stylesheet" href="style.css?v=7" />
 </head>
 <body>
   <div id="viewport">
@@ -54,10 +54,8 @@
         <!-- Speech bubble -->
         <div id="speech-area" style="display:none;">
           <div id="speech-text"></div>
-          <!-- Tail shape = Figma "Vector 34"; colored per customer -->
-          <svg class="speech-tail" viewBox="0 0 30.5 27.4631" preserveAspectRatio="none" aria-hidden="true">
-            <path d="M12.2221 25.2081L0 0H30.5L19.4835 25.0721C18.1112 28.1952 13.7104 28.2776 12.2221 25.2081Z" />
-          </svg>
+          <!-- Bubble shape + tail are drawn here (drawChalkBubble in game.js) -->
+          <canvas id="speech-canvas" aria-hidden="true"></canvas>
         </div>
         <!-- Start order button -->
         <button id="btn-start-order" class="btn-primary" style="display:none;">START ORDER</button>
@@ -228,6 +226,6 @@
     </div><!-- #game -->
   </div><!-- #viewport -->
 
-  <script src="game.js?v=5"></script>
+  <script src="game.js?v=6"></script>
 </body>
 </html>

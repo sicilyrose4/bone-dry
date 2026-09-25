@@ -209,6 +209,7 @@ const dom = {
   barPause:         $('bar-pause'),
   speechArea:       $('speech-area'),
   speechText:       $('speech-text'),
+  speechCanvas:     $('speech-canvas'),
   btnStartOrder:    $('btn-start-order'),
 
   shelfTimer:       $('shelf-timer'),
@@ -479,8 +480,7 @@ function showSpeechArea(text, slotIdx) {
   const cx = SLOT_CX[slotIdx];
   const area = dom.speechArea;
   dom.speechText.textContent = text;
-  area.style.setProperty('--bubble-bg', style.bg);
-  area.style.setProperty('--bubble-text', style.text);
+  area.style.setProperty('--bubble-text', style.bg);   // A6: text in the outline color
   area.classList.remove('below');
   area.style.display = 'flex';
   const w = area.offsetWidth;
@@ -495,12 +495,83 @@ function showSpeechArea(text, slotIdx) {
     left = clampLeft(cx + BUBBLE_BELOW.dx - w / 2);
     tailX = cx + BUBBLE_BELOW.tail;
   }
-  const tailLeft = Math.min(Math.max(tailX - left, 24), w - 24 - 30.5);
+  // `tail` offsets were measured for Figma's 30.5px tail — keep the same center for the narrower one
+  tailX += (30.5 - BUBBLE_TAIL_W) / 2;
+  const tailLeft = Math.min(Math.max(tailX - left, 14), w - 14 - BUBBLE_TAIL_W);
   area.style.left = left + 'px';
-  area.style.setProperty('--tail-left', tailLeft + 'px');
+  drawChalkBubble(dom.speechCanvas, w, area.offsetHeight, tailLeft, style.bg, area.classList.contains('below'), c.type.length);
 }
 
-// Would a bubble at the top (y 43–93) touch the tips amount or the pause button?
+/* Speech bubble style "A6" (user, 2026-09-24): dark fill, chalky outline in the
+   customer's color, radius 6, short straight tail. Drawn on a canvas, like the liquid. */
+const BUBBLE_R = 6, BUBBLE_TAIL_W = 22, BUBBLE_TAIL_H = 16, BUBBLE_LINE = 3.2, BUBBLE_WOBBLE = 0.8;
+const BUBBLE_FILL = 'rgba(4, 3, 24, 0.9)';
+
+// Outline of the bubble (clockwise, box 0,0–w,h) with the tail hanging off the bottom edge
+function bubbleOutline(w, h, tailLeft, seed) {
+  const r = BUBBLE_R, step = 3, pts = [], P = Math.PI;
+  const line = (x0, y0, x1, y1) => {
+    const n = Math.max(1, Math.round(Math.hypot(x1 - x0, y1 - y0) / step));
+    for (let i = 0; i < n; i++) pts.push([x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n]);
+  };
+  const arc = (cx, cy, a0) => { for (let i = 0; i < 4; i++) { const a = a0 + (P / 2) * i / 4; pts.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]); } };
+  const tl = tailLeft, tr = tailLeft + BUBBLE_TAIL_W, tip = [tailLeft + BUBBLE_TAIL_W * 0.45, h + BUBBLE_TAIL_H];
+  line(r, 0, w - r, 0);            arc(w - r, r, -P / 2);
+  line(w, r, w, h - r);            arc(w - r, h - r, 0);
+  line(w - r, h, tr, h);           line(tr, h, tip[0], tip[1]);   line(tip[0], tip[1], tl, h);
+  line(tl, h, r, h);               arc(r, h - r, P / 2);
+  line(0, h - r, 0, r);            arc(r, r, P);
+  // Hand-drawn wobble: nudge every point along its normal by a few overlapping waves
+  const n = pts.length;
+  return pts.map((p, i) => {
+    const a = pts[(i - 1 + n) % n], b = pts[(i + 1) % n];
+    let nx = b[1] - a[1], ny = a[0] - b[0];
+    const L = Math.hypot(nx, ny) || 1;
+    const t = i / n * 2 * P;
+    const o = BUBBLE_WOBBLE * (Math.sin(t * 5 + seed) + 0.6 * Math.sin(t * 11 + seed * 2.3) + 0.3 * Math.sin(t * 23 + seed * 0.7));
+    return [p[0] + nx / L * o, p[1] + ny / L * o];
+  });
+}
+
+// Paint a bubble of box size w×h onto `canvas` (sits behind the text). Below = tail points up.
+function drawChalkBubble(canvas, w, h, tailLeft, color, below, seed) {
+  const pad = 6, cw = w + 2 * pad, ch = h + BUBBLE_TAIL_H + 2 * pad;
+  const dpr = Math.min(3, window.devicePixelRatio || 1);
+  canvas.width = Math.ceil(cw * dpr);
+  canvas.height = Math.ceil(ch * dpr);
+  Object.assign(canvas.style, {
+    left: -pad + 'px', top: (below ? -(BUBBLE_TAIL_H + pad) : -pad) + 'px',
+    width: cw + 'px', height: ch + 'px', transform: below ? 'scaleY(-1)' : 'none',
+  });
+  const pts = bubbleOutline(w, h, tailLeft, seed);
+  const trace = ctx => {
+    ctx.setTransform(dpr, 0, 0, dpr, pad * dpr, pad * dpr);
+    ctx.beginPath();
+    pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y));
+    ctx.closePath();
+  };
+  const ctx = canvas.getContext('2d');
+  trace(ctx);
+  ctx.fillStyle = BUBBLE_FILL;
+  ctx.fill();
+  // Chalky outline: stroke on its own layer, knock grain out of it, then lay it on top
+  const line = document.createElement('canvas');
+  line.width = canvas.width; line.height = canvas.height;
+  const lc = line.getContext('2d');
+  trace(lc);
+  lc.strokeStyle = color;
+  lc.lineWidth = BUBBLE_LINE;
+  lc.lineJoin = 'round';
+  lc.stroke();
+  lc.setTransform(1, 0, 0, 1, 0, 0);
+  lc.globalCompositeOperation = 'destination-in';
+  lc.fillStyle = lc.createPattern(grainTile(), 'repeat');
+  lc.fillRect(0, 0, line.width, line.height);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.drawImage(line, 0, 0);
+}
+
+// Would a bubble at the top (y 45–93) touch the tips amount or the pause button?
 function bubbleHitsTopRow(left, w) {
   const GAP = 10;
   const tipsRight = 30 + dom.barTips.offsetWidth;          // "$0.00" starts at x=30
