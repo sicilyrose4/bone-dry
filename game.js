@@ -737,23 +737,104 @@ function hexToRgba(hex, a) {
   return `rgba(${n >> 16 & 255}, ${n >> 8 & 255}, ${n & 255}, ${a})`;
 }
 
+/* Hand-drawn liquid details (style "C", matching the bottle art):
+   a drawn surface line on top of each liquid, bubble outlines in fizzy ones,
+   a soft shine streak down the left side, all with a chalky grain. */
+const FIZZY_IDS = new Set(['soda-water', 'tonic-water', 'cola', 'ginger-beer']);
+const WAVE_FIZZY = { amp: 2.6, cycles: 2.2 };
+const WAVE_STILL = { amp: 0.8, cycles: 1.2 };
+let chalkSeq = 0;
+
+// Chalky grain filter (fractal noise knocks out bits of each stroke)
+function chalkFilterSVG(id, box) {
+  const region = box ? `filterUnits="userSpaceOnUse" x="${box[0]}" y="${box[1]}" width="${box[2]}" height="${box[3]}"` : 'x="-10%" y="-10%" width="120%" height="120%"';
+  return `<filter id="${id}" ${region}><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="5" result="n"/>` +
+    `<feColorMatrix in="n" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1.5 0" result="g"/>` +
+    `<feComposite in="SourceGraphic" in2="g" operator="in"/></filter>`;
+}
+
+function wavePath(x0, x1, y, { amp, cycles }) {
+  const steps = 28;
+  let d = '';
+  for (let k = 0; k <= steps; k++) {
+    const t = k / steps;
+    d += `${k ? 'L' : 'M'}${(x0 + (x1 - x0) * t).toFixed(1)} ${(y + amp * Math.sin(t * cycles * 2 * Math.PI)).toFixed(1)}`;
+  }
+  return d;
+}
+
+// Tiny seeded random so bubbles stay put while the glass fills
+function seededRandom(seed) {
+  let s = seed * 9301 + 49297;
+  return () => (s = (s * 9301 + 49297) % 233280) / 233280;
+}
+
+// Inside walls of the pour glass (same trace as the #pour-liquid clip-path)
+const TICK_LABEL_OZ = [8, 6, 4, 2.5, 1.5];   // the oz labels printed on the pour glass
+const POUR_WALL_L = [[406,132],[414,192],[426,276],[437.5,331.5],[441.5,352],[447.5,365.5]];
+const POUR_WALL_R = [[572.5,132],[566.5,192],[554,276],[551,331.5],[546,358.5],[538,366.5]];
+function wallX(wall, y) {
+  if (y <= wall[0][1]) return wall[0][0];
+  for (let i = 1; i < wall.length; i++) {
+    const [x0, y0] = wall[i - 1], [x1, y1] = wall[i];
+    if (y <= y1) return x0 + (x1 - x0) * (y - y0) / (y1 - y0);
+  }
+  return wall[wall.length - 1][0];
+}
+
 // Stacked bands: every committed pour, plus the one in progress
 function renderPourLiquid() {
   const layers = [...G.drink.layers];
   if (G.pour.ozPoured > 0) layers.push({ id: G.pour.ingredientId, oz: G.pour.ozPoured });
   dom.pourLiquid.innerHTML = '';
-  let total = 0;
+  let total = 0, detail = '';
   layers.forEach((l, i) => {
     const band = document.createElement('div');
     band.className = 'liquid-band';
     const bottom = i === 0 ? OZ_ZERO_Y + 6 : ozToY(total);   // first band fills the rounded bottom
     total = Math.min(MAX_OZ, total + l.oz);
     const top = ozToY(total);
+    const color = INGREDIENTS[l.id].color;
     band.style.top = top + 'px';
     band.style.height = Math.max(0, bottom - top) + 'px';
-    band.style.background = hexToRgba(INGREDIENTS[l.id].color, 0.3);
+    band.style.background = hexToRgba(color, 0.3);
     dom.pourLiquid.appendChild(band);
+    if (bottom - top < 1) return;
+
+    const fizzy = FIZZY_IDS.has(l.id);
+    // Bubbles fill in from the bottom of the layer as it rises
+    if (fizzy) {
+      const rand = seededRandom(i + 1);
+      const floor = Math.min(bottom, 358);
+      const placed = [];
+      for (let k = 0; k < 40; k++) {
+        const y = floor - 12 - k * 7 - rand() * 4, r = 3.5 + rand() * 3.5, f = rand();
+        if (y - r < top + 8) break;
+        // Stay right of the ticks and clear of the shine; hop over the oz labels
+        const xl = 470, xr = wallX(POUR_WALL_R, y) - 26;
+        if (y + r > floor - 4 || xr - xl < 2 * r) continue;
+        const x = xl + r + (xr - xl - 2 * r) * f;
+        const onLabel = TICK_LABEL_OZ.some(oz => Math.abs(ozToY(oz) - y) < r + 8 && x - r < 514);
+        if (onLabel || placed.some(([px, py]) => Math.hypot(px - x, py - y) < 22)) continue;
+        placed.push([x, y]);
+        detail += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="none" stroke="${color}" stroke-width="2.6"/>`;
+      }
+    }
+    // Surface line on top of this layer
+    detail += `<path d="${wavePath(wallX(POUR_WALL_L, top) + 8, wallX(POUR_WALL_R, top) - 8, top, fizzy ? WAVE_FIZZY : WAVE_STILL)}" fill="none" stroke="${color}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`;
   });
+  if (!detail) return;
+
+  // Shine streak down the side of the whole drink (right side here — the ticks sit on the left)
+  const top = ozToY(total), y1 = top + 18, len = Math.min(60, (356 - y1) * 0.6);
+  const shineX = y => (wallX(POUR_WALL_R, y) - 13).toFixed(1);
+  if (len >= 12) {
+    const y2 = y1 + len, y3 = y2 + 12, y4 = y3 + 10;
+    detail += `<path d="M${shineX(y1)} ${y1}L${shineX(y2)} ${y2}" stroke="rgba(255,255,255,0.41)" stroke-width="3.5" stroke-linecap="round"/>`;
+    if (y4 < 350) detail += `<path d="M${shineX(y3)} ${y3}L${shineX(y4)} ${y4}" stroke="rgba(255,255,255,0.33)" stroke-width="3.5" stroke-linecap="round"/>`;
+  }
+  dom.pourLiquid.insertAdjacentHTML('beforeend',
+    `<svg class="liquid-detail" width="844" height="390" viewBox="0 0 844 390">${chalkFilterSVG('chalk-pour', [390, 110, 200, 270])}<g filter="url(#chalk-pour)">${detail}</g></svg>`);
 }
 
 function totalPouredOz() {
@@ -1244,13 +1325,34 @@ function garnishSpot(id, placed) {
 
 const LIQUID_PATH = 'M15.2349 92C9.81188 73.7941 3.01339 25.9849 0.0160161 2.24516C-0.134587 1.05236 0.796158 0 1.99843 0H98.1087C99.2614 0 100.176 0.963895 100.085 2.11295C98.3598 23.9369 88.5012 89.4568 83.4396 121.698C83.3135 122.501 82.7139 123.124 81.9206 123.302C56.3859 129.03 34.0433 125.913 24.8618 123.334C24.1586 123.137 23.6472 122.559 23.4847 121.847C22.6398 118.146 20.1902 108.635 15.2349 92Z';
 
+// Bubble outlines for a mixed drink (liquid-shape coords); fizzier drinks show more of them
+const MIXED_BUBBLES = [[0.30,0.20,2.4],[0.66,0.16,1.5],[0.50,0.45,2.9],[0.74,0.52,1.8],[0.30,0.62,1.5],[0.58,0.78,1.1],[0.40,0.88,1.4]];
+
+// One blended liquid in the hand-drawn style: fill, surface line, bubbles, shine
+function mixedLiquidSVG(poured, color) {
+  const totalOz = poured.reduce((s, p) => s + (p.oz || 0), 0);
+  const fizzyShare = poured.reduce((s, p) => s + (FIZZY_IDS.has(p.id) ? p.oz || 0 : 0), 0) / totalOz;
+  const id = 'chalk-dv-' + (++chalkSeq);
+  let detail = '';
+  if (fizzyShare > 0) {
+    MIXED_BUBBLES.slice(0, Math.max(3, Math.round(MIXED_BUBBLES.length * Math.min(1, fizzyShare * 1.4)))).forEach(([fx, fy, r]) => {
+      const y = 11 + 104 * fy, x = 13 + 68 * fx - (y - 9) * 0.05;
+      detail += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" fill="none" stroke="${color}" stroke-width="1.2"/>`;
+    });
+  }
+  const wave = fizzyShare > 0 ? { amp: 1.1, cycles: 2.2 } : { amp: 0.45, cycles: 1.2 };
+  detail += `<path d="${wavePath(6, 83, 3.2, wave)}" fill="none" stroke="${color}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>`;
+  detail += `<path d="M13 13L16 39" stroke="rgba(255,255,255,0.41)" stroke-width="1.8" stroke-linecap="round"/>` +
+            `<path d="M18 47L19 52" stroke="rgba(255,255,255,0.33)" stroke-width="1.8" stroke-linecap="round"/>`;
+  return `<svg class="dv-liquid" viewBox="0 0 100.091 126.534" preserveAspectRatio="none">${chalkFilterSVG(id)}` +
+    `<path d="${LIQUID_PATH}" fill="${color}" fill-opacity="0.3"/><g filter="url(#${id})">${detail}</g></svg>`;
+}
+
 // Glass + one blended liquid color + placed garnishes (garnish screen and bar counter)
 function renderDrinkView(el, poured, garnishes) {
   el.innerHTML = '';
   const color = blendLiquids(poured);
-  if (color) {
-    el.insertAdjacentHTML('beforeend', `<svg class="dv-liquid" viewBox="0 0 100.091 126.534" preserveAspectRatio="none"><path d="${LIQUID_PATH}" fill="${color}" fill-opacity="0.3"/></svg>`);
-  }
+  if (color) el.insertAdjacentHTML('beforeend', mixedLiquidSVG(poured, color));
   const glass = document.createElement('img');
   glass.className = 'dv-glass';
   glass.src = ART.glass;

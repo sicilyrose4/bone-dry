@@ -676,6 +676,7 @@ html, body {
                      551px 331.5px, 554px 276px, 566.5px 192px, 572.5px 132px);
 }
 .liquid-band { position: absolute; left: 0; width: 844px; }
+.liquid-detail { position: absolute; left: 0; top: 0; overflow: visible; }
 
 /* Measuring ticks: Figma "Frame 27" (drawn in portrait, so turned -90° here) */
 #pour-ticks {
