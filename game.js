@@ -500,7 +500,7 @@ function showSpeechArea(text, slotIdx) {
   area.style.setProperty('--tail-left', tailLeft + 'px');
 }
 
-// Would a bubble at the top (y 32–93) touch the tips amount or the pause button?
+// Would a bubble at the top (y 43–93) touch the tips amount or the pause button?
 function bubbleHitsTopRow(left, w) {
   const GAP = 10;
   const tipsRight = 30 + dom.barTips.offsetWidth;          // "$0.00" starts at x=30
