@@ -39,7 +39,7 @@ const LIQUID_IDS = Object.keys(INGREDIENTS).filter(id => INGREDIENTS[id].type ==
 const REAL_HEIGHT_CM = {
   vodka: 30, 'white-rum': 29, gin: 29, 'triple-sec': 28, whiskey: 25, tequila: 24,   // 750 ml liquor
   'simple-syrup': 26, cranberry: 23, oj: 22, 'lime-juice': 21, grenadine: 19,        // bar bottles / juice
-  'soda-water': 20, 'ginger-beer': 20, 'tonic-water': 18, cola: 12.2,                 // mixers, cola can
+  'soda-water': 20, 'ginger-beer': 20, 'tonic-water': 18, cola: 14,                   // mixers, cola can
 };
 const SHELF_PX_PER_CM = 5.8;   // tallest (vodka, 30 cm) ≈ 174 px
 function shelfSize(id) {
