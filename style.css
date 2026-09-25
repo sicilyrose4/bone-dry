@@ -235,17 +235,17 @@ html, body {
 .counter-drink { position: absolute; transition: opacity 0.6s ease; }
 .counter-drink.leaving { opacity: 0; }
 
-/* Speech bubble — hugs its text (50 tall, 20px side padding), radius 24, colors per customer (Figma 486:1923 "speech bubble styles").
+/* Speech bubble — 50 tall, 30px side padding, radius 16, colors per customer (Figma 486:1923 "speech bubble styles").
    Order text is lowercase to set it apart from the UI text.
    Above the customer at y=43 (tail down), or on the counter at y=311 (tail up)
    when "above" would touch the tips / pause. */
 #speech-area {
   position: absolute;
   top: 43px;                      /* bottom edge stays at y=93, same as the Figma bubble */
-  height: 50px;                   /* tighter than Figma's 222x61 (user, 2026-09-24): */
-  padding: 0 20px;                /* the bubble shouldn't out-size START ORDER (194x54) */
+  height: 50px;                   /* no taller than START ORDER (194x54) — wider is fine (user, 2026-09-24) */
+  padding: 0 30px;
   background: var(--bubble-bg, #9d9cb6);
-  border-radius: 24px;
+  border-radius: 16px;            /* softly rounded, not a pill */
   z-index: 10;
   pointer-events: none;
   display: flex;
