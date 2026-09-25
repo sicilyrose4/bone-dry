@@ -1423,7 +1423,7 @@ dom.pauseOverlay.addEventListener('pointerdown', (e) => {
 function allImagePaths() {
   const ui = ['icon-restart.svg','arrow-bar.svg','shelf-line.svg','icon-check.svg','icon-back.svg',
               'pour-ticks.svg','tap-target.png','icon-settings.svg','select-outline-whiskey.svg','select-outline-cola.svg',
-              'select-outline-lime.svg','icon-recipe.svg','recipe-underline.svg','icon-close.svg'].map(f => `assets/ui/${f}`);
+              'select-outline-lime.svg','icon-recipe.svg','recipe-underline.svg?v=2','icon-close.svg'].map(f => `assets/ui/${f}`);
   return [
     ...Object.values(ART),
     ...CUSTOMER_IDS.flatMap(id => [customerImg(id, 'skeleton'), customerImg(id, 'selected')]),
