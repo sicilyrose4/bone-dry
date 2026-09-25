@@ -858,8 +858,9 @@ html, body {
 /* End the shift early — secondary button (like POUR / DONE / START SHIFT) */
 #btn-end-shift { letter-spacing: normal; }
 
-/* Peek confirm — PLACEHOLDER (user will provide the overlay design).
-   Dim layer + recipe-card navy box + component buttons, nothing invented. */
+/* Peek confirm — Figma 509:88: 384x194 navy box, centered over a dim layer
+   (same dim as the recipe card). Buttons are Secondary-button variants:
+   CANCEL outlined #918fb7, YES filled #cccaf3 — both 1.5px border, 43 tall. */
 #peek-confirm {
   position: absolute;
   inset: 0;
@@ -870,20 +871,37 @@ html, body {
   justify-content: center;
 }
 #peek-confirm-box {
+  width: 384px;
+  height: 194px;
   background: #2b2a45;
   border-radius: 12px;
-  padding: 24px 28px;
+  padding: 18px 0 39px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
+  gap: 19px;
+  overflow: hidden;
 }
+.peek-confirm-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  width: 100%;
+}
+.peek-confirm-head img { width: 20px; height: 20px; }
 #peek-confirm-text {
+  height: 40px;
   font-family: 'BarFontBold', sans-serif;
-  font-size: 26px;
-  color: #edecff;
+  font-size: 28px;
+  line-height: normal;
+  color: #fff;
+  text-align: center;
 }
-.peek-confirm-row { display: flex; gap: 16px; }
+.peek-confirm-row { display: flex; gap: 21px; align-items: center; }
+#peek-confirm .btn-secondary { height: 43px; border-width: 1.5px; border-style: solid; }
+.peek-cancel { background: transparent; border-color: #918fb7; color: #918fb7; }
+.peek-yes    { background: #cccaf3; border-color: #cccaf3; color: #040318; }
 
 /* ─── NOTIFICATIONS ──────────────────────────────────────────── */
 #notification-layer {

@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#12111d" />
   <title>Bone Dry</title>
-  <link rel="stylesheet" href="style.css?v=11" />
+  <link rel="stylesheet" href="style.css?v=13" />
 </head>
 <body>
   <div id="viewport">
@@ -213,13 +213,16 @@
         <button id="btn-play-again" class="btn-primary">PLAY AGAIN</button>
       </div>
 
-      <!-- Peek confirm — PLACEHOLDER until the user's overlay design arrives -->
+      <!-- Peek confirm — Figma 509:88 "recipe peek confirmation" -->
       <div id="peek-confirm" style="display:none;">
         <div id="peek-confirm-box">
-          <p id="peek-confirm-text"></p>
+          <div class="peek-confirm-head">
+            <img src="assets/ui/icon-recipe-confirm.svg" alt="" width="20" height="20" />
+            <p id="peek-confirm-text"></p>
+          </div>
           <div class="peek-confirm-row">
-            <button id="btn-peek-no" class="btn-secondary">CANCEL</button>
-            <button id="btn-peek-yes" class="btn-secondary">PEEK</button>
+            <button id="btn-peek-no" class="btn-secondary peek-cancel">CANCEL</button>
+            <button id="btn-peek-yes" class="btn-secondary peek-yes">YES</button>
           </div>
         </div>
       </div>
@@ -237,6 +240,6 @@
     </div><!-- #game -->
   </div><!-- #viewport -->
 
-  <script src="game.js?v=11"></script>
+  <script src="game.js?v=12"></script>
 </body>
 </html>

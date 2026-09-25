@@ -1393,9 +1393,9 @@ RECIPE_BUTTON_IDS.forEach(id => $(id).addEventListener('pointerdown', (e) => {
   else openPeekConfirm();
 }));
 
-// Peek confirm — PLACEHOLDER look until the user's overlay design arrives
+// Peek confirm — Figma 509:88 (wording as designed: "Peek at the recipe for 0.50?")
 function openPeekConfirm() {
-  $('peek-confirm-text').textContent = `peek at the recipe for $${PEEK_COST.toFixed(2)}?`;
+  $('peek-confirm-text').textContent = `Peek at the recipe for ${PEEK_COST.toFixed(2)}?`;
   $('peek-confirm').style.display = 'flex';
 }
 function closePeekConfirm() { $('peek-confirm').style.display = 'none'; }
