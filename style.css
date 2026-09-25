@@ -795,18 +795,21 @@ html, body {
   cursor: pointer;
   z-index: 10;
 }
+/* Dashed tap circle (no label): slowly turns + breathes, with a faint ripple
+   of the same circle growing out of it — same 1.6s rhythm as the garnish sway */
 #garnish-target img { position: absolute; inset: 0; width: 62px; height: 62px; pointer-events: none; }
-#garnish-target span {
-  position: absolute;
-  left: 50%;
-  top: 0;
-  transform: translate(-50%, 0);
-  margin-top: var(--tap-text-y, 5px);
-  font-family: 'BarFont', sans-serif;
-  font-size: 20px;
-  line-height: normal;
-  color: #9d9cb6;
-  pointer-events: none;
+#garnish-target .tap-ring { animation: tapSpin 8s linear infinite, tapPulse 1.6s ease-in-out infinite; }
+#garnish-target .tap-ripple { animation: tapRipple 1.6s ease-out infinite; }
+@keyframes tapSpin   { to { rotate: 360deg; } }
+@keyframes tapPulse  { 0%, 100% { scale: 1; } 50% { scale: 1.12; } }
+@keyframes tapRipple {
+  0%   { scale: 1;   opacity: 0.7; }
+  100% { scale: 1.6; opacity: 0; }
+}
+#game.paused #garnish-target img { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  #garnish-target .tap-ring { animation: tapPulse 1.6s ease-in-out infinite; }
+  #garnish-target .tap-ripple { display: none; }
 }
 
 #btn-garnish-to-pour { left: 39px;  top: 324px; }
