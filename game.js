@@ -600,8 +600,8 @@ function shuffleArray(arr) {
 }
 
 // The last visible bottle must be cut off by the right edge (like the OJ in Figma)
-// so it's obvious the row scrolls. Bottles start at x=38 with 36px gaps.
-const SHELF_START_X = 38, SHELF_GAP = 36, SCREEN_W = 844;
+// so it's obvious the row scrolls. Bottles start at x=38 with 56px gaps (buildShelf sets the row's gap from SHELF_GAP).
+const SHELF_START_X = 38, SHELF_GAP = 56, SCREEN_W = 844;
 function edgeBottleVisible(order) {
   let x = SHELF_START_X;
   for (const id of order) {
@@ -624,6 +624,7 @@ function shuffleShelfOrder() {
 function buildShelf() {
   G.shelf.order = shuffleShelfOrder();
   dom.shelfRow.innerHTML = '';
+  dom.shelfRow.style.gap = SHELF_GAP + 'px';
   dom.shelfRow.scrollLeft = 0;
   G.shelf.order.forEach(id => {
     const ing = INGREDIENTS[id];
