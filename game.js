@@ -33,14 +33,18 @@ const INGREDIENTS = {
 };
 const LIQUID_IDS = Object.keys(INGREDIENTS).filter(id => INGREDIENTS[id].type === 'liquid');
 
-// Shelf heights (user, 2026-09-24): every hard alcohol stands as tall as the gin,
-// every other liquid as tall as the orange juice. Width follows each bottle's own art.
-// (`shelf` above stays the Figma size — the pour screen still sizes bottles from it.)
-const HARD_ALCOHOL_IDS = new Set(['vodka', 'gin', 'tequila', 'whiskey', 'white-rum', 'triple-sec']);
-const SHELF_H_HARD = INGREDIENTS.gin.shelf[1], SHELF_H_OTHER = INGREDIENTS.oj.shelf[1];
+// Shelf heights: each bottle at its rough real-life height, all at one scale
+// (user, 2026-09-24). Width follows each bottle's own art. `shelf` above stays
+// the Figma size — the pour screen still sizes bottles from it.
+const REAL_HEIGHT_CM = {
+  vodka: 30, 'white-rum': 29, gin: 29, 'triple-sec': 28, whiskey: 25, tequila: 24,   // 750 ml liquor
+  'simple-syrup': 26, cranberry: 23, oj: 22, 'lime-juice': 21, grenadine: 19,        // bar bottles / juice
+  'soda-water': 20, 'ginger-beer': 20, 'tonic-water': 18, cola: 12.2,                 // mixers, cola can
+};
+const SHELF_PX_PER_CM = 5.8;   // tallest (vodka, 30 cm) ≈ 174 px
 function shelfSize(id) {
   const [w, h] = INGREDIENTS[id].shelf;
-  const H = HARD_ALCOHOL_IDS.has(id) ? SHELF_H_HARD : SHELF_H_OTHER;
+  const H = REAL_HEIGHT_CM[id] * SHELF_PX_PER_CM;
   return [w * H / h, H];
 }
 
