@@ -251,7 +251,7 @@ function showScreen(name) {
   Object.values(dom.screens).forEach(s => s.classList.remove('active'));
   if (dom.screens[name]) dom.screens[name].classList.add('active');
   // Recipe card closes whenever you change screens
-  dom.recipeCard.classList.remove('slide-up'); dom.overlay.classList.remove('open');
+  dom.recipeCard.classList.remove('slide-up'); dom.overlay.classList.remove('open', 'shown');
   updateTimerDisplays();
 }
 
@@ -543,11 +543,16 @@ function openRecipe(drink) {
   });
   renderDrinkView($('recipe-drink'), poured, garnishes);
 
-  requestAnimationFrame(() => requestAnimationFrame(() => dom.recipeCard.classList.add('slide-up')));
+  // Move in: card slides up while the dark layer fades in
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    dom.recipeCard.classList.add('slide-up');
+    dom.overlay.classList.add('shown');
+  }));
 }
 
 function closeRecipe() {
   dom.recipeCard.classList.remove('slide-up');
+  dom.overlay.classList.remove('shown');
   setTimeout(() => {
     if (!dom.recipeCard.classList.contains('slide-up')) dom.overlay.classList.remove('open');
   }, 350);
@@ -1050,10 +1055,10 @@ dom.barPause.addEventListener('pointerdown', (e) => { e.stopPropagation(); pause
 /* ═══════════════════════════════════════════════════════════════
    EVENT WIRING — RECIPE CARD
 ═══════════════════════════════════════════════════════════════ */
-// No X in the design — tapping anywhere closes the card
+// Close with the X or by tapping outside the card (taps on the card itself do nothing)
 dom.overlay.addEventListener('pointerdown', (e) => {
   e.stopPropagation();
-  closeRecipe();
+  if (e.target.closest('#btn-recipe-close') || !e.target.closest('#recipe-card')) closeRecipe();
 });
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1410,7 +1415,7 @@ dom.pauseOverlay.addEventListener('pointerdown', (e) => {
 function allImagePaths() {
   const ui = ['icon-restart.svg','arrow-bar.svg','shelf-line.svg','icon-check.svg','icon-back.svg',
               'pour-ticks.svg','tap-target.png','icon-settings.svg','select-outline-whiskey.svg','select-outline-cola.svg',
-              'select-outline-lime.svg','icon-recipe.svg','recipe-underline.svg'].map(f => `assets/ui/${f}`);
+              'select-outline-lime.svg','icon-recipe.svg','recipe-underline.svg','icon-close.svg'].map(f => `assets/ui/${f}`);
   return [
     ...Object.values(ART),
     ...CUSTOMER_IDS.flatMap(id => [customerImg(id, 'skeleton'), customerImg(id, 'selected')]),

@@ -355,6 +355,30 @@ html, body {
   display: none;
 }
 #overlay-recipe.open { display: block; }
+/* Dark, low-opacity layer behind the card */
+#recipe-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 3, 24, 0.55);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+#overlay-recipe.shown #recipe-backdrop { opacity: 1; }
+/* X — Figma 502:1950: 9.5px at (553,73), i.e. 281px from the card's left, 11px from its top.
+   Padded to a comfortable tap target. */
+#btn-recipe-close {
+  position: absolute;
+  left: 267px;
+  top: -3px;
+  width: 37.5px;
+  height: 37.5px;
+  padding: 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: 2;
+}
+#btn-recipe-close img { display: block; width: 9.5px; height: 9.5px; }
 #recipe-card {
   position: absolute;
   left: 272px;
@@ -369,6 +393,7 @@ html, body {
   align-items: center;
   transform: translateY(340px);
   transition: transform 0.35s ease;
+  z-index: 1;
 }
 #recipe-card.slide-up { transform: translateY(0); }
 /* Title — Scratchy 45px; every E is 8px bigger (the font's E is drawn small) */

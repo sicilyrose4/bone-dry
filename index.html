@@ -78,8 +78,10 @@
            OVERLAY: RECIPE CARD
       ═══════════════════════════════════════════ -->
       <div id="overlay-recipe">
-        <!-- Recipe card — Figma 502:1932. Slides up over the screen; tap anywhere to close. -->
+        <!-- Recipe card — Figma 502:1932. Moves up over a dim layer; close with the X or by tapping outside. -->
+        <div id="recipe-backdrop"></div>
         <div id="recipe-card">
+          <button id="btn-recipe-close" aria-label="Close recipe"><img src="assets/ui/icon-close.svg" alt="" /></button>
           <div id="recipe-title"></div>
           <img id="recipe-underline" src="assets/ui/recipe-underline.svg" alt="" />
           <div id="recipe-list"></div>
