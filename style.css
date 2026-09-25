@@ -632,7 +632,7 @@ html, body {
 }
 #pour-instruction {
   position: absolute;
-  left: 489.5px;
+  left: 548.5px;                  /* centered over the glass (Figma 512:97) */
   top: 77.5px;
   transform: translate(-50%, -50%);
   font-family: 'BarFont', sans-serif;
@@ -646,7 +646,7 @@ html, body {
 /* Glass: 192x256 at (393,124) */
 #pour-glass {
   position: absolute;
-  left: 393px;
+  left: 452px;                    /* Figma 512:97 — glass moved right once DONE was removed */
   top: 124px;
   width: 192px;
   height: 256px;
@@ -658,17 +658,17 @@ html, body {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  clip-path: polygon(406px 132px, 414px 192px, 426px 276px, 437.5px 331.5px, 441.5px 352px,
-                     447.5px 365.5px, 470px 369px, 510px 368.5px, 538px 366.5px, 546px 358.5px,
-                     551px 331.5px, 554px 276px, 566.5px 192px, 572.5px 132px);
+  clip-path: polygon(465px 132px, 473px 192px, 485px 276px, 496.5px 331.5px, 500.5px 352px,
+                     506.5px 365.5px, 529px 369px, 569px 368.5px, 597px 366.5px, 605px 358.5px,
+                     610px 331.5px, 613px 276px, 625.5px 192px, 631.5px 132px);
 }
 .liquid-band { position: absolute; left: 0; width: 844px; }
-.liquid-detail { position: absolute; left: 390px; top: 110px; }   /* = POUR_DETAIL_BOX in game.js */
+.liquid-detail { position: absolute; left: 449px; top: 110px; }   /* = POUR_DETAIL_BOX in game.js */
 
 /* Measuring ticks: Figma "Frame 27" (drawn in portrait, so turned -90° here) */
 #pour-ticks {
   position: absolute;
-  left: 327px;
+  left: 386px;
   top: 215px;
   width: 211px;
   height: 64px;
@@ -677,7 +677,7 @@ html, body {
 }
 .tick-label {
   position: absolute;
-  left: 469px;
+  left: 528px;
   height: 14px;
   font-family: 'BarFontBold', sans-serif;
   font-size: 16px;
@@ -696,17 +696,9 @@ html, body {
   transition: transform 0.2s ease, left 0.2s ease, top 0.2s ease;
 }
 
-/* DONE — secondary button, right edge at x=811 */
-#btn-pour-done {
-  position: absolute;
-  right: 33px;
-  top: 326px;
-  z-index: 10;
-}
 
-/* While holding: BACK, DONE and the instruction disappear (Figma 454:524) */
+/* While holding: BACK and the instruction disappear (Figma 454:524) */
 #screen-pour.is-pouring #btn-back-to-shelf,
-#screen-pour.is-pouring #btn-pour-done,
 #screen-pour.is-pouring #pour-instruction { visibility: hidden; }
 
 /* ═══════════════════════════════════════════
@@ -855,7 +847,7 @@ html, body {
   flex-direction: column;
   gap: 22px;
 }
-/* End the shift early — secondary button (like POUR / DONE / START SHIFT) */
+/* End the shift early — secondary button (like POUR / START SHIFT) */
 #btn-end-shift { letter-spacing: normal; }
 
 /* Peek confirm — Figma 509:88: 384x194 navy box, centered over a dim layer

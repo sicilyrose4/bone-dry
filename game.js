@@ -245,7 +245,6 @@ const dom = {
   pourTimer:        $('pour-timer'),
   pourPause:        $('pour-pause'),
   btnBack:          $('btn-back-to-shelf'),
-  btnDone:          $('btn-pour-done'),
 
   pourBottle:       $('pour-bottle-img'),
   pourGlass:        $('pour-glass'),
@@ -831,7 +830,7 @@ function refreshBarControls() {
 
 /* ═══════════════════════════════════════════════════════════════
    POUR SCREEN — LIQUID MODE
-   Hold anywhere to pour at 1 oz/sec; release to stop; DONE commits.
+   Hold anywhere to pour at 1 oz/sec; release to stop; BACK saves the pour.
    The glass reads the TOTAL level — every pour stacks as its own band.
 ═══════════════════════════════════════════════════════════════ */
 const MAX_OZ = 8;
@@ -841,19 +840,20 @@ const ozToY = oz => OZ_ZERO_Y - oz * PX_PER_OZ;
 
 // Bottle poses from Figma: idle box + tilted center/rotation.
 // Other bottles: idle = shelf size x3.08 standing at y=380 (like whiskey/cola),
-// tilted so the mouth lands where whiskey's/cola's do (~396, 62).
+// tilted so the mouth lands where whiskey's/cola's do (~455, 62).
+// Layout = Figma 512:97 (no DONE button): bottle 90px and glass 59px right of the older frames.
 const POUR_POSE = {
-  whiskey: { idle:{ x:87, y:-68, w:191, h:448 }, tilt:{ cx:182.5, cy:156,  rot:68.63 } },
-  cola:    { idle:{ x:95, y:87,  w:176, h:293 }, tilt:{ cx:258.6, cy:85.3, rot:75.8 } },
-  vodka:   { idle:{ x:92, y:-66, w:175, h:444 }, tilt:{ cx:180.5, cy:134,  rot:77.42 } },  // Figma 437:295 / 437:333
+  whiskey: { idle:{ x:177, y:-68, w:191, h:448 }, tilt:{ cx:241.5, cy:156,  rot:68.63 } },
+  cola:    { idle:{ x:185, y:87,  w:176, h:293 }, tilt:{ cx:317.6, cy:85.3, rot:75.8 } },
+  vodka:   { idle:{ x:182, y:-66, w:175, h:444 }, tilt:{ cx:239.5, cy:134,  rot:77.42 } },  // Figma 437:295 / 437:333
 };
 function pourPose(id) {
   if (POUR_POSE[id]) return POUR_POSE[id];
   const [sw, sh] = INGREDIENTS[id].shelf;
   const w = sw * 3.079, h = sh * 3.079, rot = 72, r = rot * Math.PI / 180;
   return {
-    idle: { x: 182.75 - w / 2, y: 380 - h, w, h },
-    tilt: { cx: 396 - (h / 2) * Math.sin(r), cy: 62 + (h / 2) * Math.cos(r), rot },
+    idle: { x: 272.75 - w / 2, y: 380 - h, w, h },
+    tilt: { cx: 455 - (h / 2) * Math.sin(r), cy: 62 + (h / 2) * Math.cos(r), rot },
   };
 }
 
@@ -942,9 +942,9 @@ function drawLiquidDetail(canvas, [bx, by, bw, bh], strokes) {
 
 // Inside walls of the pour glass (same trace as the #pour-liquid clip-path)
 const TICK_LABEL_OZ = [8, 6, 4, 2.5, 1.5];   // the oz labels printed on the pour glass
-const POUR_WALL_L = [[406,132],[414,192],[426,276],[437.5,331.5],[441.5,352],[447.5,365.5]];
-const POUR_WALL_R = [[572.5,132],[566.5,192],[554,276],[551,331.5],[546,358.5],[538,366.5]];
-const POUR_DETAIL_BOX = [390, 110, 200, 270];   // matches .liquid-detail in style.css
+const POUR_WALL_L = [[465,132],[473,192],[485,276],[496.5,331.5],[500.5,352],[506.5,365.5]];
+const POUR_WALL_R = [[631.5,132],[625.5,192],[613,276],[610,331.5],[605,358.5],[597,366.5]];
+const POUR_DETAIL_BOX = [449, 110, 200, 270];   // matches .liquid-detail in style.css
 function wallX(wall, y) {
   if (y <= wall[0][1]) return wall[0][0];
   for (let i = 1; i < wall.length; i++) {
@@ -985,10 +985,10 @@ function renderPourLiquid() {
         const y = floor - 12 - k * 7 - rand() * 4, r = 3.5 + rand() * 3.5, f = rand();
         if (y - r < top + 8) break;
         // Stay right of the ticks and clear of the shine; hop over the oz labels
-        const xl = 470, xr = wallX(POUR_WALL_R, y) - 26;
+        const xl = 529, xr = wallX(POUR_WALL_R, y) - 26;
         if (y + r > floor - 4 || xr - xl < 2 * r) continue;
         const x = xl + r + (xr - xl - 2 * r) * f;
-        const onLabel = TICK_LABEL_OZ.some(oz => Math.abs(ozToY(oz) - y) < r + 8 && x - r < 514);
+        const onLabel = TICK_LABEL_OZ.some(oz => Math.abs(ozToY(oz) - y) < r + 8 && x - r < 573);
         if (onLabel || placed.some(([px, py]) => Math.hypot(px - x, py - y) < 22)) continue;
         placed.push([x, y]);
         strokes.push({ x, y, r, color, width: 2.6 });
@@ -1443,19 +1443,12 @@ dom.btnBackToPour.addEventListener('click', (e) => {
 ═══════════════════════════════════════════════════════════════ */
 dom.btnBack.addEventListener('pointerdown', (e) => {
   e.stopPropagation();
-  // Back to the shelf without recording this pour
-  G.pour.pouring = false;
-  G.pour.ozPoured = 0;
-  stopPourRAF();
-  openShelf();
+  // BACK keeps what was poured (Figma 512:97 — there's no DONE button anymore)
+  commitLiquidPour();
 });
 
 dom.pourPause.addEventListener('pointerdown', (e) => { e.stopPropagation(); pauseToggle(); });
 
-dom.btnDone.addEventListener('pointerdown', (e) => {
-  e.stopPropagation();
-  commitLiquidPour();
-});
 
 // Hold anywhere (except buttons) to pour
 dom.screens.pour.addEventListener('pointerdown', (e) => {
