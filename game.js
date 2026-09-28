@@ -245,6 +245,7 @@ const dom = {
   pourTimer:        $('pour-timer'),
   pourPause:        $('pour-pause'),
   btnBack:          $('btn-back-to-shelf'),
+  btnDone:          $('btn-pour-done'),
 
   pourBottle:       $('pour-bottle-img'),
   pourGlass:        $('pour-glass'),
@@ -830,7 +831,7 @@ function refreshBarControls() {
 
 /* ═══════════════════════════════════════════════════════════════
    POUR SCREEN — LIQUID MODE
-   Hold anywhere to pour at 1 oz/sec; release to stop; BACK saves the pour.
+   Hold anywhere to pour at 1 oz/sec; release to stop; BACK or DONE saves the pour.
    The glass reads the TOTAL level — every pour stacks as its own band.
 ═══════════════════════════════════════════════════════════════ */
 const MAX_OZ = 8;
@@ -841,7 +842,7 @@ const ozToY = oz => OZ_ZERO_Y - oz * PX_PER_OZ;
 // Bottle poses from Figma: idle box + tilted center/rotation.
 // Other bottles: idle = shelf size x3.08 standing at y=380 (like whiskey/cola),
 // tilted so the mouth lands where whiskey's/cola's do (~455, 62).
-// Layout = Figma 512:97 (no DONE button): bottle 90px and glass 59px right of the older frames.
+// Layout = Figma 512:97 (+ DONE kept, user 2026-09-28): bottle 90px and glass 59px right of the older frames.
 const POUR_POSE = {
   whiskey: { idle:{ x:177, y:-68, w:191, h:448 }, tilt:{ cx:241.5, cy:156,  rot:68.63 } },
   cola:    { idle:{ x:185, y:87,  w:176, h:293 }, tilt:{ cx:317.6, cy:85.3, rot:75.8 } },
@@ -1441,11 +1442,11 @@ dom.btnBackToPour.addEventListener('click', (e) => {
 /* ═══════════════════════════════════════════════════════════════
    EVENT WIRING — POUR SCREEN
 ═══════════════════════════════════════════════════════════════ */
-dom.btnBack.addEventListener('pointerdown', (e) => {
+// Two ways off the pour screen, and both keep what was poured (user, 2026-09-28)
+[dom.btnBack, dom.btnDone].forEach(btn => btn.addEventListener('pointerdown', (e) => {
   e.stopPropagation();
-  // BACK keeps what was poured (Figma 512:97 — there's no DONE button anymore)
   commitLiquidPour();
-});
+}));
 
 dom.pourPause.addEventListener('pointerdown', (e) => { e.stopPropagation(); pauseToggle(); });
 

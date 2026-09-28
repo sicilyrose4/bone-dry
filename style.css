@@ -697,8 +697,17 @@ html, body {
 }
 
 
-/* While holding: BACK and the instruction disappear (Figma 454:524) */
+/* DONE — secondary button, right edge at x=811 (kept alongside BACK; both save the pour) */
+#btn-pour-done {
+  position: absolute;
+  right: 33px;
+  top: 326px;
+  z-index: 10;
+}
+
+/* While holding: BACK, DONE and the instruction disappear (Figma 454:524) */
 #screen-pour.is-pouring #btn-back-to-shelf,
+#screen-pour.is-pouring #btn-pour-done,
 #screen-pour.is-pouring #pour-instruction { visibility: hidden; }
 
 /* ═══════════════════════════════════════════
