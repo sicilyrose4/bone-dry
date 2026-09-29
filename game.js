@@ -90,12 +90,18 @@ const ART = {
 // `bubble`: speech bubble colors + where it sits over this customer (Figma 486:1923).
 //   dx = bubble center relative to the customer's center, tail = tail's left edge relative to it.
 const CUSTOMERS = {
-  red:    { w:102, h:224, sel:{ x:-11,   y:-5.5, w:124, h:235 },           bubble:{ bg:'#c06b7f', text:'#551222', dx:-49, tail:-15.5 } },
-  purple: { w:108, h:241, sel:{ x:-8,    y:1.5,  w:124, h:238 }, sink:23,  bubble:{ bg:'#9d9cb6', text:'#353454', dx:-41, tail:-7.5 } },
-  lime:   { w:130, h:232, sel:{ x:-2.5,  y:0,    w:135, h:232 },           bubble:{ bg:'#c5c497', text:'#393308', dx:-35, tail:-1.5 } },
-  pink:   { w:138, h:189, sel:{ x:-31.5, y:-12,  w:201, h:213 },           bubble:{ bg:'#c597b3', text:'#631041', dx:-49, tail:-15.5 } },
-  green:  { w:116, h:222, sel:{ x:-5.5,  y:-2,   w:127, h:226 },           bubble:{ bg:'#8bb08f', text:'#304833', dx:32,  tail:-15 } },
-  orange: { w:101, h:223, sel:{ x:0,     y:-14.5,w:101, h:252 },           bubble:{ bg:'#e6baa0', text:'#522408', dx:-41, tail:-7.5 } },
+  // Figma 527:134 "customers" (user, 2026-09-29): 10 customers. `sel` = selected art's box vs the skeleton's.
+  red:      { w:102,    h:224,    sel:{ x:-11,    y:-5.5,  w:124,    h:235 },            bubble:{ bg:'#c06b7f', text:'#551222', dx:-49, tail:-15.5 } },
+  purple:   { w:108,    h:241,    sel:{ x:-8,     y:1.5,   w:124,    h:238 },  sink:23,  bubble:{ bg:'#9d9cb6', text:'#353454', dx:-41, tail:-7.5 } },
+  yellow:   { w:130,    h:232,    sel:{ x:-2.5,   y:0,     w:135,    h:232 },            bubble:{ bg:'#c5c497', text:'#393308', dx:-35, tail:-1.5 } },   // hat guy (was "lime" in code)
+  orange:   { w:101,    h:223,    sel:{ x:0,      y:-14.5, w:101,    h:252 },            bubble:{ bg:'#e6baa0', text:'#522408', dx:-41, tail:-7.5 } },
+  pink:     { w:136.62, h:231.82, sel:{ x:-23.8,  y:-7.93, w:184.22, h:247.68 },         bubble:{ bg:'#c597b3', text:'#631041', dx:-41, tail:-7.5 } },
+  // New (2026-09-29): bubble colors = each one's art color, muted like the Figma ones — swap for official colors
+  lavender: { w:92.13,  h:225,    sel:{ x:-26.13, y:-3.1,  w:144.39, h:231.2 },          bubble:{ bg:'#9999c0', dx:-41, tail:-7.5 } },
+  blue:     { w:95.19,  h:219.48, sel:{ x:-14.1,  y:-7.93, w:123.4,  h:235.34 },         bubble:{ bg:'#8fc1ca', dx:-41, tail:-7.5 } },
+  lime:     { w:97.84,  h:223.88, sel:{ x:-17.63, y:-2.64, w:133.1,  h:229.17 },         bubble:{ bg:'#bac692', dx:-41, tail:-7.5 } },
+  orange2:  { w:92.55,  h:224.77, sel:{ x:-4.85,  y:-4.41, w:102.25, h:233.58 },         bubble:{ bg:'#caa48f', dx:-41, tail:-7.5 } },
+  teal:     { w:102.25, h:227.41, sel:{ x:-6.61,  y:-10.58,w:115.47, h:248.56 },         bubble:{ bg:'#8fcab9', dx:-41, tail:-7.5 } },
 };
 // Bubble on the counter, under the customer (Figma: orange example) — tail points up
 const BUBBLE_BELOW = { dx:38.5, tail:-17.5 };
@@ -110,11 +116,12 @@ const orderLine = drink => ORDER_LINES[Math.floor(Math.random() * ORDER_LINES.le
 const REACTIONS = {
   red:    { perfect:'perfect, thank you!', good:'mm, lovely!', strong:'ooh, a little strong', weak:'a bit weak', sweet:'ooh, very sweet', off:'not quite right…', bad:'is this mine?', slow:'that took a while' },
   purple: { perfect:'splendid, thank you', good:"that'll do nicely", strong:"goodness, that's strong", weak:'rather weak', sweet:'a touch sweet', off:'not quite right', bad:'in my day…', slow:'took your time' },
-  lime:   { perfect:'yooo perfect', good:'solid, thanks', strong:'woah. strong.', weak:'kinda weak ngl', sweet:'dang, sweet', off:'hm, not quite', bad:'bro, what?', slow:'finally lol' },
+  yellow: { perfect:'yooo perfect', good:'solid, thanks', strong:'woah. strong.', weak:'kinda weak ngl', sweet:'dang, sweet', off:'hm, not quite', bad:'bro, what?', slow:'finally lol' },
   pink:   { perfect:'okay, you ate', good:'not bad', strong:'heavy hand much?', weak:'forget something?', sweet:'too sweet, babe', off:'this is not it', bad:'absolutely not', slow:'took you long enough' },
-  green:  { perfect:'yeah. perfect.', good:'fine. thanks.', strong:'strong.', weak:'weak.', sweet:'too sweet.', off:'not right.', bad:'no.', slow:'about time.' },
   orange: { perfect:'perfect!! thank you!', good:'yay, thanks!', strong:'whoa, strong!', weak:'kinda weak?', sweet:'sooo sweet', off:'not quite right…', bad:'oh no…', slow:'finally, yay!' },
 };
+// Customers without their own lines yet (new 2026-09-29 — theirs are awaiting the user's OK)
+const DEFAULT_REACTIONS = { perfect:'perfect, thanks!', good:'nice, thanks!', strong:'a little strong', weak:'a bit weak', sweet:'kinda sweet', off:'not quite right', bad:'hmm… no', slow:'that took a while' };
 const CUSTOMER_IDS = Object.keys(CUSTOMERS);
 const customerImg = (id, state) => `assets/customers/${id}-${state}.png`;
 
@@ -538,7 +545,7 @@ function placeBubble(area, textEl, canvas, text, slotIdx, mayGoBelow) {
 
 // Reaction after serving: the customer's A6 bubble with their line for this mood
 function showReaction(slotIdx, mood) {
-  const line = REACTIONS[G.customers[slotIdx].type]?.[mood];
+  const line = (REACTIONS[G.customers[slotIdx].type] || DEFAULT_REACTIONS)[mood];
   if (!line) return null;
   const area = document.createElement('div');
   area.className = 'speech-bubble reaction';
