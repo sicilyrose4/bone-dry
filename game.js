@@ -91,17 +91,19 @@ const ART = {
 //   dx = bubble center relative to the customer's center, tail = tail's left edge relative to it.
 const CUSTOMERS = {
   // Figma 527:134 "customers" (user, 2026-09-29): 10 customers. `sel` = selected art's box vs the skeleton's.
-  red:      { w:102,    h:224,    sel:{ x:-11,    y:-5.5,  w:124,    h:235 },            bubble:{ bg:'#c06b7f', text:'#551222', dx:-49, tail:-15.5 } },
+  // `sink` = px lower than standing on the counter line: hides where each drawing's own bottom
+  // edge rounds off (and the PNG's straight edge) behind the counter — at least 3 for everyone.
+  red:      { w:102,    h:224,    sel:{ x:-11,    y:-5.5,  w:124,    h:235 }, sink:3,             bubble:{ bg:'#c06b7f', text:'#551222', dx:-49, tail:-15.5 } },
   purple:   { w:108,    h:241,    sel:{ x:-8,     y:1.5,   w:124,    h:238 },  sink:23,  bubble:{ bg:'#9d9cb6', text:'#353454', dx:-41, tail:-7.5 } },
-  yellow:   { w:130,    h:232,    sel:{ x:-2.5,   y:0,     w:135,    h:232 },            bubble:{ bg:'#c5c497', text:'#393308', dx:-35, tail:-1.5 } },   // hat guy (was "lime" in code)
-  orange:   { w:101,    h:223,    sel:{ x:0,      y:-14.5, w:101,    h:252 },            bubble:{ bg:'#e6baa0', text:'#522408', dx:-41, tail:-7.5 } },
-  pink:     { w:136.62, h:231.82, sel:{ x:-23.8,  y:-7.93, w:184.22, h:247.68 },         bubble:{ bg:'#c597b3', text:'#631041', dx:-41, tail:-7.5 } },
+  yellow:   { w:130,    h:232,    sel:{ x:-2.5,   y:0,     w:135,    h:232 }, sink:9,             bubble:{ bg:'#c5c497', text:'#393308', dx:-35, tail:-1.5 } },   // hat guy (was "lime" in code)
+  orange:   { w:101,    h:223,    sel:{ x:0,      y:-14.5, w:101,    h:252 }, sink:3,             bubble:{ bg:'#e6baa0', text:'#522408', dx:-41, tail:-7.5 } },
+  pink:     { w:136.62, h:231.82, sel:{ x:-23.8,  y:-7.93, w:184.22, h:247.68 }, sink:6,          bubble:{ bg:'#c597b3', text:'#631041', dx:-41, tail:-7.5 } },
   // New (2026-09-29): bubble colors = each one's art color, muted like the Figma ones — swap for official colors
-  lavender: { w:92.13,  h:225,    sel:{ x:-26.13, y:-3.1,  w:144.39, h:231.2 },          bubble:{ bg:'#9999c0', dx:-41, tail:-7.5 } },
-  blue:     { w:95.19,  h:219.48, sel:{ x:-14.1,  y:-7.93, w:123.4,  h:235.34 },         bubble:{ bg:'#8fc1ca', dx:-41, tail:-7.5 } },
-  lime:     { w:97.84,  h:223.88, sel:{ x:-17.63, y:-2.64, w:133.1,  h:229.17 },         bubble:{ bg:'#bac692', dx:-41, tail:-7.5 } },
-  orange2:  { w:92.55,  h:224.77, sel:{ x:-4.85,  y:-4.41, w:102.25, h:233.58 },         bubble:{ bg:'#caa48f', dx:-41, tail:-7.5 } },
-  teal:     { w:102.25, h:227.41, sel:{ x:-6.61,  y:-10.58,w:115.47, h:248.56 },         bubble:{ bg:'#8fcab9', dx:-41, tail:-7.5 } },
+  lavender: { w:92.13,  h:225,    sel:{ x:-26.13, y:-3.1,  w:144.39, h:231.2 }, sink:7,           bubble:{ bg:'#9999c0', dx:-41, tail:-7.5 } },
+  blue:     { w:95.19,  h:219.48, sel:{ x:-14.1,  y:-7.93, w:123.4,  h:235.34 }, sink:3,          bubble:{ bg:'#8fc1ca', dx:-41, tail:-7.5 } },
+  lime:     { w:97.84,  h:223.88, sel:{ x:-17.63, y:-2.64, w:133.1,  h:229.17 }, sink:5,          bubble:{ bg:'#bac692', dx:-41, tail:-7.5 } },
+  orange2:  { w:92.55,  h:224.77, sel:{ x:-4.85,  y:-4.41, w:102.25, h:233.58 }, sink:5,          bubble:{ bg:'#caa48f', dx:-41, tail:-7.5 } },
+  teal:     { w:102.25, h:227.41, sel:{ x:-6.61,  y:-10.58,w:115.47, h:248.56 }, sink:3,          bubble:{ bg:'#8fcab9', dx:-41, tail:-7.5 } },
 };
 // Bubble on the counter, under the customer (Figma: orange example) — tail points up
 const BUBBLE_BELOW = { dx:38.5, tail:-17.5 };
