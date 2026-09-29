@@ -433,11 +433,28 @@ function trySpawnCustomer() {
   // Bar full: check again shortly so a freed spot refills right away
   if (!empty.length) { G.nextArrivalIn = PACE.refillGap; return; }
   scheduleNextArrival();
-  const present = G.customers.filter(Boolean).map(c => c.type);
-  const types = CUSTOMER_IDS.filter(t => !present.includes(t));
   const slot = empty[Math.floor(Math.random() * empty.length)];
-  const type = types[Math.floor(Math.random() * types.length)];
-  createCustomer(slot, type);
+  createCustomer(slot, nextCustomerType());
+}
+
+// Who walks in next (user, 2026-09-29): every customer comes through once, in a random
+// order, before anyone repeats — a served customer is never replaced by a copy of themselves.
+const RECENT_GUARD = 3;   // someone who just left can't come back until this many others have
+function nextCustomerType() {
+  const present = G.customers.filter(Boolean).map(c => c.type);
+  const ok = t => !present.includes(t) && !G.recentTypes.includes(t);
+  if (!G.customerQueue.some(ok)) {
+    // New round: everyone, shuffled — whoever was just here goes to the back of the line
+    const recent = [...present, ...G.recentTypes];
+    G.customerQueue.push(...shuffleArray(CUSTOMER_IDS.filter(t => !recent.includes(t))),
+                         ...shuffleArray(CUSTOMER_IDS.filter(t => recent.includes(t))));
+  }
+  let i = G.customerQueue.findIndex(ok);
+  if (i < 0) i = G.customerQueue.findIndex(t => !present.includes(t));
+  return G.customerQueue.splice(i, 1)[0];
+}
+function noteCustomerLeft(type) {
+  G.recentTypes = [type, ...G.recentTypes].slice(0, RECENT_GUARD);
 }
 
 function createCustomer(slot, type) {
@@ -1237,6 +1254,7 @@ function serveDrink() {
       if (reactionEl) reactionEl.remove();
       if (G.customers[customerIdx] === customer) {
         G.customers[customerIdx] = null;
+        noteCustomerLeft(customer.type);
         renderCustomer(customerIdx);
       }
       G.serving--;
@@ -1304,6 +1322,8 @@ function initGame() {
   G.serving = 0;
   G.timerRunning = false;
   G.customers = [];
+  G.customerQueue = [];   // this round's arrival order (nextCustomerType)
+  G.recentTypes = [];     // who just left, most recent first
   G.selectedIdx = null;
   G.lastDrinkId = null;
   G.drinksServed = 0;
