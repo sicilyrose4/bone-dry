@@ -119,8 +119,14 @@ const REACTIONS = {
   yellow: { perfect:'yooo perfect', good:'solid, thanks', strong:'woah. strong.', weak:'kinda weak ngl', sweet:'dang, sweet', off:'hm, not quite', bad:'bro, what?', slow:'finally lol' },
   pink:   { perfect:'okay, you ate', good:'not bad', strong:'heavy hand much?', weak:'forget something?', sweet:'too sweet, babe', off:'this is not it', bad:'absolutely not', slow:'took you long enough' },
   orange: { perfect:'perfect!! thank you!', good:'yay, thanks!', strong:'whoa, strong!', weak:'kinda weak?', sweet:'sooo sweet', off:'not quite right…', bad:'oh no…', slow:'finally, yay!' },
+  // New customers' lines (user-approved, 2026-09-29)
+  lavender: { perfect:"oh, it's perfect!", good:'lovely, thank you', strong:"oof, that's strong", weak:'hmm, kinda weak', sweet:'oh, so sweet', off:'not quite right…', bad:'oh… no thanks', slow:'that took forever' },
+  blue:     { perfect:'perfect, thanks', good:"that's good", strong:"that's strong", weak:'a little weak', sweet:'pretty sweet', off:'not quite it', bad:'hm, no', slow:'took a bit' },
+  lime:     { perfect:'omg perfect!', good:'cute, thanks!', strong:'ooh, strong!', weak:'a little weak?', sweet:'so sweet!', off:'hmm, not quite', bad:'um… what?', slow:'finally!' },
+  orange2:  { perfect:'perfect, thanks pal', good:'good stuff', strong:'whoa, strong one', weak:'bit weak, bud', sweet:'real sweet', off:'not quite right', bad:'uh… nope', slow:'took a while, huh' },
+  teal:     { perfect:'this is perfect!', good:'thanks so much!', strong:"oh, that's strong", weak:'kinda weak', sweet:"that's sweet!", off:'not quite right', bad:'oh… hm', slow:'that took a while' },
 };
-// Customers without their own lines yet (new 2026-09-29 — theirs are awaiting the user's OK)
+// Fallback for any customer added later without their own lines
 const DEFAULT_REACTIONS = { perfect:'perfect, thanks!', good:'nice, thanks!', strong:'a little strong', weak:'a bit weak', sweet:'kinda sweet', off:'not quite right', bad:'hmm… no', slow:'that took a while' };
 const CUSTOMER_IDS = Object.keys(CUSTOMERS);
 const customerImg = (id, state) => `assets/customers/${id}-${state}.png`;
