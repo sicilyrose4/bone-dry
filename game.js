@@ -72,6 +72,7 @@ const DRINKS = [
   { id:'tequila-sunrise', name:'Tequila Sunrise', ingredients:[{id:'tequila',oz:1.5},{id:'oj',oz:4},{id:'grenadine',oz:0.5},{id:'orange',count:1},{id:'cherry',count:1}] },
   // Long Island: lime juice stands in for lemon juice (not on the shelf)
   { id:'long-island',     name:'Long Island Iced Tea', ingredients:[{id:'vodka',oz:0.5},{id:'gin',oz:0.5},{id:'white-rum',oz:0.5},{id:'tequila',oz:0.5},{id:'triple-sec',oz:0.5},{id:'lime-juice',oz:0.5},{id:'simple-syrup',oz:0.5},{id:'cola',oz:1.5},{id:'lemon',count:1}] },   // added 2026-09-29
+  { id:'tequila-soda',    name:'Tequila Soda',    ingredients:[{id:'tequila',oz:1.5},{id:'soda-water',oz:4},{id:'lime',count:1}] },   // added 2026-09-29
   { id:'ranch-water',     name:'Ranch Water',     ingredients:[{id:'tequila',oz:1.5},{id:'lime-juice',oz:0.5},{id:'soda-water',oz:4},{id:'lime',count:1}] },
 ];
 
