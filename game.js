@@ -53,6 +53,7 @@ const DRINKS = [
   { id:'vodka-soda',      name:'Vodka Soda',      ingredients:[{id:'vodka',oz:1.5},{id:'soda-water',oz:4},{id:'lime',count:1}] },
   { id:'vodka-tonic',     name:'Vodka Tonic',     ingredients:[{id:'vodka',oz:1.5},{id:'tonic-water',oz:4},{id:'lime',count:1}] },
   { id:'vodka-cranberry', name:'Vodka Cranberry', ingredients:[{id:'vodka',oz:1.5},{id:'cranberry',oz:4},{id:'lime',count:1}] },
+  { id:'dirty-shirley',   name:'Dirty Shirley',   ingredients:[{id:'vodka',oz:1.5},{id:'ginger-beer',oz:4},{id:'grenadine',oz:0.5},{id:'cherry',count:1}] },   // added 2026-09-29
   { id:'screwdriver',     name:'Screwdriver',     ingredients:[{id:'vodka',oz:1.5},{id:'oj',oz:4},{id:'orange',count:1}] },
   { id:'moscow-mule',     name:'Moscow Mule',     ingredients:[{id:'vodka',oz:1.5},{id:'ginger-beer',oz:4},{id:'lime-juice',oz:0.5},{id:'lime',count:1}] },
   { id:'kentucky-mule',   name:'Kentucky Mule',   ingredients:[{id:'whiskey',oz:1.5},{id:'ginger-beer',oz:4},{id:'lime-juice',oz:0.5},{id:'lime',count:1}] },   // added 2026-09-29
@@ -69,6 +70,8 @@ const DRINKS = [
   { id:'whiskey-ginger',  name:'Whiskey Ginger',  ingredients:[{id:'whiskey',oz:1.5},{id:'ginger-beer',oz:4},{id:'lemon',count:1}] },
   { id:'margarita',       name:'Margarita',       ingredients:[{id:'tequila',oz:2},{id:'triple-sec',oz:1},{id:'lime-juice',oz:1},{id:'lime',count:1}] },
   { id:'tequila-sunrise', name:'Tequila Sunrise', ingredients:[{id:'tequila',oz:1.5},{id:'oj',oz:4},{id:'grenadine',oz:0.5},{id:'orange',count:1},{id:'cherry',count:1}] },
+  // Long Island: lime juice stands in for lemon juice (not on the shelf)
+  { id:'long-island',     name:'Long Island Iced Tea', ingredients:[{id:'vodka',oz:0.5},{id:'gin',oz:0.5},{id:'white-rum',oz:0.5},{id:'tequila',oz:0.5},{id:'triple-sec',oz:0.5},{id:'lime-juice',oz:0.5},{id:'simple-syrup',oz:0.5},{id:'cola',oz:1.5},{id:'lemon',count:1}] },   // added 2026-09-29
   { id:'ranch-water',     name:'Ranch Water',     ingredients:[{id:'tequila',oz:1.5},{id:'lime-juice',oz:0.5},{id:'soda-water',oz:4},{id:'lime',count:1}] },
 ];
 
@@ -709,8 +712,15 @@ function openRecipe(drink) {
   // Ingredients: 28px as designed; smaller when a recipe has more lines
   const list = $('recipe-list');
   const n = drink.ingredients.length;
-  list.style.fontSize = (n <= 3 ? 28 : n === 4 ? 25 : n === 5 ? 21 : 19) + 'px';
+  let fs = n <= 3 ? 28 : n === 4 ? 25 : n === 5 ? 21 : 19;
+  list.style.fontSize = fs + 'px';
+  list.style.lineHeight = '';
   list.innerHTML = drink.ingredients.map(recipeLine).join('');
+  // Long recipes (e.g. Long Island): tighten + shrink until the mini drink still shows on screen
+  const listBottom = () => 62 + list.offsetTop + list.offsetHeight;   // card sits at y=62
+  const limit = 390 - 13 - 59.5 - 2;                                    // mini drink below it
+  if (listBottom() > limit) list.style.lineHeight = '1.05';
+  while (listBottom() > limit && fs > 15) list.style.fontSize = (--fs) + 'px';
   // Mini drink: what the finished drink should look like
   const poured = drink.ingredients.filter(i => i.oz).map(i => ({ id: i.id, oz: i.oz }));
   const garnishes = [];
