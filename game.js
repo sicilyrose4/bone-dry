@@ -55,12 +55,15 @@ const DRINKS = [
   { id:'vodka-cranberry', name:'Vodka Cranberry', ingredients:[{id:'vodka',oz:1.5},{id:'cranberry',oz:4},{id:'lime',count:1}] },
   { id:'screwdriver',     name:'Screwdriver',     ingredients:[{id:'vodka',oz:1.5},{id:'oj',oz:4},{id:'orange',count:1}] },
   { id:'moscow-mule',     name:'Moscow Mule',     ingredients:[{id:'vodka',oz:1.5},{id:'ginger-beer',oz:4},{id:'lime-juice',oz:0.5},{id:'lime',count:1}] },
+  { id:'kentucky-mule',   name:'Kentucky Mule',   ingredients:[{id:'whiskey',oz:1.5},{id:'ginger-beer',oz:4},{id:'lime-juice',oz:0.5},{id:'lime',count:1}] },   // added 2026-09-29
+  { id:'mexican-mule',    name:'Mexican Mule',    ingredients:[{id:'tequila',oz:1.5},{id:'ginger-beer',oz:4},{id:'lime-juice',oz:0.5},{id:'lime',count:1}] },   // added 2026-09-29
   { id:'cosmopolitan',    name:'Cosmopolitan',    ingredients:[{id:'vodka',oz:1.5},{id:'triple-sec',oz:0.5},{id:'cranberry',oz:1},{id:'lime-juice',oz:0.5},{id:'lime',count:1}] },
   { id:'gin-tonic',       name:'Gin and Tonic',   ingredients:[{id:'gin',oz:1.5},{id:'tonic-water',oz:4},{id:'lime',count:1}] },
   { id:'gin-rickey',      name:'Gin Rickey',      ingredients:[{id:'gin',oz:1.5},{id:'lime-juice',oz:0.5},{id:'soda-water',oz:4},{id:'lime',count:1}] },
   { id:'tom-collins',     name:'Tom Collins',     ingredients:[{id:'gin',oz:1.5},{id:'simple-syrup',oz:0.5},{id:'soda-water',oz:4},{id:'lemon',count:1}] },
   { id:'cuba-libre',      name:'Cuba Libre',      ingredients:[{id:'white-rum',oz:1.5},{id:'cola',oz:4},{id:'lime',count:1}] },
   { id:'rum-punch',       name:'Rum Punch',       ingredients:[{id:'white-rum',oz:1.5},{id:'oj',oz:2},{id:'cranberry',oz:2},{id:'grenadine',oz:0.5},{id:'cherry',count:1}] },
+  { id:'daiquiri',        name:'Daiquiri',        ingredients:[{id:'white-rum',oz:2},{id:'lime-juice',oz:1},{id:'simple-syrup',oz:0.5},{id:'lime',count:1}] },   // added 2026-09-29
   { id:'mojito',          name:'Mojito',          ingredients:[{id:'white-rum',oz:1.5},{id:'lime-juice',oz:0.5},{id:'simple-syrup',oz:0.5},{id:'soda-water',oz:3},{id:'mint',count:1},{id:'lime',count:1}] },
   { id:'whiskey-coke',    name:'Whiskey Coke',    ingredients:[{id:'whiskey',oz:1.5},{id:'cola',oz:4},{id:'lime',count:1}] },
   { id:'whiskey-ginger',  name:'Whiskey Ginger',  ingredients:[{id:'whiskey',oz:1.5},{id:'ginger-beer',oz:4},{id:'lemon',count:1}] },
