@@ -114,32 +114,11 @@ html, body {
 }
 
 /* ═══════════════════════════════════════════
-   LOADING (463:1533) + HOME (463:1564)
+   HOME (463:1564) — first screen (the loading screen was removed, user 2026-09-30)
 ═══════════════════════════════════════════ */
-#screen-loading, #screen-home { background: #12111d; }
+#screen-home { background: #12111d; }
 .bd-logo { position: absolute; width: 306px; height: 214px; pointer-events: none; }
-.loading-logo { left: 269px; top: 53px; }
 .home-logo    { left: 116px; top: 88px; }
-
-#loading-track {
-  position: absolute;
-  left: 228px;
-  top: 319px;
-  width: 388px;
-  height: 17px;
-  background: #474658;
-  border-radius: 18px;
-}
-#loading-fill {
-  position: absolute;
-  left: 3px;
-  top: 3px;
-  width: 0;               /* grows to 382px as images load */
-  height: 11px;
-  background: #c5dc6f;
-  border-radius: 18px;
-  transition: width 0.15s ease;
-}
 
 /* Secondary button, centered where the Figma home frame puts it (center 637, 154) */
 #btn-start-shift {
