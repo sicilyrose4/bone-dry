@@ -119,16 +119,15 @@ html, body {
 #screen-home { background: #12111d; }
 /* Figma 527:141 */
 .bd-logo { position: absolute; pointer-events: none; }
-.home-logo { left: 122px; top: 56px; width: 249px; height: 174px; }   /* flicker lives inside logo-neon.svg */
-#home-bottles { position: absolute; left: 24px; top: 255px; width: 463px; height: 72.13px; opacity: 0.6; pointer-events: none; }
+.home-logo { left: 95px; top: 58px; width: 321.43px; height: 225px; }   /* E flicker lives inside logo-neon.svg */
+#home-bottles { position: absolute; left: -10px; top: 316px; width: 854px; height: 97.23px; opacity: 0.5; pointer-events: none; }   /* runs off the bottom */
 #home-bottles img { position: absolute; object-fit: cover; }
-#home-shelf-line { position: absolute; left: 0; top: 327.5px; width: 491.5px; height: 1px; background: #45426a; opacity: 0.6; pointer-events: none; }
 
 /* Secondary button, centered where the Figma home frame puts it */
 #btn-start-shift {
   position: absolute;
   left: 638px;
-  top: 141.5px;                   /* center 638, 161.5 (Figma 527:141) */
+  top: 116.5px;                   /* center 638, 136.5 (Figma 527:141) */
   transform: translateX(-50%);
 }
 #btn-start-shift:active { transform: translateX(-50%) scale(0.96); }
@@ -147,8 +146,8 @@ html, body {
   text-align: center;
   white-space: nowrap;
 }
-#btn-history    { top: 204px; }
-#btn-drink-menu { top: 248.5px; }
+#btn-history    { top: 179px; }
+#btn-drink-menu { top: 223.5px; }
 /* Gear is drawn in portrait in Figma, so it's turned -90° here */
 #btn-settings {
   position: absolute;
