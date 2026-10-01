@@ -724,7 +724,7 @@ html, body {
 /* The copy that follows the finger while dragging a garnish onto the drink */
 .tray-garnish.garnish-ghost { pointer-events: none; z-index: 40; }
 /* Placed garnishes can be dragged back off the drink (to the trash) */
-#garnish-drink .dv-garnish { pointer-events: auto; cursor: grab; }
+#garnish-drink .dv-garnish { pointer-events: auto; cursor: grab; -webkit-user-drag: none; user-select: none; -webkit-touch-callout: none; }
 .placed-ghost { position: absolute; z-index: 40; pointer-events: none; object-fit: cover; }
 /* Trash — Majesticons delete-bin in #9d9cb6, centered between ← POUR and SERVE → (x 421, y 344) */
 #garnish-trash { position: absolute; left: 405px; top: 328px; width: 32px; height: 32px; pointer-events: none; z-index: 30; }

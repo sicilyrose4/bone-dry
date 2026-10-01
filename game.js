@@ -1635,6 +1635,7 @@ function renderDrinkView(el, poured, garnishes) {
     const img = document.createElement('img');
     img.className = 'dv-garnish';
     img.dataset.index = i;
+    img.draggable = false;   // no native image drag — it would cancel our own drag
     img.src = ingPath(g.id);
     img.alt = '';
     const p = g.spot;
@@ -1764,7 +1765,7 @@ $('garnish-drink').addEventListener('pointerdown', (e) => {
   if (!img || G.screen !== 'garnish' || !G.timerRunning) return;
   e.stopPropagation();
   const p = stagePoint(e), index = +img.dataset.index;
-  Object.assign(placedDrag, { g: G.drink.garnishes[index], index, x0: p.x, y0: p.y, dragging: false, ghost: null });
+  Object.assign(placedDrag, { g: G.drink.garnishes[index], index, img, x0: p.x, y0: p.y, dragging: false, ghost: null });
 });
 
 window.addEventListener('pointermove', (e) => {
@@ -1774,12 +1775,12 @@ window.addEventListener('pointermove', (e) => {
   if (!d.dragging) {
     if (Math.hypot(p.x - d.x0, p.y - d.y0) < DRAG_START_PX) return;
     d.dragging = true;
-    // Lift it off the drink
+    // Lift it off the drink. Hide its image rather than re-rendering: iPhone Safari stops
+    // sending move events if the element under the finger is removed mid-touch.
     G.drink.garnishes.splice(d.index, 1);
     changeGarnishCount(d.g.id, -1);
     hideGarnishToast();
-    G.garnishSel = null;
-    renderGarnishScreen();
+    d.img.style.visibility = 'hidden';
     const s = d.g.spot, left = 355 + s.cx - s.w / 2, top = 120 + s.cy - s.h / 2;   // garnish-drink sits at (355,120)
     d.ghost = document.createElement('img');
     d.ghost.className = 'placed-ghost';
@@ -1810,7 +1811,7 @@ function endPlacedDrag(e) {
     }
     renderGarnishScreen();
   }
-  d.g = null; d.dragging = false; d.ghost = null;
+  d.g = null; d.img = null; d.dragging = false; d.ghost = null;
 }
 window.addEventListener('pointerup', endPlacedDrag);
 window.addEventListener('pointercancel', endPlacedDrag);
