@@ -358,7 +358,7 @@ function tick() {
    every few seconds until they're tapped. */
 const CALL_OUTS = ['excuse me!', 'hello?', 'over here!', 'hey, bartender!', 'um, hi?', 'can i order?',
                    'ahem…', 'anyone there?', 'psst!', "i'm ready!", 'still waiting…', 'yoo-hoo!'];
-const CALL_AFTER = 6;     // seconds of waiting before the first call-out
+const CALL_AFTER = 2.5;   // seconds of waiting before the first call-out (user, 2026-10-01: was 6)
 const CALL_SHOW  = 2.5;   // each phrase stays this long…
 const CALL_GAP   = 1.5;   // …then a short pause before the next one
 
