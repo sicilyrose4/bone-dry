@@ -173,7 +173,7 @@ html, body {
    (461:1408, 459:1276, 461:1361)
 ═══════════════════════════════════════════ */
 #screen-bar {
-  background: #000;
+  background: #12111d;   /* matches the recolored bar art */
 }
 .bar-bg {
   position: absolute;
