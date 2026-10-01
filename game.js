@@ -1372,7 +1372,7 @@ function initGame() {
   G.shiftRemaining = SHIFT_SECONDS;
   G.shiftOver = false;
   G.dial = PACE.startDial;
-  G.nextArrivalIn = 1;
+  G.nextArrivalIn = 0.2;   // first customer starts fading in right away (user, 2026-10-01: was 1s)
   G.serving = 0;
   G.timerRunning = false;
   G.customers = [];
