@@ -2076,6 +2076,7 @@ $('btn-menu-next').addEventListener('click', (e) => { e.stopPropagation(); moveM
 })();
 
 $('btn-drink-menu').addEventListener('click', (e) => { e.stopPropagation(); openDrinkMenu(); });
+$('btn-end-home').addEventListener('click', (e) => { e.stopPropagation(); showScreen('home'); });
 $('btn-menu-home').addEventListener('click', (e) => { e.stopPropagation(); showScreen('home'); });
 
 // Opens straight to home (loading screen removed, user 2026-09-30). Art still preloads
