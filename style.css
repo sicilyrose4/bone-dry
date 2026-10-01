@@ -256,6 +256,9 @@ html, body {
   pointer-events: none;
 }
 .customer-slot.leaving { opacity: 0; }
+/* A customer who's been waiting too long calls out (small white text over their head) */
+.callout { position: absolute; transform: translateX(-50%); font-family: 'BarFont', sans-serif; font-size: 16px; line-height: normal; color: #fff; white-space: nowrap; pointer-events: none; z-index: 8; opacity: 0; transition: opacity 0.25s ease; }
+.callout.show { opacity: 1; }
 .customer-slot.arriving { animation: customerIn 0.6s ease; }
 @keyframes customerIn {
   from { opacity: 0; }

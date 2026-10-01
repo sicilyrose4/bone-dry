@@ -349,7 +349,46 @@ function tick() {
     if (G.nextArrivalIn <= 0) trySpawnCustomer();
   }
 
+  updateCallOuts();
   updateTimerDisplays();
+}
+
+/* Waiting customers call out (user, 2026-10-01): if nobody taps a customer for
+   CALL_AFTER seconds, they say one of these over their head, then a different one
+   every few seconds until they're tapped. */
+const CALL_OUTS = ['excuse me!', 'hello?', 'over here!', 'hey, bartender!', 'um, hi?', 'can i order?',
+                   'ahem…', 'anyone there?', 'psst!', "i'm ready!", 'still waiting…', 'yoo-hoo!'];
+const CALL_AFTER = 6;     // seconds of waiting before the first call-out
+const CALL_SHOW  = 2.5;   // each phrase stays this long…
+const CALL_GAP   = 1.5;   // …then a short pause before the next one
+
+function updateCallOuts() {
+  [0, 1, 2].forEach(slot => {
+    const c = G.customers[slot], el = $(`callout-${slot}`);
+    const waiting = c && c.state === 'skeleton' && G.drink.forCustomer !== slot;
+    if (!waiting) {
+      if (c) { c.waited = 0; c.callTimer = 0; }
+      el.classList.remove('show');
+      return;
+    }
+    c.waited = (c.waited || 0) + TICK;
+    if (c.waited < CALL_AFTER) return;
+    c.callTimer = (c.callTimer || 0) - TICK;
+    if (c.callTimer > 0) return;
+    if (el.classList.contains('show')) {
+      el.classList.remove('show');
+      c.callTimer = CALL_GAP;
+    } else {
+      const options = CALL_OUTS.filter(p => p !== c.lastCall);
+      c.lastCall = options[Math.floor(Math.random() * options.length)];
+      el.textContent = c.lastCall;
+      const spec = CUSTOMERS[c.type];
+      el.style.left = SLOT_CX[slot] + 'px';
+      el.style.top = (COUNTER_TOP + (spec.sink || 0) - spec.h - 24) + 'px';   // just over their head
+      el.classList.add('show');
+      c.callTimer = CALL_SHOW;
+    }
+  });
 }
 
 function pauseToggle() {
@@ -1353,6 +1392,7 @@ function initGame() {
   dom.game.classList.remove('paused');
   dom.counterDrinks.innerHTML = '';
   document.querySelectorAll('.bar-tip-float, .speech-bubble.reaction').forEach(e => e.remove());
+  document.querySelectorAll('.callout').forEach(e => e.classList.remove('show'));
   hideSpeechArea();
   G.shelf = { order: [], selected: null, toast: null };
   refreshBarControls();
