@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#12111d" />
   <title>Bone Dry</title>
-  <link rel="stylesheet" href="style.css?v=28" />
+  <link rel="stylesheet" href="style.css?v=29" />
 </head>
 <body>
   <div id="viewport">
@@ -47,16 +47,17 @@
       </div>
 
       <!-- ═══════════════════════════════════════════
-           DRINK MENU — PLACEHOLDER (user OK'd, 2026-10-01) until the real design:
-           every recipe as a mini recipe card on a swipeable row
+           DRINK MENU — Figma 559:427 (1428×619 frame, scaled to fit): a looping carousel
+           of recipe cards — big card in the middle, faded smaller ones either side
       ═══════════════════════════════════════════ -->
       <div id="screen-menu" class="screen">
-        <!-- Plain top-left back button, like the other screens (no header — user, 2026-10-01) -->
         <button id="btn-menu-home" class="pour-back">
           <img src="assets/ui/icon-back.svg" alt="" width="24" height="24" />
-          <span>HOME</span>
+          <span>BACK TO HOME</span>
         </button>
-        <div id="menu-row"></div>
+        <div id="menu-carousel"></div>
+        <button id="btn-menu-prev" class="menu-arrow prev" aria-label="Previous drink"><img src="assets/ui/menu-arrow-next.svg" alt="" /></button>
+        <button id="btn-menu-next" class="menu-arrow" aria-label="Next drink"><img src="assets/ui/menu-arrow-next.svg" alt="" /></button>
       </div>
 
       <!-- ═══════════════════════════════════════════
@@ -266,6 +267,6 @@
     </div><!-- #game -->
   </div><!-- #viewport -->
 
-  <script src="game.js?v=38"></script>
+  <script src="game.js?v=40"></script>
 </body>
 </html>

@@ -169,30 +169,38 @@ html, body {
 }
 
 /* ═══════════════════════════════════════════
-   DRINK MENU — placeholder in the game's style (recipe-card navy, Scratchy titles,
-   hand-drawn underline, Bar font lines, mini drinks). Row swipes like the shelf.
+   DRINK MENU — Figma 559:427, scaled ×0.591 (1428 → 844 wide).
+   Every card is built at the big center size; side cards are the same card scaled
+   ×0.72 at 70% opacity. Positions/animation are transforms set in game.js.
 ═══════════════════════════════════════════ */
-#screen-menu { background: #12111d; }
-#menu-row {
-  position: absolute; left: 0; top: 74px; width: 844px; height: 270px;
-  display: flex; gap: 16px; padding: 0 38px;
-  overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
-  -webkit-overflow-scrolling: touch; touch-action: pan-x;
+#screen-menu { background: #040318; }
+#btn-menu-home { left: 19px; top: 25px; z-index: 10; }
+#menu-carousel { position: absolute; inset: 0; overflow: hidden; touch-action: none; }
+.menu-card {
+  position: absolute; left: 0; top: 0;
+  width: 277.2px; height: 308.6px;
+  padding: 34.2px 18px 0;
+  background: #2b2a45; border-radius: 11.1px;
+  display: flex; flex-direction: column; align-items: center;
+  transform-origin: 50% 50%;
+  transition: transform 0.4s ease, opacity 0.4s ease;
+  cursor: pointer;
 }
-#menu-row::-webkit-scrollbar { display: none; }
-#menu-row::after { content: ''; flex: none; width: 22px; }   /* right padding inside the scroll */
-.menu-card { flex: none; width: 150px; height: 262px; background: #2b2a45; border-radius: 12px; display: flex; flex-direction: column; align-items: center; padding: 18px 10px 0; overflow: hidden; }
-.menu-card .menu-name { width: 132px; height: 34px; display: flex; align-items: center; justify-content: center; font-family: 'Scratchy', 'BarFontBold', sans-serif; line-height: normal; color: #cccaf3; }
+.menu-card.no-anim { transition: none; }
+.menu-card .menu-name { width: 240.2px; height: 42px; display: flex; align-items: center; justify-content: center; font-family: 'Scratchy', 'BarFontBold', sans-serif; line-height: normal; color: #cccaf3; }
 .menu-card .menu-name span { display: inline-block; white-space: nowrap; }
-.menu-card .menu-ul { width: 126px; height: 7px; margin-top: 2px; flex: none; }
-.menu-card .menu-ings { margin-top: 10px; font-family: 'BarFont', sans-serif; font-size: 15px; line-height: 1.35; color: #cccaf3; text-align: center; white-space: nowrap; }
+.menu-card .menu-ul { width: 244.4px; height: 11.9px; flex: none; }
+.menu-card .menu-ings { margin-top: 12px; font-family: 'BarFont', sans-serif; font-size: 25.9px; line-height: 1.32; color: #cccaf3; text-align: center; white-space: nowrap; }
 .menu-card .menu-ings .ing { color: #edecff; }
-.menu-card .menu-glass { margin-top: auto; margin-bottom: 14px; width: 49px; height: 66px; position: relative; flex: none; }
-.menu-card .menu-glass .drink-view { left: 0; top: 0; transform-origin: 0 0; transform: scale(0.4); }
-.menu-card.wide { width: 236px; }
-.menu-card.wide .menu-name { width: 216px; }
-.menu-card.wide .menu-ul { width: 200px; }
-.menu-card.wide .menu-ings { columns: 2; column-gap: 14px; font-size: 13px; text-align: left; }
+.menu-card.long .menu-ings { columns: 2; column-gap: 14px; text-align: left; }   /* 7+ lines (Long Island) */
+.menu-card .menu-glass { margin-top: 12px; width: 40.7px; height: 54.5px; position: relative; flex: none; }
+.menu-card .menu-glass .drink-view { left: 0; top: 0; transform-origin: 0 0; transform: scale(0.3323); }
+.menu-arrow { position: absolute; top: 192.1px; width: 24.8px; height: 24.8px; padding: 0; border: none; background: none; z-index: 10; cursor: pointer; }
+.menu-arrow::before { content: ''; position: absolute; inset: -12px; }   /* bigger tap area */
+.menu-arrow img { width: 100%; height: 100%; display: block; }
+.menu-arrow.prev { left: 71.5px; }
+.menu-arrow.prev img { transform: scaleX(-1); }
+#btn-menu-next { left: 735.2px; }
 
 /* ═══════════════════════════════════════════
    SCREEN 1: BAR  — values from Figma "Updated flow" bar frames

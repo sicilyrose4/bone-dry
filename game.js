@@ -1965,9 +1965,21 @@ function preload(onProgress) {
 $('btn-start-shift').addEventListener('click', (e) => { e.stopPropagation(); initGame(); });
 
 /* ═══════════════════════════════════════════════════════════════
-   DRINK MENU — placeholder until the real design (user OK'd, 2026-10-01):
-   every recipe as a small recipe card on a row that swipes like the shelf
+   DRINK MENU — Figma 559:427 (user, 2026-10-01): looping carousel of recipe cards.
+   Arrows or swipe to move; tap a side card to bring it to the middle. Cards slide
+   over and grow/shrink. Five cards live in the DOM (slots −2…+2); the ones that
+   slide off one side are refilled and dropped in on the other.
 ═══════════════════════════════════════════════════════════════ */
+const MENU_SLOTS = {   // card center (x, y), scale, opacity — scaled from the Figma frame
+  '-2': { x: 19.2,  y: 204.5, s: 0.72, o: 0 },
+  '-1': { x: 220.4, y: 204.5, s: 0.72, o: 0.7 },
+  '0':  { x: 421.7, y: 192.7, s: 1,    o: 1 },
+  '1':  { x: 611.0, y: 204.5, s: 0.72, o: 0.7 },
+  '2':  { x: 812.2, y: 204.5, s: 0.72, o: 0 },
+};
+const MENU_CARD_W = 277.2, MENU_CARD_H = 308.6;
+const menu = { index: 0, cards: [] };   // index = drink in the middle
+
 function drinkGarnishes(drink) {
   const g = [];
   drink.ingredients.filter(i => i.count).forEach(i => {
@@ -1976,34 +1988,92 @@ function drinkGarnishes(drink) {
   return g;
 }
 
+function fillMenuCard(card, drink) {
+  card.classList.toggle('long', drink.ingredients.length > 6);
+  card.innerHTML = `<div class="menu-name"><span></span></div>
+    <img class="menu-ul" src="assets/ui/recipe-underline.svg?v=2" alt="" />
+    <div class="menu-ings">${drink.ingredients.map(recipeLine).join('')}</div>
+    <div class="menu-glass"><div class="drink-view"></div></div>`;
+  renderDrinkView(card.querySelector('.drink-view'), drink.ingredients.filter(i => i.oz).map(i => ({ id: i.id, oz: i.oz })), drinkGarnishes(drink));
+  // Name: Scratchy at 41.6px (E rule built in), shrunk to fit the card
+  const nameBox = card.querySelector('.menu-name'), span = nameBox.firstChild, name = drink.name.toUpperCase();
+  let size = 41.6;
+  const setName = () => { nameBox.style.fontSize = size + 'px'; span.innerHTML = scratchyHTML(name, size); };
+  setName();
+  while (span.offsetWidth > 236 && size > 18) { size -= 1; setName(); }
+  // Lines: shrink until the glass still fits on the card
+  const ings = card.querySelector('.menu-ings');
+  let fs = drink.ingredients.length > 6 ? 17 : 25.9;
+  ings.style.fontSize = fs + 'px';
+  while (card.scrollHeight > card.clientHeight && fs > 11) ings.style.fontSize = (fs -= 1) + 'px';
+}
+
+function placeMenuCard(card, slot) {
+  const p = MENU_SLOTS[slot];
+  card.dataset.slot = slot;
+  card.style.transform = `translate(${p.x - MENU_CARD_W / 2}px, ${p.y - MENU_CARD_H / 2}px) scale(${p.s})`;
+  card.style.opacity = p.o;
+  card.style.zIndex = 3 - Math.abs(slot);
+  card.style.pointerEvents = p.o ? 'auto' : 'none';
+}
+
+const drinkAt = offset => DRINKS[((menu.index + offset) % DRINKS.length + DRINKS.length) % DRINKS.length];
+
 function openDrinkMenu() {
   showScreen('menu');
-  const row = $('menu-row');
-  row.innerHTML = '';
-  row.scrollLeft = 0;
-  DRINKS.forEach(d => {
+  const wrap = $('menu-carousel');
+  wrap.innerHTML = '';
+  menu.cards = [-2, -1, 0, 1, 2].map(slot => {
     const card = document.createElement('div');
-    card.className = 'menu-card' + (d.ingredients.length > 6 ? ' wide' : '');   // long recipes get two columns
-    const name = d.name.toUpperCase();
-    card.innerHTML = `<div class="menu-name"><span></span></div>
-      <img class="menu-ul" src="assets/ui/recipe-underline.svg?v=2" alt="" />
-      <div class="menu-ings">${d.ingredients.map(recipeLine).join('')}</div>
-      <div class="menu-glass"><div class="drink-view"></div></div>`;
-    row.appendChild(card);   // in the page first, so it can be measured
-    renderDrinkView(card.querySelector('.drink-view'), d.ingredients.filter(i => i.oz).map(i => ({ id: i.id, oz: i.oz })), drinkGarnishes(d));
-    // Name: shrink until it fits the card
-    const nameBox = card.querySelector('.menu-name'), span = nameBox.firstChild;
-    let size = 26;
-    const setName = () => { nameBox.style.fontSize = size + 'px'; span.innerHTML = scratchyHTML(name, size); };
-    setName();
-    const maxW = nameBox.clientWidth - 4;
-    while (span.offsetWidth > maxW && size > 14) { size--; setName(); }
-    // Long recipes (e.g. Long Island): shrink the lines until the glass still fits
-    const ings = card.querySelector('.menu-ings');
-    let fs = parseFloat(getComputedStyle(ings).fontSize);
-    while (card.scrollHeight > card.clientHeight && fs > 10) ings.style.fontSize = (--fs) + 'px';
+    card.className = 'menu-card no-anim';
+    wrap.appendChild(card);   // in the page first, so it can be measured
+    fillMenuCard(card, drinkAt(slot));
+    placeMenuCard(card, slot);
+    card.addEventListener('click', () => { const sl = +card.dataset.slot; if (sl && !menu.swiped) moveMenu(sl); });
+    return card;
   });
+  requestAnimationFrame(() => menu.cards.forEach(c => c.classList.remove('no-anim')));
 }
+
+// Step the carousel by dir (+1 → next drink slides in from the right)
+function moveMenu(dir) {
+  if (!dir) return;
+  const step = Math.sign(dir);
+  menu.index = (menu.index + step + DRINKS.length) % DRINKS.length;
+  menu.cards.forEach(card => {
+    let slot = +card.dataset.slot - step;
+    if (Math.abs(slot) > 2) {
+      // Fell off one end: refill and drop it in on the far side (no animation)
+      slot = -Math.sign(slot) * 2;
+      card.classList.add('no-anim');
+      fillMenuCard(card, drinkAt(slot));
+      placeMenuCard(card, slot);
+      void card.offsetWidth;
+      card.classList.remove('no-anim');
+    } else placeMenuCard(card, slot);
+  });
+  if (Math.abs(dir) > 1) setTimeout(() => moveMenu(dir - step), 120);
+}
+
+$('btn-menu-prev').addEventListener('click', (e) => { e.stopPropagation(); moveMenu(-1); });
+$('btn-menu-next').addEventListener('click', (e) => { e.stopPropagation(); moveMenu(1); });
+// Swipe left/right on the cards
+(() => {
+  let x0 = null;
+  const wrap = $('menu-carousel');
+  wrap.addEventListener('pointerdown', (e) => { x0 = e.clientX; });
+  window.addEventListener('pointerup', (e) => {
+    if (x0 === null || G.screen !== 'menu') { x0 = null; return; }
+    const r = dom.screens.menu.getBoundingClientRect();
+    const dx = (e.clientX - x0) * 844 / r.width;
+    x0 = null;
+    if (Math.abs(dx) > 40) {
+      moveMenu(dx < 0 ? 1 : -1);
+      menu.swiped = true;                                   // the click that may follow isn't a tap
+      setTimeout(() => { menu.swiped = false; }, 60);
+    }
+  });
+})();
 
 $('btn-drink-menu').addEventListener('click', (e) => { e.stopPropagation(); openDrinkMenu(); });
 $('btn-menu-home').addEventListener('click', (e) => { e.stopPropagation(); showScreen('home'); });
