@@ -1631,9 +1631,10 @@ function renderDrinkView(el, poured, garnishes) {
   glass.src = ART.glass;
   glass.alt = '';
   el.appendChild(glass);
-  garnishes.forEach(g => {
+  garnishes.forEach((g, i) => {
     const img = document.createElement('img');
     img.className = 'dv-garnish';
+    img.dataset.index = i;
     img.src = ingPath(g.id);
     img.alt = '';
     const p = g.spot;
@@ -1744,6 +1745,75 @@ function endGarnishDrag(e) {
 window.addEventListener('pointermove', moveGarnishDrag);
 window.addEventListener('pointerup', endGarnishDrag);
 window.addEventListener('pointercancel', endGarnishDrag);
+
+/* Drag a garnish that's already on the drink (user, 2026-09-30): it comes off the drink and
+   a trash icon shows at the bottom center (between ← POUR and SERVE →). Over the trash the
+   garnish drops to 60% opacity; let go there and it's gone. Let go anywhere else → back on. */
+const TRASH = { cx: 421, cy: 344, radius: 55 };   // midway between the nav buttons (156 ↔ 686), level with them
+const placedDrag = { g: null, index: -1, x0: 0, y0: 0, dragging: false, ghost: null, offX: 0, offY: 0 };
+
+function changeGarnishCount(id, delta) {
+  const p = G.drink.poured.find(x => x.id === id);
+  if (p) p.count = (p.count || 0) + delta;
+  else if (delta > 0) G.drink.poured.push({ id, count: delta });
+  G.drink.poured = G.drink.poured.filter(x => INGREDIENTS[x.id].type !== 'garnish' || x.count > 0);
+}
+
+$('garnish-drink').addEventListener('pointerdown', (e) => {
+  const img = e.target.closest('.dv-garnish');
+  if (!img || G.screen !== 'garnish' || !G.timerRunning) return;
+  e.stopPropagation();
+  const p = stagePoint(e), index = +img.dataset.index;
+  Object.assign(placedDrag, { g: G.drink.garnishes[index], index, x0: p.x, y0: p.y, dragging: false, ghost: null });
+});
+
+window.addEventListener('pointermove', (e) => {
+  const d = placedDrag;
+  if (!d.g) return;
+  const p = stagePoint(e);
+  if (!d.dragging) {
+    if (Math.hypot(p.x - d.x0, p.y - d.y0) < DRAG_START_PX) return;
+    d.dragging = true;
+    // Lift it off the drink
+    G.drink.garnishes.splice(d.index, 1);
+    changeGarnishCount(d.g.id, -1);
+    hideGarnishToast();
+    G.garnishSel = null;
+    renderGarnishScreen();
+    const s = d.g.spot, left = 355 + s.cx - s.w / 2, top = 120 + s.cy - s.h / 2;   // garnish-drink sits at (355,120)
+    d.ghost = document.createElement('img');
+    d.ghost.className = 'placed-ghost';
+    d.ghost.src = ingPath(d.g.id);
+    d.ghost.alt = '';
+    Object.assign(d.ghost.style, { width: s.w + 'px', height: s.h + 'px', transform: `rotate(${s.rot}deg)${s.flip ? ' scaleY(-1)' : ''}` });
+    d.offX = d.x0 - left; d.offY = d.y0 - top;
+    dom.screens.garnish.appendChild(d.ghost);
+    $('garnish-trash').style.display = 'block';
+  }
+  d.ghost.style.left = (p.x - d.offX) + 'px';
+  d.ghost.style.top = (p.y - d.offY) + 'px';
+  d.ghost.style.opacity = overTrash(p) ? '0.6' : '1';
+});
+
+const overTrash = p => Math.hypot(p.x - TRASH.cx, p.y - TRASH.cy) < TRASH.radius;
+
+function endPlacedDrag(e) {
+  const d = placedDrag;
+  if (!d.g) return;
+  if (d.dragging) {
+    if (d.ghost) d.ghost.remove();
+    $('garnish-trash').style.display = 'none';
+    if (!overTrash(stagePoint(e))) {
+      // Not trashed — it goes back where it was
+      G.drink.garnishes.splice(d.index, 0, d.g);
+      changeGarnishCount(d.g.id, +1);
+    }
+    renderGarnishScreen();
+  }
+  d.g = null; d.dragging = false; d.ghost = null;
+}
+window.addEventListener('pointerup', endPlacedDrag);
+window.addEventListener('pointercancel', endPlacedDrag);
 
 function openGarnishScreen() {
   G.garnishSel = null;

@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#12111d" />
   <title>Bone Dry</title>
-  <link rel="stylesheet" href="style.css?v=17" />
+  <link rel="stylesheet" href="style.css?v=18" />
 </head>
 <body>
   <div id="viewport">
@@ -187,6 +187,8 @@
           <img src="assets/ui/arrow-bar.svg" alt="" width="18" height="16" />
           <span>POUR</span>
         </button>
+        <!-- Shows while dragging a garnish off the drink — drop it here to throw it away -->
+        <img id="garnish-trash" src="assets/ui/icon-trash.svg" alt="Trash" style="display:none;" />
         <div id="garnish-toast" style="display:none;">
           <span id="garnish-toast-text"></span>
           <img src="assets/ui/icon-check.svg" alt="" width="20" height="20" />
@@ -234,6 +236,6 @@
     </div><!-- #game -->
   </div><!-- #viewport -->
 
-  <script src="game.js?v=28"></script>
+  <script src="game.js?v=29"></script>
 </body>
 </html>
