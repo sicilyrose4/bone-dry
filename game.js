@@ -138,7 +138,7 @@ const REACTIONS = {
 // Fallback for any customer added later without their own lines
 const DEFAULT_REACTIONS = { perfect:'perfect, thanks!', good:'nice, thanks!', strong:'a little strong', weak:'a bit weak', sweet:'kinda sweet', off:'not quite right', bad:'hmm… no', slow:'that took a while' };
 const CUSTOMER_IDS = Object.keys(CUSTOMERS);
-const CUSTOMER_ART_V = 2;   // bump when customer art changes so phones reload it
+const CUSTOMER_ART_V = 3;   // bump when customer art changes so phones reload it
 const customerImg = (id, state) => `assets/customers/${id}-${state}.png?v=${CUSTOMER_ART_V}`;
 
 // Slot centers (x) and counter top (y) from the bar frames
