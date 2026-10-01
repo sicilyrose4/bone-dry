@@ -77,6 +77,8 @@ html, body {
 .btn-primary   { background: #cccaf3; height: 54px; padding: 0 24px; }
 .btn-secondary { background: #918fb7; height: 40px; padding: 0 34px; }
 .btn-primary:active, .btn-secondary:active { transform: scale(0.96); }
+/* Secondary, outlined variant (Figma 507:59 "Variant2"): #918fb7 border + text, no fill, 43 tall */
+.btn-secondary.outline { background: transparent; border: 1.5px solid #918fb7; color: #918fb7; height: 43px; }
 
 /* ─── SHARED HUD ELEMENTS ────────────────────────────────────── */
 .pause-btn {
@@ -842,7 +844,8 @@ html, body {
   font-size: 24px;
   color: #9d9cb6;
 }
-#btn-play-again { margin-top: 8px; }   /* primary button */
+/* PLAY AGAIN (primary) + BACK TO HOME (outlined secondary), stretched to the same width */
+.end-buttons { display: flex; flex-direction: column; align-items: stretch; gap: 12px; margin-top: 8px; }
 
 /* HUD row on every screen where ingredients go in (Figma 483:1652):
    timer · recipe icon · pause, 15px apart, centered at y=33 */

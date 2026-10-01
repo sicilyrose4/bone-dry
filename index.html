@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#12111d" />
   <title>Bone Dry</title>
-  <link rel="stylesheet" href="style.css?v=29" />
+  <link rel="stylesheet" href="style.css?v=30" />
 </head>
 <body>
   <div id="viewport">
@@ -237,9 +237,12 @@
         <h1 id="end-title">SHIFT OVER</h1>
         <p id="end-tips">Total Tips: $0.00</p>
         <p id="end-served">Customers served: 0</p>
-        <button id="btn-play-again" class="btn-primary">PLAY AGAIN</button>
-        <!-- Temporary until the real shift-over design (user, 2026-10-01) -->
-        <button id="btn-end-home" class="btn-secondary">BACK TO HOME</button>
+        <!-- Both buttons share one width so their sides line up (user, 2026-10-01) -->
+        <div class="end-buttons">
+          <button id="btn-play-again" class="btn-primary">PLAY AGAIN</button>
+          <!-- Temporary until the real shift-over design -->
+          <button id="btn-end-home" class="btn-secondary outline">BACK TO HOME</button>
+        </div>
       </div>
 
       <!-- Peek confirm — Figma 509:88 "recipe peek confirmation" -->
