@@ -83,7 +83,7 @@ const GARNISH_UNITS = { lime:'slice', lemon:'slice', orange:'slice', mint:'sprig
    ART — swap bar background / counter here
 ═══════════════════════════════════════════════════════════════ */
 const ART = {
-  barBackground: 'assets/bar/background-040318.jpg',   // black recolored to #040318 (user, 2026-10-01; #12111D was too light); original: background.jpg
+  barBackground: 'assets/bar/background-030214.jpg',   // black recolored to #030214 (user, 2026-10-01; #12111D, #040318 were too light); original: background.jpg
   barCounter:    'assets/bar/counter-slate.png',   // slate indigo #3d3b70 (original purple: assets/bar/counter.png)
   glass:         'assets/glass-straight-on.png',
 };
