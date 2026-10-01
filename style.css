@@ -838,6 +838,7 @@ html, body {
   margin: 0; font-family: 'BarFont', sans-serif; font-size: 22.5px; line-height: normal; color: #cccaf3; white-space: nowrap;
 }
 /* START OVER (primary) + BACK TO HOME (outlined secondary), stretched to the same width */
+#btn-end-home { border-color: transparent; }   /* no stroke (user, 2026-10-01) — text only, same size/spacing */
 .end-buttons { position: absolute; left: 422px; top: 260.8px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: stretch; gap: 14.8px; }
 
 /* HUD row on every screen where ingredients go in (Figma 483:1652):
