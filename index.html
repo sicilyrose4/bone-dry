@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#12111d" />
   <title>Bone Dry</title>
-  <link rel="stylesheet" href="style.css?v=30" />
+  <link rel="stylesheet" href="style.css?v=31" />
 </head>
 <body>
   <div id="viewport">
@@ -234,13 +234,13 @@
            SCREEN 5: SHIFT END
       ═══════════════════════════════════════════ -->
       <div id="screen-end" class="screen">
-        <h1 id="end-title">SHIFT OVER</h1>
-        <p id="end-tips">Total Tips: $0.00</p>
-        <p id="end-served">Customers served: 0</p>
-        <!-- Both buttons share one width so their sides line up (user, 2026-10-01) -->
+        <!-- Figma 568:497 "shift over" (1428×619, scaled ×0.591 + centered) -->
+        <img id="end-skull" src="assets/ui/shift-over-skull.png" alt="" />
+        <h1 id="end-title">SHI<span class="t-f">F</span>T <span class="t-o">O</span><span class="t-v">V</span>ER</h1>
+        <p id="end-tips">Total tips: $0.00</p>
+        <!-- Both buttons share one width so their sides line up -->
         <div class="end-buttons">
-          <button id="btn-play-again" class="btn-primary">PLAY AGAIN</button>
-          <!-- Temporary until the real shift-over design -->
+          <button id="btn-play-again" class="btn-primary">START OVER</button>
           <button id="btn-end-home" class="btn-secondary outline">BACK TO HOME</button>
         </div>
       </div>
@@ -272,6 +272,6 @@
     </div><!-- #game -->
   </div><!-- #viewport -->
 
-  <script src="game.js?v=41"></script>
+  <script src="game.js?v=42"></script>
 </body>
 </html>

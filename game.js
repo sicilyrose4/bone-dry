@@ -275,7 +275,6 @@ const dom = {
   pourLiquid:       $('pour-liquid'),
 
   endTips:          $('end-tips'),
-  endServed:        $('end-served'),
   btnPlayAgain:     $('btn-play-again'),
 
   pauseOverlay:     $('pause-overlay'),
@@ -1321,8 +1320,7 @@ function endShift(early = false) {
   PROGRESS.shifts.push({ date: new Date().toISOString(), tips: Math.round(G.tips * 100) / 100, served: G.drinksServed,
                          ...(early ? { endedEarly: true, secondsLeft: Math.ceil(G.shiftRemaining) } : {}) });
   saveProgress();
-  dom.endTips.textContent   = `Total Tips: $${G.tips.toFixed(2)}`;
-  dom.endServed.textContent = `Customers served: ${G.drinksServed}`;
+  dom.endTips.textContent = `Total tips: $${G.tips.toFixed(2)}`;
   showScreen('end');
 }
 

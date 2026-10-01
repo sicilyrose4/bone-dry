@@ -821,31 +821,24 @@ html, body {
    SCREEN 5: END
 ═══════════════════════════════════════════ */
 /* Placeholder end screen (real design coming) — Figma colors only */
-#screen-end {
-  background: #040318;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-}
-#screen-end.active { display: flex; }
+/* Shift over — Figma 568:497, scaled ×0.591 (1428 → 844) and centered vertically (+12).
+   Buttons keep their real component sizes so they stay easy to tap. */
+#screen-end { background: #040318; }
+#end-skull { position: absolute; left: 394.8px; top: 43.9px; width: 54.4px; height: 62.4px; pointer-events: none; }
 #end-title {
-  font-family: 'BarFontBold', sans-serif;
-  font-size: 48px;
-  color: #fff;
+  position: absolute; left: 422px; top: 152.4px; transform: translate(-50%, -50%);
+  margin: 0; font-family: 'Scratchy', 'BarFontBold', sans-serif; font-weight: normal; font-size: 72.7px; line-height: normal;
+  color: #fff; white-space: nowrap;
 }
+#end-title .t-f { letter-spacing: -0.04em; }   /* Figma's per-letter tracking */
+#end-title .t-o { letter-spacing: -0.03em; }
+#end-title .t-v { letter-spacing: -0.07em; }
 #end-tips {
-  font-family: 'BarFont', sans-serif;
-  font-size: 32px;
-  color: #cccaf3;
+  position: absolute; left: 422.9px; top: 205.8px; transform: translate(-50%, -50%);
+  margin: 0; font-family: 'BarFont', sans-serif; font-size: 22.5px; line-height: normal; color: #cccaf3; white-space: nowrap;
 }
-#end-served {
-  font-family: 'BarFont', sans-serif;
-  font-size: 24px;
-  color: #9d9cb6;
-}
-/* PLAY AGAIN (primary) + BACK TO HOME (outlined secondary), stretched to the same width */
-.end-buttons { display: flex; flex-direction: column; align-items: stretch; gap: 12px; margin-top: 8px; }
+/* START OVER (primary) + BACK TO HOME (outlined secondary), stretched to the same width */
+.end-buttons { position: absolute; left: 422px; top: 260.8px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: stretch; gap: 14.8px; }
 
 /* HUD row on every screen where ingredients go in (Figma 483:1652):
    timer · recipe icon · pause, 15px apart, centered at y=33 */
