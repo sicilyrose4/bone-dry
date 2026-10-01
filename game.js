@@ -233,6 +233,7 @@ const dom = {
   game:             $('game'),
   screens: {
     home:           $('screen-home'),
+    menu:           $('screen-menu'),
     bar:            $('screen-bar'),
     shelf:          $('screen-shelf'),
     pour:           $('screen-pour'),
@@ -680,7 +681,7 @@ function scratchyHTML(text, size) {
     const isE = ch.toUpperCase() === 'E';
     const beforeE = chars[i + 1] && chars[i + 1].toUpperCase() === 'E' && ch !== ' ';
     const style = [];
-    if (isE) style.push(`font-size:${size + 8}px`);
+    if (isE) style.push(`font-size:${(size * (1 + 8 / 45)).toFixed(1)}px`);   // +8px at the 45px title size — scaled for smaller text
     if (beforeE) style.push(`letter-spacing:${-(size * 0.05).toFixed(2)}px`);
     return style.length ? `<span style="${style.join(';')}">${ch}</span>` : ch;
   }).join('');
@@ -1962,6 +1963,50 @@ function preload(onProgress) {
 }
 
 $('btn-start-shift').addEventListener('click', (e) => { e.stopPropagation(); initGame(); });
+
+/* ═══════════════════════════════════════════════════════════════
+   DRINK MENU — placeholder until the real design (user OK'd, 2026-10-01):
+   every recipe as a small recipe card on a row that swipes like the shelf
+═══════════════════════════════════════════════════════════════ */
+function drinkGarnishes(drink) {
+  const g = [];
+  drink.ingredients.filter(i => i.count).forEach(i => {
+    for (let k = 0; k < i.count; k++) g.push({ id: i.id, spot: garnishSpot(i.id, g) });
+  });
+  return g;
+}
+
+function openDrinkMenu() {
+  showScreen('menu');
+  const row = $('menu-row');
+  row.innerHTML = '';
+  row.scrollLeft = 0;
+  DRINKS.forEach(d => {
+    const card = document.createElement('div');
+    card.className = 'menu-card' + (d.ingredients.length > 6 ? ' wide' : '');   // long recipes get two columns
+    const name = d.name.toUpperCase();
+    card.innerHTML = `<div class="menu-name"><span></span></div>
+      <img class="menu-ul" src="assets/ui/recipe-underline.svg?v=2" alt="" />
+      <div class="menu-ings">${d.ingredients.map(recipeLine).join('')}</div>
+      <div class="menu-glass"><div class="drink-view"></div></div>`;
+    row.appendChild(card);   // in the page first, so it can be measured
+    renderDrinkView(card.querySelector('.drink-view'), d.ingredients.filter(i => i.oz).map(i => ({ id: i.id, oz: i.oz })), drinkGarnishes(d));
+    // Name: shrink until it fits the card
+    const nameBox = card.querySelector('.menu-name'), span = nameBox.firstChild;
+    let size = 26;
+    const setName = () => { nameBox.style.fontSize = size + 'px'; span.innerHTML = scratchyHTML(name, size); };
+    setName();
+    const maxW = nameBox.clientWidth - 4;
+    while (span.offsetWidth > maxW && size > 14) { size--; setName(); }
+    // Long recipes (e.g. Long Island): shrink the lines until the glass still fits
+    const ings = card.querySelector('.menu-ings');
+    let fs = parseFloat(getComputedStyle(ings).fontSize);
+    while (card.scrollHeight > card.clientHeight && fs > 10) ings.style.fontSize = (--fs) + 'px';
+  });
+}
+
+$('btn-drink-menu').addEventListener('click', (e) => { e.stopPropagation(); openDrinkMenu(); });
+$('btn-menu-home').addEventListener('click', (e) => { e.stopPropagation(); showScreen('home'); });
 
 // Opens straight to home (loading screen removed, user 2026-09-30). Art still preloads
 // quietly in the background so nothing pops in once a shift starts.

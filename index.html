@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#12111d" />
   <title>Bone Dry</title>
-  <link rel="stylesheet" href="style.css?v=24" />
+  <link rel="stylesheet" href="style.css?v=27" />
 </head>
 <body>
   <div id="viewport">
@@ -44,6 +44,20 @@
         <button id="btn-history" class="home-link">HISTORY</button>
         <button id="btn-drink-menu" class="home-link">DRINK MENU</button>
         <button id="btn-settings" aria-label="Settings"><img src="assets/ui/icon-settings.svg" alt="" /></button>
+      </div>
+
+      <!-- ═══════════════════════════════════════════
+           DRINK MENU — PLACEHOLDER (user OK'd, 2026-10-01) until the real design:
+           every recipe as a mini recipe card on a swipeable row
+      ═══════════════════════════════════════════ -->
+      <div id="screen-menu" class="screen">
+        <!-- Top row like the other screens: plain back button + gray title -->
+        <button id="btn-menu-home" class="pour-back">
+          <img src="assets/ui/icon-back.svg" alt="" width="24" height="24" />
+          <span>HOME</span>
+        </button>
+        <span id="menu-title">DRINK MENU</span>
+        <div id="menu-row"></div>
       </div>
 
       <!-- ═══════════════════════════════════════════
@@ -253,6 +267,6 @@
     </div><!-- #game -->
   </div><!-- #viewport -->
 
-  <script src="game.js?v=35"></script>
+  <script src="game.js?v=38"></script>
 </body>
 </html>

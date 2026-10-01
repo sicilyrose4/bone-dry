@@ -169,6 +169,34 @@ html, body {
 }
 
 /* ═══════════════════════════════════════════
+   DRINK MENU — placeholder in the game's style (recipe-card navy, Scratchy titles,
+   hand-drawn underline, Bar font lines, mini drinks). Row swipes like the shelf.
+═══════════════════════════════════════════ */
+#screen-menu { background: #12111d; }
+/* Title = the top-row title style used on the shelf / garnish screens */
+#menu-title { position: absolute; left: 422px; top: 33.5px; transform: translate(-50%, -50%); font-family: 'BarFont', sans-serif; font-size: 24px; line-height: normal; color: #8e8e8e; white-space: nowrap; pointer-events: none; }
+#menu-row {
+  position: absolute; left: 0; top: 74px; width: 844px; height: 270px;
+  display: flex; gap: 16px; padding: 0 38px;
+  overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
+  -webkit-overflow-scrolling: touch; touch-action: pan-x;
+}
+#menu-row::-webkit-scrollbar { display: none; }
+#menu-row::after { content: ''; flex: none; width: 22px; }   /* right padding inside the scroll */
+.menu-card { flex: none; width: 150px; height: 262px; background: #2b2a45; border-radius: 12px; display: flex; flex-direction: column; align-items: center; padding: 18px 10px 0; overflow: hidden; }
+.menu-card .menu-name { width: 132px; height: 34px; display: flex; align-items: center; justify-content: center; font-family: 'Scratchy', 'BarFontBold', sans-serif; line-height: normal; color: #cccaf3; }
+.menu-card .menu-name span { display: inline-block; white-space: nowrap; }
+.menu-card .menu-ul { width: 126px; height: 7px; margin-top: 2px; flex: none; }
+.menu-card .menu-ings { margin-top: 10px; font-family: 'BarFont', sans-serif; font-size: 15px; line-height: 1.35; color: #cccaf3; text-align: center; white-space: nowrap; }
+.menu-card .menu-ings .ing { color: #edecff; }
+.menu-card .menu-glass { margin-top: auto; margin-bottom: 14px; width: 49px; height: 66px; position: relative; flex: none; }
+.menu-card .menu-glass .drink-view { left: 0; top: 0; transform-origin: 0 0; transform: scale(0.4); }
+.menu-card.wide { width: 236px; }
+.menu-card.wide .menu-name { width: 216px; }
+.menu-card.wide .menu-ul { width: 200px; }
+.menu-card.wide .menu-ings { columns: 2; column-gap: 14px; font-size: 13px; text-align: left; }
+
+/* ═══════════════════════════════════════════
    SCREEN 1: BAR  — values from Figma "Updated flow" bar frames
    (461:1408, 459:1276, 461:1361)
 ═══════════════════════════════════════════ */
