@@ -1672,10 +1672,79 @@ function buildGarnishTray() {
       Object.assign(o.style, { left: ox + 'px', top: oy + 'px', width: t.outline.w + 'px', height: t.outline.h + 'px' });
       el.appendChild(o);
     }
-    el.addEventListener('click', () => toggleGarnish(id));
+    el.addEventListener('click', () => {
+      if (garnishDrag.justDropped) { garnishDrag.justDropped = false; return; }   // that was a drag, not a tap
+      toggleGarnish(id);
+    });
+    el.addEventListener('pointerdown', (e) => startGarnishDrag(e, id, el));
     tray.appendChild(el);
   });
 }
+
+/* Drag a garnish onto the drink (user, 2026-09-30) — works alongside tap → TAP circle.
+   A copy follows the finger; the target circle shows where it lands. Drop on the glass
+   or near the circle to place it; anywhere else it just goes back. */
+const DRAG_START_PX = 8;     // movement before a press counts as a drag (stage px)
+const DROP_RADIUS = 70;      // drop this close to the target circle's center to place
+const garnishDrag = { id: null, el: null, ghost: null, x0: 0, y0: 0, dragging: false, justDropped: false, prevSel: null };
+
+// Pointer position in stage coords (the 844×390 stage is scaled to fit the phone)
+function stagePoint(e) {
+  const r = dom.screens.garnish.getBoundingClientRect();
+  return { x: (e.clientX - r.left) * 844 / r.width, y: (e.clientY - r.top) * 390 / r.height };
+}
+
+function startGarnishDrag(e, id, el) {
+  if (G.screen !== 'garnish' || !G.timerRunning) return;
+  const p = stagePoint(e);
+  Object.assign(garnishDrag, { id, el, ghost: null, x0: p.x, y0: p.y, dragging: false, justDropped: false, prevSel: G.garnishSel });
+}
+
+function moveGarnishDrag(e) {
+  const d = garnishDrag;
+  if (!d.id) return;
+  const p = stagePoint(e);
+  if (!d.dragging) {
+    if (Math.hypot(p.x - d.x0, p.y - d.y0) < DRAG_START_PX) return;
+    d.dragging = true;
+    hideGarnishToast();
+    G.garnishSel = d.id;          // shows the target circle as the drop hint
+    renderGarnishScreen();
+    d.ghost = d.el.cloneNode(true);
+    d.ghost.classList.remove('selected');
+    d.ghost.classList.add('garnish-ghost');
+    dom.screens.garnish.appendChild(d.ghost);
+    d.offX = d.x0 - parseFloat(d.el.style.left);
+    d.offY = d.y0 - parseFloat(d.el.style.top);
+  }
+  d.ghost.style.left = (p.x - d.offX) + 'px';
+  d.ghost.style.top = (p.y - d.offY) + 'px';
+}
+
+function endGarnishDrag(e) {
+  const d = garnishDrag;
+  if (!d.id) return;
+  if (d.dragging) {
+    const p = stagePoint(e);
+    const spot = garnishSpot(d.id, G.drink.garnishes);
+    const tx = 355 + spot.target.x, ty = 120 + spot.target.y;   // target circle center (garnish-drink at 355,120)
+    const overGlass = p.x > 355 - 20 && p.x < 355 + 122.49 + 20 && p.y > 120 - 20 && p.y < 120 + 164 + 20;
+    if (d.ghost) d.ghost.remove();
+    if (G.timerRunning && (overGlass || Math.hypot(p.x - tx, p.y - ty) < DROP_RADIUS)) {
+      G.garnishSel = d.id;
+      placeSelectedGarnish();
+    } else {
+      G.garnishSel = d.prevSel;   // missed: back to how it was
+      renderGarnishScreen();
+    }
+    d.justDropped = true;         // swallow the click that follows pointerup
+    setTimeout(() => { d.justDropped = false; }, 50);
+  }
+  d.id = null; d.el = null; d.ghost = null; d.dragging = false;
+}
+window.addEventListener('pointermove', moveGarnishDrag);
+window.addEventListener('pointerup', endGarnishDrag);
+window.addEventListener('pointercancel', endGarnishDrag);
 
 function openGarnishScreen() {
   G.garnishSel = null;
