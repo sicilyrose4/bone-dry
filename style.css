@@ -173,8 +173,6 @@ html, body {
    hand-drawn underline, Bar font lines, mini drinks). Row swipes like the shelf.
 ═══════════════════════════════════════════ */
 #screen-menu { background: #12111d; }
-/* Title = the top-row title style used on the shelf / garnish screens */
-#menu-title { position: absolute; left: 422px; top: 33.5px; transform: translate(-50%, -50%); font-family: 'BarFont', sans-serif; font-size: 24px; line-height: normal; color: #8e8e8e; white-space: nowrap; pointer-events: none; }
 #menu-row {
   position: absolute; left: 0; top: 74px; width: 844px; height: 270px;
   display: flex; gap: 16px; padding: 0 38px;
