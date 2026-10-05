@@ -1165,21 +1165,26 @@ const SWEET_IDS  = new Set(['simple-syrup', 'grenadine', 'triple-sec']);
 const GARNISH_PLURAL = { lime: 'limes', lemon: 'lemons', orange: 'orange slices', cherry: 'cherries', mint: 'mint sprigs' };
 function tipReason(recipe, poured, drinkTime, tier, peeks, result) {
   const name = id => INGREDIENTS[id].name.toLowerCase();
-  const issues = [];   // [penalty, sentence, isForgot]
-  poured.forEach(p => { if (!recipe.ingredients.some(r => r.id === p.id)) issues.push([35, `${INGREDIENTS[p.id].name} doesn't belong in this one.`]); });
+  const cap = t => t[0].toUpperCase() + t.slice(1);
+  const list = ns => ns.length < 3 ? ns.join(' and ') : ns.slice(0, -1).join(', ') + ' and ' + ns[ns.length - 1];
+  const issues = [];   // [penalty, sentence (lowercase start), isForgot]
+  const extra = poured.filter(p => !recipe.ingredients.some(r => r.id === p.id)).map(p => name(p.id));
+  if (extra.length) issues.push([35, `${list(extra)} ${extra.length > 1 ? "don't" : "doesn't"} belong in this one.`]);
+  const missing = recipe.ingredients.filter(r => !poured.find(p => p.id === r.id));
+  const missLiquid = missing.filter(r => INGREDIENTS[r.id].type !== 'garnish').map(r => name(r.id));
+  const missGarnish = missing.filter(r => INGREDIENTS[r.id].type === 'garnish').map(r => name(r.id));
+  if (missLiquid.length) issues.push([30, `it was missing the ${list(missLiquid)}.`]);
+  if (missGarnish.length) issues.push([30, `you forgot the ${list(missGarnish)}.`, true]);
   recipe.ingredients.forEach(req => {
     const actual = poured.find(p => p.id === req.id);
-    if (!actual) {
-      issues.push([30, INGREDIENTS[req.id].type === 'garnish' ? `You forgot the ${name(req.id)}.` : `It was missing the ${name(req.id)}.`, INGREDIENTS[req.id].type === 'garnish']);
-      return;
-    }
+    if (!actual) return;
     if (req.count && (actual.count || 0) !== req.count)
-      issues.push([10, (actual.count || 0) > req.count ? `Too many ${GARNISH_PLURAL[req.id] || name(req.id)}.` : `Needed more ${GARNISH_PLURAL[req.id] || name(req.id)}.`]);
+      issues.push([10, (actual.count || 0) > req.count ? `too many ${GARNISH_PLURAL[req.id] || name(req.id)}.` : `needed more ${GARNISH_PLURAL[req.id] || name(req.id)}.`]);
     if (req.oz) {
       const delta = (actual.oz || 0) - req.oz, diff = Math.abs(delta), n = name(req.id);
-      if (diff > 1.5)       issues.push([20, delta > 0 ? `Way too much ${n}.` : `Way too little ${n}.`]);
-      else if (diff > 0.75) issues.push([12, delta > 0 ? `Heavy on the ${n}.` : `Light on the ${n}.`]);
-      else if (diff > 0.3)  issues.push([5,  delta > 0 ? `A little heavy on the ${n}.` : `A little light on the ${n}.`]);
+      if (diff > 1.5)       issues.push([20, delta > 0 ? `way too much ${n}.` : `way too little ${n}.`]);
+      else if (diff > 0.75) issues.push([12, delta > 0 ? `heavy on the ${n}.` : `light on the ${n}.`]);
+      else if (diff > 0.3)  issues.push([5,  delta > 0 ? `a little heavy on the ${n}.` : `a little light on the ${n}.`]);
     }
   });
   issues.sort((a, b) => b[0] - a[0]);
@@ -1193,8 +1198,8 @@ function tipReason(recipe, poured, drinkTime, tier, peeks, result) {
   }
   const parts = [];
   if (issues.length) {
-    parts.push(issues[0][1]);
-    if (issues[1]) parts.push(issues[1][2] ? issues[1][1].replace('You forgot', 'You also forgot') : 'Also ' + issues[1][1][0].toLowerCase() + issues[1][1].slice(1));
+    parts.push(cap(issues[0][1]));
+    if (issues[1]) parts.push(issues[1][2] ? cap(issues[1][1].replace('you forgot', 'you also forgot')) : 'Also ' + issues[1][1]);
     else if (extras[0]) parts.push(extras[0]);
   } else {
     parts.push(result.score >= 95 ? 'Spot on, every pour was right.' : 'Close to the recipe.');
@@ -1409,18 +1414,22 @@ function endShift(early = false) {
   buildShiftSummary();
 }
 
-/* Shift-over summary panel (Figma 568:497): every order with its tip and why. It scrolls
-   itself very slowly and loops; the player can scroll it any time, and when they let go
-   it carries on from wherever they left it. */
-const SUMMARY_SPEED = 12;      // px per second
-const SUMMARY_IDLE_MS = 1500;  // how long after the player stops touching it before it moves again
-const summary = { raf: 0, pos: 0, expected: 0, last: 0, holdUntil: 0, touching: false, loopH: 0 };
+/* Shift-over summary panel (Figma 568:497): every order with its tip and why. The whole card
+   scrolls as one layer (its top edge scrolls off too). It drifts down very slowly, rests at the
+   end, glides back to the top, rests, and goes again (user, 2026-10-05). The player can scroll
+   it any time; when they stop, it carries on from wherever they left it. */
+const SUMMARY_SPEED = 12;        // px per second while drifting down
+const SUMMARY_IDLE_MS = 1500;    // after the player stops touching it
+const SUMMARY_END_PAUSE = 2500;  // rest at the bottom
+const SUMMARY_TOP_PAUSE = 1500;  // rest at the top before drifting again
+const SUMMARY_RETURN_MS = 1200;  // glide back up
+const summary = { raf: 0, pos: 0, expected: 0, last: 0, holdUntil: 0, touching: false, max: 0, phase: 'drift', phaseAt: 0, from: 0 };
 const money = v => '$' + (v % 1 === 0 ? v : v.toFixed(2));
 
 function summaryItemHTML(o) {
   const spec = CUSTOMERS[o.type], h = 78.6, w = h * spec.w / spec.h;
   return `<div class="sum-item">
-    <img class="sum-cust" src="${customerImg(o.type, 'skeleton')}" alt="" style="width:${w.toFixed(1)}px;height:${h}px" />
+    <div class="sum-cust-box"><img class="sum-cust" src="${customerImg(o.type, 'skeleton')}" alt="" style="width:${Math.min(w, 46).toFixed(1)}px;height:${(Math.min(w, 46) * h / w).toFixed(1)}px" /></div>
     <div class="sum-text">
       <div class="sum-drink">${o.drink.toUpperCase()}</div>
       <div class="sum-tip">TIP: ${money(o.tip)}</div>
@@ -1432,32 +1441,38 @@ function summaryItemHTML(o) {
 function buildShiftSummary() {
   const box = $('end-summary'), list = $('end-summary-list');
   cancelAnimationFrame(summary.raf);
+  list.innerHTML = G.shiftLog.length ? G.shiftLog.map(summaryItemHTML).join('')
+                                     : '<p class="sum-empty">No drinks were served this shift.</p>';
   box.scrollTop = 0;
-  if (!G.shiftLog.length) {
-    list.innerHTML = '<p class="sum-empty">No drinks were served this shift.</p>';
-    summary.loopH = 0;
-    return;
-  }
-  const one = G.shiftLog.map(summaryItemHTML).join('');
-  list.innerHTML = one;
-  const visible = 390 - box.offsetTop;              // the panel runs off the bottom of the screen
-  if (list.scrollHeight <= visible) { summary.loopH = 0; return; }   // fits: nothing to scroll
-  // Two copies back to back so the loop is seamless
-  list.innerHTML = one + one;
-  const items = list.children;
-  summary.loopH = items[G.shiftLog.length].offsetTop - items[0].offsetTop;
-  Object.assign(summary, { pos: 0, expected: 0, last: 0, holdUntil: performance.now() + 1200, touching: false });
+  // Few orders: the card just runs off the bottom like the frame and stays put
+  const fits = 56.3 + list.offsetHeight <= 390;
+  box.classList.toggle('fits', fits);
+  summary.max = box.scrollHeight - box.clientHeight;
+  if (fits || summary.max <= 1) return;
+  Object.assign(summary, { pos: 0, expected: 0, last: 0, touching: false, phase: 'rest-top', phaseAt: performance.now() });
   summary.raf = requestAnimationFrame(stepSummary);
 }
 
 function stepSummary(now) {
-  if (G.screen !== 'end' || !summary.loopH) return;
+  if (G.screen !== 'end') return;
   const box = $('end-summary');
   const dt = summary.last ? Math.min(0.25, (now - summary.last) / 1000) : 0;   // keeps speed steady even if frames are slow
   summary.last = now;
+  summary.max = box.scrollHeight - box.clientHeight;
   if (!summary.touching && now > summary.holdUntil) {
-    summary.pos += SUMMARY_SPEED * dt;
-    if (summary.pos >= summary.loopH) summary.pos -= summary.loopH;
+    const since = now - summary.phaseAt;
+    if (summary.phase === 'drift') {
+      summary.pos = Math.min(summary.max, summary.pos + SUMMARY_SPEED * dt);
+      if (summary.pos >= summary.max - 0.5) { summary.phase = 'rest-end'; summary.phaseAt = now; }
+    } else if (summary.phase === 'rest-end' && since > SUMMARY_END_PAUSE) {
+      Object.assign(summary, { phase: 'return', phaseAt: now, from: summary.pos });
+    } else if (summary.phase === 'return') {
+      const t = Math.min(1, since / SUMMARY_RETURN_MS), e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      summary.pos = summary.from * (1 - e);
+      if (t >= 1) { summary.phase = 'rest-top'; summary.phaseAt = now; }
+    } else if (summary.phase === 'rest-top' && since > SUMMARY_TOP_PAUSE) {
+      summary.phase = 'drift';
+    }
     box.scrollTop = summary.pos;
     summary.expected = box.scrollTop;
   }
@@ -1466,19 +1481,14 @@ function stepSummary(now) {
 
 (() => {
   const box = $('end-summary');
-  const hold = () => { summary.holdUntil = performance.now() + SUMMARY_IDLE_MS; };
+  // The player took over: keep their position and drift on from there once they let go
+  const hold = () => { summary.holdUntil = performance.now() + SUMMARY_IDLE_MS; summary.phase = 'drift'; summary.phaseAt = performance.now(); };
   box.addEventListener('pointerdown', () => { summary.touching = true; hold(); });
   box.addEventListener('touchstart', () => { summary.touching = true; hold(); }, { passive: true });
   ['pointerup', 'pointercancel', 'touchend', 'touchcancel'].forEach(t => window.addEventListener(t, () => { if (summary.touching) { summary.touching = false; hold(); } }));
   box.addEventListener('wheel', hold, { passive: true });
-  // Any scroll we didn't make ourselves (finger, wheel, momentum) → pick up from there
   box.addEventListener('scroll', () => {
-    if (Math.abs(box.scrollTop - summary.expected) > 1.5) {
-      let top = box.scrollTop;
-      if (summary.loopH && top >= summary.loopH) { top -= summary.loopH; box.scrollTop = top; }
-      summary.pos = summary.expected = top;
-      hold();
-    }
+    if (Math.abs(box.scrollTop - summary.expected) > 1.5) { summary.pos = summary.expected = box.scrollTop; hold(); }
   });
 })();
 
