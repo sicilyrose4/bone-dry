@@ -861,9 +861,9 @@ html, body {
 .sum-cust-box { flex: none; width: 46px; display: flex; justify-content: center; }   /* fixed column so every order's text lines up */
 .sum-cust { flex: none; object-fit: contain; pointer-events: none; }
 .sum-text { width: 152px; display: flex; flex-direction: column; }
-.sum-drink { font-family: 'BarFontBold', sans-serif; font-size: 22.5px; line-height: normal; color: #fff; }   /* white (user, 2026-10-05) */
+.sum-drink { font-family: 'BarFontBold', sans-serif; font-size: 22.5px; line-height: normal; color: #cccaf3; }
 .sum-tip { margin-top: 2.4px; font-family: 'BarFont', sans-serif; font-size: 17.7px; line-height: normal; color: #9b99d4; }
-.sum-reason { margin: 10.6px 0 0; font-family: 'BarFont', sans-serif; font-size: 14.2px; line-height: normal; color: #cccaf3; }   /* the title's old color */
+.sum-reason { margin: 10.6px 0 0; font-family: 'BarFont', sans-serif; font-size: 14.2px; line-height: normal; color: #fff; }
 .sum-empty { margin: 0; font-family: 'BarFont', sans-serif; font-size: 17.7px; color: #cccaf3; text-align: center; }
 
 /* HUD row on every screen where ingredients go in (Figma 483:1652):
