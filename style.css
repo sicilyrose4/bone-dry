@@ -824,25 +824,43 @@ html, body {
    SCREEN 5: END
 ═══════════════════════════════════════════ */
 /* Placeholder end screen (real design coming) — Figma colors only */
-/* Shift over — Figma 568:497, scaled ×0.591 (1428 → 844) and centered vertically (+12).
+/* Shift over — Figma 568:497, scaled ×0.591 (1428 → 844) and shifted down 12 to center.
+   Left: status (skull, title, total tips, buttons). Right: the order summary panel.
    Buttons keep their real component sizes so they stay easy to tap. */
 #screen-end { background: #040318; }
-#end-skull { position: absolute; left: 394.8px; top: 43.9px; width: 54.4px; height: 62.4px; pointer-events: none; }
+#end-skull { position: absolute; left: 219.9px; top: 56.3px; width: 45.6px; height: 52.4px; pointer-events: none; }
 #end-title {
-  position: absolute; left: 422px; top: 152.4px; transform: translate(-50%, -50%);
+  position: absolute; left: 242.9px; top: 154.7px; transform: translate(-50%, -50%);
   margin: 0; font-family: 'Scratchy', 'BarFontBold', sans-serif; font-weight: normal; font-size: 72.7px; line-height: normal;
   color: #fff; white-space: nowrap;
 }
 #end-title .t-f { letter-spacing: -0.04em; }   /* Figma's per-letter tracking */
 #end-title .t-o { letter-spacing: -0.03em; }
 #end-title .t-v { letter-spacing: -0.07em; }
+#end-title .t-e { font-size: 78px; }            /* the frame enlarges this E (132 vs 123) */
 #end-tips {
-  position: absolute; left: 422.9px; top: 205.8px; transform: translate(-50%, -50%);
+  position: absolute; left: 243.8px; top: 208.2px; transform: translate(-50%, -50%);
   margin: 0; font-family: 'BarFont', sans-serif; font-size: 22.5px; line-height: normal; color: #cccaf3; white-space: nowrap;
 }
 /* START OVER (primary) + BACK TO HOME (outlined secondary), stretched to the same width */
 #btn-end-home { border-color: transparent; }   /* no stroke (user, 2026-10-01) — text only, same size/spacing */
-.end-buttons { position: absolute; left: 422px; top: 260.8px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: stretch; gap: 14.8px; }
+.end-buttons { position: absolute; left: 243.4px; top: 263.2px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: stretch; gap: 14.8px; }
+/* Summary panel — runs off the bottom of the screen like the frame; scrolls by itself + by hand */
+#end-summary {
+  position: absolute; left: 472.2px; top: 56.3px; width: 277.2px; height: 449px;
+  background: #2b2a45; border-radius: 11.1px;
+  overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none;
+  -webkit-overflow-scrolling: touch; touch-action: pan-y;
+}
+#end-summary::-webkit-scrollbar { display: none; }
+#end-summary-list { padding: 34.2px 31.4px 60px; display: flex; flex-direction: column; gap: 27.8px; }
+.sum-item { display: flex; align-items: flex-end; gap: 16.5px; }
+.sum-cust { flex: none; object-fit: contain; pointer-events: none; }
+.sum-text { width: 158.4px; display: flex; flex-direction: column; }
+.sum-drink { font-family: 'BarFontBold', sans-serif; font-size: 22.5px; line-height: normal; color: #cccaf3; }
+.sum-tip { margin-top: 2.4px; font-family: 'BarFont', sans-serif; font-size: 17.7px; line-height: normal; color: #9b99d4; }
+.sum-reason { margin: 10.6px 0 0; font-family: 'BarFont', sans-serif; font-size: 14.2px; line-height: normal; color: #fff; }
+.sum-empty { margin: 0; font-family: 'BarFont', sans-serif; font-size: 17.7px; color: #cccaf3; text-align: center; }
 
 /* HUD row on every screen where ingredients go in (Figma 483:1652):
    timer · recipe icon · pause, 15px apart, centered at y=33 */

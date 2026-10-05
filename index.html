@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#12111d" />
   <title>Bone Dry</title>
-  <link rel="stylesheet" href="style.css?v=33" />
+  <link rel="stylesheet" href="style.css?v=34" />
 </head>
 <body>
   <div id="viewport">
@@ -238,10 +238,12 @@
            SCREEN 5: SHIFT END
       ═══════════════════════════════════════════ -->
       <div id="screen-end" class="screen">
-        <!-- Figma 568:497 "shift over" (1428×619, scaled ×0.591 + centered) -->
+        <!-- Figma 568:497 "shift over" (1428×619, scaled ×0.591 + centered): status on the left, order summary on the right -->
         <img id="end-skull" src="assets/ui/shift-over-skull.png" alt="" />
-        <h1 id="end-title">SHI<span class="t-f">F</span>T <span class="t-o">O</span><span class="t-v">V</span>ER</h1>
+        <h1 id="end-title">SHI<span class="t-f">F</span>T <span class="t-o">O</span><span class="t-v">V</span><span class="t-e">E</span>R</h1>
         <p id="end-tips">Total tips: $0.00</p>
+        <!-- Every order this shift with its tip + why — scrolls itself slowly, loops, and can be scrolled by hand -->
+        <div id="end-summary"><div id="end-summary-list"></div></div>
         <!-- Both buttons share one width so their sides line up -->
         <div class="end-buttons">
           <button id="btn-play-again" class="btn-primary">START OVER</button>
@@ -276,6 +278,6 @@
     </div><!-- #game -->
   </div><!-- #viewport -->
 
-  <script src="game.js?v=45"></script>
+  <script src="game.js?v=47"></script>
 </body>
 </html>

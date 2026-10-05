@@ -1160,6 +1160,49 @@ document.querySelectorAll('.tick-label').forEach(el => {
 const SPIRIT_IDS = new Set(['vodka', 'gin', 'tequila', 'whiskey', 'white-rum']);
 const SWEET_IDS  = new Set(['simple-syrup', 'grenadine', 'triple-sec']);
 
+/* Shift-over summary (user, 2026-10-05): a neutral, ~2-line reason for each tip — not in
+   the customer's voice. Built from the same details scoreDrink() uses, so it always matches. */
+const GARNISH_PLURAL = { lime: 'limes', lemon: 'lemons', orange: 'orange slices', cherry: 'cherries', mint: 'mint sprigs' };
+function tipReason(recipe, poured, drinkTime, tier, peeks, result) {
+  const name = id => INGREDIENTS[id].name.toLowerCase();
+  const issues = [];   // [penalty, sentence, isForgot]
+  poured.forEach(p => { if (!recipe.ingredients.some(r => r.id === p.id)) issues.push([35, `${INGREDIENTS[p.id].name} doesn't belong in this one.`]); });
+  recipe.ingredients.forEach(req => {
+    const actual = poured.find(p => p.id === req.id);
+    if (!actual) {
+      issues.push([30, INGREDIENTS[req.id].type === 'garnish' ? `You forgot the ${name(req.id)}.` : `It was missing the ${name(req.id)}.`, INGREDIENTS[req.id].type === 'garnish']);
+      return;
+    }
+    if (req.count && (actual.count || 0) !== req.count)
+      issues.push([10, (actual.count || 0) > req.count ? `Too many ${GARNISH_PLURAL[req.id] || name(req.id)}.` : `Needed more ${GARNISH_PLURAL[req.id] || name(req.id)}.`]);
+    if (req.oz) {
+      const delta = (actual.oz || 0) - req.oz, diff = Math.abs(delta), n = name(req.id);
+      if (diff > 1.5)       issues.push([20, delta > 0 ? `Way too much ${n}.` : `Way too little ${n}.`]);
+      else if (diff > 0.75) issues.push([12, delta > 0 ? `Heavy on the ${n}.` : `Light on the ${n}.`]);
+      else if (diff > 0.3)  issues.push([5,  delta > 0 ? `A little heavy on the ${n}.` : `A little light on the ${n}.`]);
+    }
+  });
+  issues.sort((a, b) => b[0] - a[0]);
+  const extras = [];
+  if (peeks) extras.push(peeks === 1 ? `Peeking at the recipe cost $${PEEK_COST.toFixed(2)}.`
+                                     : `Peeking ${peeks === 2 ? 'twice' : peeks + ' times'} cost $${(PEEK_COST * peeks).toFixed(2)}.`);
+  if (tier !== 'new') {
+    if (drinkTime < 30)       extras.push('Fast service earned a bonus.');
+    else if (drinkTime < 60)  extras.push('Quick service, small bonus.');
+    else if (drinkTime > 120) extras.push('Took over 2 minutes, so the tip dropped.');
+  }
+  const parts = [];
+  if (issues.length) {
+    parts.push(issues[0][1]);
+    if (issues[1]) parts.push(issues[1][2] ? issues[1][1].replace('You forgot', 'You also forgot') : 'Also ' + issues[1][1][0].toLowerCase() + issues[1][1].slice(1));
+    else if (extras[0]) parts.push(extras[0]);
+  } else {
+    parts.push(result.score >= 95 ? 'Spot on, every pour was right.' : 'Close to the recipe.');
+    if (extras[0]) parts.push(extras[0]);
+  }
+  return parts.join(' ');
+}
+
 function scoreDrink(recipe, poured, drinkTime, tier, peeks) {
   let score = 100;
   const reqIds = recipe.ingredients.map(r => r.id);
@@ -1268,6 +1311,8 @@ function serveDrink() {
   const result = scoreDrink(G.drink.recipe, G.drink.poured, drinkTime, G.drink.tier, G.drink.peeks);
   G.tips += result.tip;
   G.drinksServed++;
+  G.shiftLog.push({ type: customer.type, drink: G.drink.recipe.name, tip: result.tip,
+                    reason: tipReason(G.drink.recipe, G.drink.poured, drinkTime, G.drink.tier, G.drink.peeks, result) });
   updateDial(result.score, drinkTime, G.drink.peeks > 0);
 
   // Familiarity: every served drink counts toward new → familiar (this session only)
@@ -1361,7 +1406,81 @@ function endShift(early = false) {
   saveProgress();
   dom.endTips.textContent = `Total tips: $${G.tips.toFixed(2)}`;
   showScreen('end');
+  buildShiftSummary();
 }
+
+/* Shift-over summary panel (Figma 568:497): every order with its tip and why. It scrolls
+   itself very slowly and loops; the player can scroll it any time, and when they let go
+   it carries on from wherever they left it. */
+const SUMMARY_SPEED = 12;      // px per second
+const SUMMARY_IDLE_MS = 1500;  // how long after the player stops touching it before it moves again
+const summary = { raf: 0, pos: 0, expected: 0, last: 0, holdUntil: 0, touching: false, loopH: 0 };
+const money = v => '$' + (v % 1 === 0 ? v : v.toFixed(2));
+
+function summaryItemHTML(o) {
+  const spec = CUSTOMERS[o.type], h = 78.6, w = h * spec.w / spec.h;
+  return `<div class="sum-item">
+    <img class="sum-cust" src="${customerImg(o.type, 'skeleton')}" alt="" style="width:${w.toFixed(1)}px;height:${h}px" />
+    <div class="sum-text">
+      <div class="sum-drink">${o.drink.toUpperCase()}</div>
+      <div class="sum-tip">TIP: ${money(o.tip)}</div>
+      <p class="sum-reason">${o.reason}</p>
+    </div>
+  </div>`;
+}
+
+function buildShiftSummary() {
+  const box = $('end-summary'), list = $('end-summary-list');
+  cancelAnimationFrame(summary.raf);
+  box.scrollTop = 0;
+  if (!G.shiftLog.length) {
+    list.innerHTML = '<p class="sum-empty">No drinks were served this shift.</p>';
+    summary.loopH = 0;
+    return;
+  }
+  const one = G.shiftLog.map(summaryItemHTML).join('');
+  list.innerHTML = one;
+  const visible = 390 - box.offsetTop;              // the panel runs off the bottom of the screen
+  if (list.scrollHeight <= visible) { summary.loopH = 0; return; }   // fits: nothing to scroll
+  // Two copies back to back so the loop is seamless
+  list.innerHTML = one + one;
+  const items = list.children;
+  summary.loopH = items[G.shiftLog.length].offsetTop - items[0].offsetTop;
+  Object.assign(summary, { pos: 0, expected: 0, last: 0, holdUntil: performance.now() + 1200, touching: false });
+  summary.raf = requestAnimationFrame(stepSummary);
+}
+
+function stepSummary(now) {
+  if (G.screen !== 'end' || !summary.loopH) return;
+  const box = $('end-summary');
+  const dt = summary.last ? Math.min(0.25, (now - summary.last) / 1000) : 0;   // keeps speed steady even if frames are slow
+  summary.last = now;
+  if (!summary.touching && now > summary.holdUntil) {
+    summary.pos += SUMMARY_SPEED * dt;
+    if (summary.pos >= summary.loopH) summary.pos -= summary.loopH;
+    box.scrollTop = summary.pos;
+    summary.expected = box.scrollTop;
+  }
+  summary.raf = requestAnimationFrame(stepSummary);
+}
+
+(() => {
+  const box = $('end-summary');
+  const hold = () => { summary.holdUntil = performance.now() + SUMMARY_IDLE_MS; };
+  box.addEventListener('pointerdown', () => { summary.touching = true; hold(); });
+  box.addEventListener('touchstart', () => { summary.touching = true; hold(); }, { passive: true });
+  ['pointerup', 'pointercancel', 'touchend', 'touchcancel'].forEach(t => window.addEventListener(t, () => { if (summary.touching) { summary.touching = false; hold(); } }));
+  box.addEventListener('wheel', hold, { passive: true });
+  // Any scroll we didn't make ourselves (finger, wheel, momentum) → pick up from there
+  box.addEventListener('scroll', () => {
+    if (Math.abs(box.scrollTop - summary.expected) > 1.5) {
+      let top = box.scrollTop;
+      if (summary.loopH && top >= summary.loopH) { top -= summary.loopH; box.scrollTop = top; }
+      summary.pos = summary.expected = top;
+      hold();
+    }
+  });
+})();
 
 /* ═══════════════════════════════════════════════════════════════
    INIT / RESET
@@ -1381,6 +1500,7 @@ function initGame() {
   G.selectedIdx = null;
   G.lastDrinkId = null;
   G.drinksServed = 0;
+  G.shiftLog = [];        // every drink served this shift, for the shift-over summary
   G.shiftEnded = false;
   resetCurrentDrink();
 
