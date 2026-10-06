@@ -365,7 +365,7 @@ const CALL_GAP   = 1.5;   // …then a short pause before the next one
 function updateCallOuts() {
   [0, 1, 2].forEach(slot => {
     const c = G.customers[slot], el = $(`callout-${slot}`);
-    const waiting = c && c.state === 'skeleton' && G.drink.forCustomer !== slot;
+    const waiting = c && c.state === 'skeleton' && G.drink.forCustomer !== slot && dom.speechArea.style.display === 'none';   // quiet while an order bubble is up
     if (!waiting) {
       if (c) { c.waited = 0; c.callTimer = 0; }
       el.classList.remove('show');
@@ -542,6 +542,14 @@ function renderCustomer(slot) {
   el.appendChild(img);
 }
 
+// Tapping a customer clears what everyone else is saying (user, 2026-10-05): a served
+// customer's reaction + tip and any "excuse me!" call-outs fade right away, so nothing
+// stacks on top of the new order bubble.
+function clearCustomerChatter() {
+  document.querySelectorAll('.bar-tip-float, .speech-bubble.reaction').forEach(e => e.classList.add('leaving'));
+  document.querySelectorAll('.callout').forEach(e => e.classList.remove('show'));
+}
+
 function selectCustomer(slot) {
   if (G.shiftEnded) return;
   // While a drink is being made, customers can't be switched or deselected
@@ -559,6 +567,7 @@ function selectCustomer(slot) {
     return;
   }
 
+  clearCustomerChatter();
   const prev = G.selectedIdx;
   if (prev !== null && G.customers[prev] && G.customers[prev].state === 'selected') {
     G.customers[prev].state = 'skeleton';

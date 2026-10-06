@@ -353,7 +353,7 @@ html, body {
   animation: barTipIn 0.25s ease forwards;
   transition: opacity 0.6s ease;
 }
-.bar-tip-float.leaving { opacity: 0; }
+.bar-tip-float.leaving { opacity: 0; animation: none; }   /* drop the fade-in hold so it can fade out */
 /* With a reaction bubble over the customer, the tip sits beside it, level with the bubble */
 .bar-tip-float.with-reaction { top: 43px; }
 .bar-tip-float.pending { visibility: hidden; animation: none; }   /* waits for the reaction */
