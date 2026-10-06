@@ -1887,7 +1887,7 @@ function moveGarnishDrag(e) {
     if (Math.hypot(p.x - d.x0, p.y - d.y0) < DRAG_START_PX) return;
     d.dragging = true;
     hideGarnishToast();
-    G.garnishSel = d.id;          // shows the target circle as the drop hint
+    G.garnishSel = d.id;          // names the garnish up top (no circle while dragging)
     renderGarnishScreen();
     d.ghost = d.el.cloneNode(true);
     d.ghost.classList.remove('selected');
@@ -1913,7 +1913,8 @@ function endGarnishDrag(e) {
       G.garnishSel = d.id;
       placeSelectedGarnish();
     } else {
-      G.garnishSel = d.prevSel;   // missed: back to how it was
+      d.dragging = false;
+      G.garnishSel = d.prevSel;   // missed: back to how it was (its tap circle returns)
       renderGarnishScreen();
     }
     d.justDropped = true;         // swallow the click that follows pointerup
@@ -2023,7 +2024,7 @@ function renderGarnishScreen() {
   renderDrinkView($('garnish-drink'), G.drink.poured, G.drink.garnishes);
 
   const target = $('garnish-target');
-  if (sel) {
+  if (sel && !garnishDrag.dragging) {   // the circle is for tapping only — not while dragging
     const spot = garnishSpot(sel, G.drink.garnishes);
     target.style.left = (355 + spot.target.x - 31) + 'px';
     target.style.top = (120 + spot.target.y - 31) + 'px';
