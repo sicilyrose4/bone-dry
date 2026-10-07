@@ -2371,16 +2371,17 @@ window.addEventListener('DOMContentLoaded', () => {
 
 /* ═══════════════════════════════════════════════════════════════
    SIGNATURE MENU UNLOCKED — Figma 719:1910 (user, 2026-10-07)
-   The shaker shakes by itself → tips over and the cap pops off ("opened") →
-   it lies poured out while the six recipe cards fly out of its mouth into a fan ("poured") →
-   the shaker slides away and the cards settle ("after").
+   The shaker shakes by itself in the middle ("start in the center") → slides to the side
+   ("move to the side") → tips over and the cap pops off ("opened") → it lies poured out while the
+   six recipe cards fly out of its mouth into a fan ("poured") → the shaker slides away, the cards
+   settle and the title fades in ("after"). No X — BACK TO HOME only (user, 2026-10-07).
    Poses are landscape centers + rotation straight from the four Figma frames.
 ═══════════════════════════════════════════════════════════════ */
 const SHAKER_PARTS = {
   body: { src: 'assets/ui/shaker-body.png', w: 111.42, h: 219.69,
-          shake: [177.6, 314.4, -6.08], open: [152.2, 310.4, 23.83], pour: [16.1, 307.7, 49.51] },
+          center: [417.9, 312.1, 5.19], side: [177.6, 313.9, -6.08], open: [152.2, 310.1, 23.89], pour: [16.1, 307.8, 49.49] },
   cap:  { src: 'assets/ui/shaker-cap.png',  w: 111.42, h: 120.88,
-          shake: [161.8, 166, -6.08],   open: [184.4, 137.8, -13.19], pour: [102.7, 146.8, -12.64] },
+          center: [431.4, 163.9, 5.2],  side: [161.8, 165.9, -6.08],  open: [184.4, 137.7, -13.21], pour: [102.7, 146.7, -12.66] },
 };
 // "after" frame card slots, left → right (center, rotation, width; all cards are one card scaled), with paint order
 const UNLOCK_SLOTS = [
@@ -2457,28 +2458,32 @@ function playUnlock(freezeAt) {
 
   // 0 — screen fades in
   anim(ov, [{ opacity: 0 }, { opacity: 1 }], 0, 300, 'ease-out');
-  // 1 — shaking by itself (rig wobbles around the shaker's base, harder and harder, with little hops)
+  // 1 — shaking by itself in the middle (rig wobbles around the shaker's base, harder and harder, with little hops)
   const SHAKE_AT = 350, SHAKE_MS = 1500;
-  rig.style.transformOrigin = '189px 424px';
+  rig.style.transformOrigin = '408px 422px';
   const wob = [];
   for (let k = 0; k <= 16; k++) {
     const amp = k === 0 || k === 16 ? 0 : 2 + 7 * (k / 16);
     wob.push({ transform: `translateY(${k % 2 ? -3 - amp / 3 : 0}px) rotate(${k % 2 ? amp : -amp}deg)`, offset: k / 16 });
   }
   anim(rig, wob, SHAKE_AT, SHAKE_MS, 'linear');
-  // 2 — tips over, cap pops off
-  const TIP_AT = SHAKE_AT + SHAKE_MS, TIP_MS = 420;
-  anim(parts.body, [{ transform: pose(B.w, B.h, B.shake) }, { transform: pose(B.w, B.h, B.open) }], TIP_AT, TIP_MS, 'cubic-bezier(.5,0,.8,.6)');
-  anim(parts.cap, [{ transform: pose(C.w, C.h, C.shake) },
+  // 2 — slides over to the left side
+  const MOVE_AT = SHAKE_AT + SHAKE_MS + 100, MOVE_MS = 650;
+  anim(parts.body, [{ transform: pose(B.w, B.h, B.center) }, { transform: pose(B.w, B.h, B.side) }], MOVE_AT, MOVE_MS);
+  anim(parts.cap, [{ transform: pose(C.w, C.h, C.center) }, { transform: pose(C.w, C.h, C.side) }], MOVE_AT, MOVE_MS);
+  // 3 — tips over, cap pops off
+  const TIP_AT = MOVE_AT + MOVE_MS + 120, TIP_MS = 420;
+  anim(parts.body, [{ transform: pose(B.w, B.h, B.side) }, { transform: pose(B.w, B.h, B.open) }], TIP_AT, TIP_MS, 'cubic-bezier(.5,0,.8,.6)', { fill: 'forwards' });
+  anim(parts.cap, [{ transform: pose(C.w, C.h, C.side) },
                    { transform: pose(C.w, C.h, [C.open[0] - 4, C.open[1] - 22, C.open[2] - 6]), offset: .7 },
-                   { transform: pose(C.w, C.h, C.open) }], TIP_AT, TIP_MS + 80, 'ease-out');
-  // 3 — keeps falling to "poured"; the cap tumbles off to the side
+                   { transform: pose(C.w, C.h, C.open) }], TIP_AT, TIP_MS + 80, 'ease-out', { fill: 'forwards' });
+  // 4 — keeps falling to "poured"; the cap tumbles off to the side
   const POUR_AT = TIP_AT + TIP_MS + 60, POUR_MS = 380;
   anim(parts.body, [{ transform: pose(B.w, B.h, B.open) }, { transform: pose(B.w, B.h, B.pour) }], POUR_AT, POUR_MS, 'cubic-bezier(.4,0,.6,1.3)', { fill: 'forwards' });
   anim(parts.cap, [{ transform: pose(C.w, C.h, C.open) },
                    { transform: pose(C.w, C.h, [C.pour[0] + 30, C.pour[1] - 40, C.pour[2] - 20]), offset: .45 },
                    { transform: pose(C.w, C.h, C.pour) }], POUR_AT, POUR_MS + 200, 'ease-out', { fill: 'forwards' });
-  // 4 — cards fly out of the shaker's mouth into the fan (middle ones first)
+  // 5 — cards fly out of the shaker's mouth into the fan (middle ones first)
   const r = B.pour[2] * Math.PI / 180, mouth = [B.pour[0] + Math.sin(r) * B.h / 2, B.pour[1] - Math.cos(r) * B.h / 2];
   const OUT_AT = POUR_AT + POUR_MS - 60;
   [0, 1, 2, 3, 4, 5].forEach((i, n) => {
@@ -2489,14 +2494,15 @@ function playUnlock(freezeAt) {
              { transform: pose(SIG_CARD_W, SIG_CARD_H, mid, s * 0.8), opacity: 1, offset: .45 },
              { transform: pose(SIG_CARD_W, SIG_CARD_H, end, s), opacity: 1 }], OUT_AT + n * 110, 620, 'cubic-bezier(.25,.8,.3,1)', { fill: 'forwards' });
   });
-  // 5 — the shaker slides off, the cards settle into the "after" frame
+  // 6 — the shaker slides off, the cards settle into the "after" frame, the title fades in
   const AWAY_AT = OUT_AT + 5 * 110 + 620 + 250;
   anim(rig, [{ transform: 'none', opacity: 1 }, { transform: 'translate(-150px, 60px)', opacity: 0 }], AWAY_AT, 500, 'ease-in', { fill: 'forwards' });
   cards.forEach(({ c, slot }) => anim(c, [{ transform: pose(SIG_CARD_W, SIG_CARD_H, [slot.x, slot.y - 2, slot.r], slot.w / SIG_CARD_W) },
                                           { transform: pose(SIG_CARD_W, SIG_CARD_H, [slot.x, slot.y, slot.r], slot.w / SIG_CARD_W) }], AWAY_AT + 150, 350, 'ease-out', { fill: 'forwards' }));
+  anim($('unlock-title'), [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], AWAY_AT + 350, 500, 'ease-out');
   // Resting state for the shaker parts before their animations start
-  parts.body.style.transform = pose(B.w, B.h, B.shake);
-  parts.cap.style.transform = pose(C.w, C.h, C.shake);
+  parts.body.style.transform = pose(B.w, B.h, B.center);
+  parts.cap.style.transform = pose(C.w, C.h, C.center);
 
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) unlockAnims.forEach(a => a.finish());
   if (freezeAt != null) unlockAnims.forEach(a => { a.pause(); a.currentTime = freezeAt; });
