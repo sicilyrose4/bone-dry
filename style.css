@@ -1023,7 +1023,7 @@ html, body {
 }
 
 /* ═══════════════════════════════════════════
-   SIGNATURE MENU UNLOCKED — Figma 719:1910. Full-screen #2b2a45; title, BACK TO HOME, X.
+   SIGNATURE MENU UNLOCKED — Figma 719:1910. Full-screen #2b2a45; title + BACK TO HOME (no X — user, 2026-10-07).
    Shaker pieces + cards are absolutely placed by transforms in game.js (playUnlock).
 ═══════════════════════════════════════════ */
 #unlock-overlay { position: absolute; inset: 0; z-index: 70; background: #2b2a45; overflow: hidden; }
@@ -1031,8 +1031,6 @@ html, body {
   font-family: 'BarFontBold', sans-serif; font-size: 28px; line-height: 27px; color: #cccaf3; text-align: center; }
 #btn-unlock-home { color: #7a78a4; z-index: 5; }
 #btn-unlock-home svg { display: block; }
-#btn-unlock-close { position: absolute; left: 793px; top: 19px; width: 37.5px; height: 37.5px; padding: 14px; background: none; border: none; cursor: pointer; z-index: 5; }
-#btn-unlock-close img { display: block; width: 9.5px; height: 9.5px; }
 #unlock-stage { position: absolute; inset: 0; }
 #unlock-stage .shaker-part { position: absolute; left: 0; top: 0; transform-origin: 50% 50%; }
 #unlock-stage .shaker-rig { position: absolute; inset: 0; }

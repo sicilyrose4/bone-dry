@@ -2503,7 +2503,6 @@ function playUnlock(freezeAt) {
 }
 
 const closeUnlock = () => { unlockAnims.forEach(a => a.cancel()); unlockAnims = []; $('unlock-overlay').style.display = 'none'; showScreen('home'); };
-$('btn-unlock-close').addEventListener('click', (e) => { e.stopPropagation(); closeUnlock(); });
 $('btn-unlock-home').addEventListener('click', (e) => { e.stopPropagation(); closeUnlock(); });
 // Tap anywhere else to skip to the end
 $('unlock-overlay').addEventListener('click', () => unlockAnims.forEach(a => { if (a.playState !== 'finished') a.finish(); }));
