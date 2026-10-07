@@ -2223,22 +2223,19 @@ function preload(onProgress) {
 $('btn-start-shift').addEventListener('click', (e) => { e.stopPropagation(); initGame(); });
 
 // MOCKTAILS ONLY toggle (Figma 606:554 off / 606:942 on)
-function applyMode(animate) {
-  const home = dom.screens.home, logo = $('home-logo');
-  home.classList.toggle('mocktails', mocktailsOnly);
+function applyMode() {
+  dom.screens.home.classList.toggle('mocktails', mocktailsOnly);
   $('btn-mocktails').setAttribute('aria-checked', mocktailsOnly);
-  if (animate) { logo.classList.remove('relight'); void logo.offsetWidth; logo.classList.add('relight'); }
 }
 $('btn-mocktails').addEventListener('click', (e) => {
   e.stopPropagation();
   mocktailsOnly = !mocktailsOnly;
   try { localStorage.setItem(MODE_KEY, mocktailsOnly ? '1' : '0'); } catch (err) { /* storage unavailable */ }
-  applyMode(true);
+  applyMode();
 });
-$('home-logo').addEventListener('animationend', (e) => { if (e.animationName === 'relight') $('home-logo').classList.remove('relight'); });
 $('btn-mode-info').addEventListener('click', (e) => { e.stopPropagation(); $('mode-tip').classList.toggle('show'); });
 document.addEventListener('pointerdown', (e) => { if (!e.target.closest('#btn-mode-info')) $('mode-tip').classList.remove('show'); });
-applyMode(false);
+applyMode();
 
 /* ═══════════════════════════════════════════════════════════════
    DRINK MENU — Figma 559:427 (user, 2026-10-01): looping carousel of recipe cards.
@@ -2379,7 +2376,7 @@ const closeUnlock = () => { $('unlock-overlay').style.display = 'none'; };
 $('btn-unlock-close').addEventListener('click', (e) => { e.stopPropagation(); closeUnlock(); });
 $('btn-unlock-menu').addEventListener('click', (e) => {
   e.stopPropagation(); closeUnlock();
-  if (mocktailsOnly) { mocktailsOnly = false; try { localStorage.setItem(MODE_KEY, '0'); } catch (err) { /* storage unavailable */ } applyMode(false); }
+  if (mocktailsOnly) { mocktailsOnly = false; try { localStorage.setItem(MODE_KEY, '0'); } catch (err) { /* storage unavailable */ } applyMode(); }
   menu.index = 0; openDrinkMenu();   // signatures sit at the front of the cocktail menu
 });
 
