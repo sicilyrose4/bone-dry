@@ -2362,21 +2362,149 @@ window.addEventListener('DOMContentLoaded', () => {
   // Poster QR code → https://sicilyrose4.github.io/bone-dry/?unlock=signature (scanning again just shows it again)
   if (new URLSearchParams(location.search).get('unlock') === 'signature') {
     history.replaceState(null, '', location.pathname);   // so a reload / "Add to Home Screen" opens plain home
-    unlockSignatureMenu();
+    // Wait for the fonts (cards are measured) and the shaker art, so nothing pops in mid-animation
+    const art = Object.values(SHAKER_PARTS).map(p => { const i = new Image(); i.src = p.src; return i.decode().catch(() => {}); });
+    Promise.all([document.fonts.load("21px 'Scratchy'"), document.fonts.load("13px 'BarFont'"), document.fonts.load("28px 'BarFontBold'"), ...art])
+      .catch(() => {}).then(unlockSignatureMenu);
   }
 });
 
+/* ═══════════════════════════════════════════════════════════════
+   SIGNATURE MENU UNLOCKED — Figma 719:1910 (user, 2026-10-07)
+   The shaker shakes by itself → tips over and the cap pops off ("opened") →
+   it lies poured out while the six recipe cards fly out of its mouth into a fan ("poured") →
+   the shaker slides away and the cards settle ("after").
+   Poses are landscape centers + rotation straight from the four Figma frames.
+═══════════════════════════════════════════════════════════════ */
+const SHAKER_PARTS = {
+  body: { src: 'assets/ui/shaker-body.png', w: 111.42, h: 219.69,
+          shake: [177.6, 314.4, -6.08], open: [152.2, 310.4, 23.83], pour: [16.1, 307.7, 49.51] },
+  cap:  { src: 'assets/ui/shaker-cap.png',  w: 111.42, h: 120.88,
+          shake: [161.8, 166, -6.08],   open: [184.4, 137.8, -13.19], pour: [102.7, 146.8, -12.64] },
+};
+// "after" frame card slots, left → right (center, rotation, width; all cards are one card scaled), with paint order
+const UNLOCK_SLOTS = [
+  { x: 195.2, y: 266.1, r: -31,    w: 106.49, bg: '#58533e', z: 1 },
+  { x: 255.7, y: 241.1, r: -19.86, w: 124.65, bg: '#7e5740', z: 3 },
+  { x: 352.9, y: 227.9, r: -4.15,  w: 140.29, bg: '#774473', z: 4 },
+  { x: 470.1, y: 226.5, r: 3.73,   w: 140.29, bg: '#3c3b5c', z: 6 },
+  { x: 577.1, y: 247.8, r: 14.98,  w: 125.17, bg: '#5e663d', z: 5 },
+  { x: 650.6, y: 270.6, r: 28.2,   w: 106.49, bg: '#416f72', z: 2 },
+];
+const SIG_CARD_W = 140.29, SIG_CARD_H = 156.19;
+// Which drink sits in which slot (my pick — easy to swap). The Bone Dry gets the navy card on top of
+// the pile; the outer cards are partly covered, as in the Figma frame.
+const UNLOCK_ORDER = ['funny-bone', 'grave-yard', 'sour-skull', 'the-bone-dry', 'skeletonic', 'night-shift'];
+
+const pose = (w, h, [cx, cy, r], s = 1) => `translate(${cx - w / 2}px, ${cy - h / 2}px) rotate(${r}deg) scale(${s})`;
+
+function buildSigCard(drink, slot) {
+  const c = document.createElement('div');
+  c.className = 'sig-card';
+  c.style.background = slot.bg;
+  c.style.zIndex = slot.z;
+  c.style.opacity = 0;   // hidden until it flies out of the shaker
+  c.innerHTML = `<div class="t"></div><img class="ul" src="assets/ui/recipe-underline.svg?v=2" alt="" />
+    <div class="ls">${drink.ingredients.map(recipeLine).join('')}</div><div class="g"><div class="drink-view"></div></div>`;
+  renderDrinkView(c.querySelector('.drink-view'), drink.ingredients.filter(i => i.oz).map(i => ({ id: i.id, oz: i.oz })), drinkGarnishes(drink));
+  return c;
+}
+// After it's in the page: shrink the name to fit, and the lines so the glass stays on the card
+function fitSigCard(c, drink) {
+  const t = c.querySelector('.t'), name = drink.name.toUpperCase();
+  let size = 21.04;
+  const setName = () => { t.style.fontSize = size + 'px'; t.innerHTML = scratchyHTML(name, size); };
+  setName();
+  while (t.offsetWidth > 122 && size > 12) { size -= 0.5; setName(); }
+  const ls = c.querySelector('.ls'), g = c.querySelector('.g');
+  let fs = 13.09;
+  while (g.offsetTop + g.offsetHeight > SIG_CARD_H - 6 && fs > 9) { fs -= 0.25; ls.style.fontSize = fs + 'px'; ls.style.lineHeight = fs > 11 ? 1.32 : 1.22; }
+}
+
+let unlockAnims = [];
 function unlockSignatureMenu() {
   signatureUnlocked = true;
   try { localStorage.setItem(SIGNATURE_KEY, '1'); } catch (e) { /* storage unavailable */ }
-  $('unlock-list').innerHTML = SIGNATURES.map(d => `<span>${scratchyHTML(d.name.toUpperCase(), 22)}</span>`).join('');
-  $('unlock-overlay').style.display = '';
+  playUnlock();
 }
-const closeUnlock = () => { $('unlock-overlay').style.display = 'none'; };
+
+function playUnlock(freezeAt) {
+  const ov = $('unlock-overlay'), stage = $('unlock-stage');
+  unlockAnims.forEach(a => a.cancel());
+  unlockAnims = [];
+  stage.innerHTML = '';
+  ov.style.display = '';
+  const anim = (el, kf, delay, duration, easing = 'ease-in-out', extra = {}) =>
+    unlockAnims.push(el.animate(kf, { delay, duration, easing, fill: 'both', ...extra }));
+
+  // Shaker: a rig (for the shake) holding the body + cap
+  const rig = document.createElement('div'); rig.className = 'shaker-rig'; stage.appendChild(rig);
+  const parts = {};
+  for (const [k, p] of Object.entries(SHAKER_PARTS)) {
+    const img = document.createElement('img');
+    img.className = 'shaker-part'; img.src = p.src; img.alt = '';
+    Object.assign(img.style, { width: p.w + 'px', height: p.h + 'px' });
+    rig.appendChild(img); parts[k] = img;
+  }
+  const B = SHAKER_PARTS.body, C = SHAKER_PARTS.cap;
+
+  // Cards (in the page first so they can be measured)
+  const cards = UNLOCK_ORDER.map((id, i) => {
+    const drink = SIGNATURES.find(d => d.id === id), slot = UNLOCK_SLOTS[i];
+    const c = buildSigCard(drink, slot); stage.appendChild(c); fitSigCard(c, drink);
+    return { c, slot };
+  });
+
+  // 0 — screen fades in
+  anim(ov, [{ opacity: 0 }, { opacity: 1 }], 0, 300, 'ease-out');
+  // 1 — shaking by itself (rig wobbles around the shaker's base, harder and harder, with little hops)
+  const SHAKE_AT = 350, SHAKE_MS = 1500;
+  rig.style.transformOrigin = '189px 424px';
+  const wob = [];
+  for (let k = 0; k <= 16; k++) {
+    const amp = k === 0 || k === 16 ? 0 : 2 + 7 * (k / 16);
+    wob.push({ transform: `translateY(${k % 2 ? -3 - amp / 3 : 0}px) rotate(${k % 2 ? amp : -amp}deg)`, offset: k / 16 });
+  }
+  anim(rig, wob, SHAKE_AT, SHAKE_MS, 'linear');
+  // 2 — tips over, cap pops off
+  const TIP_AT = SHAKE_AT + SHAKE_MS, TIP_MS = 420;
+  anim(parts.body, [{ transform: pose(B.w, B.h, B.shake) }, { transform: pose(B.w, B.h, B.open) }], TIP_AT, TIP_MS, 'cubic-bezier(.5,0,.8,.6)');
+  anim(parts.cap, [{ transform: pose(C.w, C.h, C.shake) },
+                   { transform: pose(C.w, C.h, [C.open[0] - 4, C.open[1] - 22, C.open[2] - 6]), offset: .7 },
+                   { transform: pose(C.w, C.h, C.open) }], TIP_AT, TIP_MS + 80, 'ease-out');
+  // 3 — keeps falling to "poured"; the cap tumbles off to the side
+  const POUR_AT = TIP_AT + TIP_MS + 60, POUR_MS = 380;
+  anim(parts.body, [{ transform: pose(B.w, B.h, B.open) }, { transform: pose(B.w, B.h, B.pour) }], POUR_AT, POUR_MS, 'cubic-bezier(.4,0,.6,1.3)', { fill: 'forwards' });
+  anim(parts.cap, [{ transform: pose(C.w, C.h, C.open) },
+                   { transform: pose(C.w, C.h, [C.pour[0] + 30, C.pour[1] - 40, C.pour[2] - 20]), offset: .45 },
+                   { transform: pose(C.w, C.h, C.pour) }], POUR_AT, POUR_MS + 200, 'ease-out', { fill: 'forwards' });
+  // 4 — cards fly out of the shaker's mouth into the fan (middle ones first)
+  const r = B.pour[2] * Math.PI / 180, mouth = [B.pour[0] + Math.sin(r) * B.h / 2, B.pour[1] - Math.cos(r) * B.h / 2];
+  const OUT_AT = POUR_AT + POUR_MS - 60;
+  [0, 1, 2, 3, 4, 5].forEach((i, n) => {
+    const { c, slot } = cards[i], s = slot.w / SIG_CARD_W;
+    const end = [slot.x, slot.y - 2, slot.r];   // "poured" sits 2px higher than "after"
+    const mid = [(mouth[0] + slot.x) / 2, Math.min(mouth[1], slot.y) - 70, slot.r * 0.5 + 25];
+    anim(c, [{ transform: pose(SIG_CARD_W, SIG_CARD_H, [mouth[0], mouth[1], B.pour[2]], 0.12), opacity: 0 },
+             { transform: pose(SIG_CARD_W, SIG_CARD_H, mid, s * 0.8), opacity: 1, offset: .45 },
+             { transform: pose(SIG_CARD_W, SIG_CARD_H, end, s), opacity: 1 }], OUT_AT + n * 110, 620, 'cubic-bezier(.25,.8,.3,1)', { fill: 'forwards' });
+  });
+  // 5 — the shaker slides off, the cards settle into the "after" frame
+  const AWAY_AT = OUT_AT + 5 * 110 + 620 + 250;
+  anim(rig, [{ transform: 'none', opacity: 1 }, { transform: 'translate(-150px, 60px)', opacity: 0 }], AWAY_AT, 500, 'ease-in', { fill: 'forwards' });
+  cards.forEach(({ c, slot }) => anim(c, [{ transform: pose(SIG_CARD_W, SIG_CARD_H, [slot.x, slot.y - 2, slot.r], slot.w / SIG_CARD_W) },
+                                          { transform: pose(SIG_CARD_W, SIG_CARD_H, [slot.x, slot.y, slot.r], slot.w / SIG_CARD_W) }], AWAY_AT + 150, 350, 'ease-out', { fill: 'forwards' }));
+  // Resting state for the shaker parts before their animations start
+  parts.body.style.transform = pose(B.w, B.h, B.shake);
+  parts.cap.style.transform = pose(C.w, C.h, C.shake);
+
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) unlockAnims.forEach(a => a.finish());
+  if (freezeAt != null) unlockAnims.forEach(a => { a.pause(); a.currentTime = freezeAt; });
+}
+
+const closeUnlock = () => { unlockAnims.forEach(a => a.cancel()); unlockAnims = []; $('unlock-overlay').style.display = 'none'; showScreen('home'); };
 $('btn-unlock-close').addEventListener('click', (e) => { e.stopPropagation(); closeUnlock(); });
-$('btn-unlock-menu').addEventListener('click', (e) => {
-  e.stopPropagation(); closeUnlock();
-  if (mocktailsOnly) { mocktailsOnly = false; try { localStorage.setItem(MODE_KEY, '0'); } catch (err) { /* storage unavailable */ } applyMode(); }
-  menu.index = 0; openDrinkMenu();   // signatures sit at the front of the cocktail menu
-});
+$('btn-unlock-home').addEventListener('click', (e) => { e.stopPropagation(); closeUnlock(); });
+// Tap anywhere else to skip to the end
+$('unlock-overlay').addEventListener('click', () => unlockAnims.forEach(a => { if (a.playState !== 'finished') a.finish(); }));
 

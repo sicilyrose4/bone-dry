@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#12111d" />
   <title>Bone Dry</title>
-  <link rel="stylesheet" href="style.css?v=45" />
+  <link rel="stylesheet" href="style.css?v=46" />
 </head>
 <body>
   <div id="viewport">
@@ -306,15 +306,17 @@
         </div>
       </div>
 
-      <!-- Signature menu unlocked — opened by the poster's QR code (?unlock=signature).
-           PLACEHOLDER using the Figma 688:2771 popup wording; the user is designing the real screen. -->
+      <!-- Signature menu unlocked — Figma 719:1910 (shaking → opened → poured → after). Opened by the
+           poster's QR code (?unlock=signature). The shaker shakes by itself, tips over, the cap pops off and
+           the six signature recipe cards fan out of it. Shaker, cap and cards are built in game.js. -->
       <div id="unlock-overlay" style="display:none;">
-        <div id="unlock-box">
-          <button id="btn-unlock-close" aria-label="Close"><img src="assets/ui/icon-close.svg" alt="" /></button>
-          <p id="unlock-title">You’ve unlocked the Bone Dry signature cocktail menu!</p>
-          <div id="unlock-list"></div>
-          <button id="btn-unlock-menu" class="btn-primary">SEE THE MENU</button>
-        </div>
+        <button id="btn-unlock-home" class="pour-back">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M11 19L4 12L11 5M4 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>BACK TO HOME</span>
+        </button>
+        <button id="btn-unlock-close" aria-label="Close"><img src="assets/ui/icon-close.svg" alt="" /></button>
+        <p id="unlock-title">You’ve unlocked the Bone Dry signature cocktail menu!</p>
+        <div id="unlock-stage"></div>
       </div>
 
       <!-- Pause overlay -->
@@ -330,6 +332,6 @@
     </div><!-- #game -->
   </div><!-- #viewport -->
 
-  <script src="game.js?v=56"></script>
+  <script src="game.js?v=57"></script>
 </body>
 </html>

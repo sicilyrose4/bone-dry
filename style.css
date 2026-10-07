@@ -1023,18 +1023,26 @@ html, body {
 }
 
 /* ═══════════════════════════════════════════
-   SIGNATURE MENU UNLOCKED — PLACEHOLDER (Figma 688:2771 popup: dim layer, 552×279 navy box).
-   Opened by the poster QR code; the real design is still coming from the user.
+   SIGNATURE MENU UNLOCKED — Figma 719:1910. Full-screen #2b2a45; title, BACK TO HOME, X.
+   Shaker pieces + cards are absolutely placed by transforms in game.js (playUnlock).
 ═══════════════════════════════════════════ */
-#unlock-overlay { position: absolute; inset: 0; z-index: 70; background: rgba(0, 0, 0, 0.6); }
-#unlock-box {
-  position: absolute; left: 146px; top: 56px; width: 552px; height: 279px; box-sizing: border-box;
-  padding: 24px 40px 0; border-radius: 12px; background: #2b2a45;
-  display: flex; flex-direction: column; align-items: center;
-}
-#unlock-title { margin: 0; width: 396px; font-family: 'BarFontBold', sans-serif; font-size: 28px; line-height: 30px; color: #fff; text-align: center; }
-#unlock-list { margin-top: 18px; display: grid; grid-template-columns: repeat(3, auto); gap: 6px 26px; justify-content: center; }
-#unlock-list span { font-family: 'Scratchy', 'BarFontBold', sans-serif; font-size: 22px; color: #cccaf3; white-space: nowrap; text-align: center; }
-#btn-unlock-menu { margin-top: auto; margin-bottom: 26px; }
-#btn-unlock-close { position: absolute; right: 6px; top: 6px; width: 37.5px; height: 37.5px; padding: 14px; background: none; border: none; cursor: pointer; }
+#unlock-overlay { position: absolute; inset: 0; z-index: 70; background: #2b2a45; overflow: hidden; }
+#unlock-title { position: absolute; left: 224px; top: 33px; width: 396px; margin: 0; z-index: 2;
+  font-family: 'BarFontBold', sans-serif; font-size: 28px; line-height: 27px; color: #cccaf3; text-align: center; }
+#btn-unlock-home { color: #7a78a4; z-index: 5; }
+#btn-unlock-home svg { display: block; }
+#btn-unlock-close { position: absolute; left: 793px; top: 19px; width: 37.5px; height: 37.5px; padding: 14px; background: none; border: none; cursor: pointer; z-index: 5; }
 #btn-unlock-close img { display: block; width: 9.5px; height: 9.5px; }
+#unlock-stage { position: absolute; inset: 0; }
+#unlock-stage .shaker-part { position: absolute; left: 0; top: 0; transform-origin: 50% 50%; }
+#unlock-stage .shaker-rig { position: absolute; inset: 0; }
+/* Recipe cards — built at the big size (140.29×156.19) and scaled per slot */
+.sig-card { position: absolute; left: 0; top: 0; width: 140.29px; height: 156.19px; box-sizing: border-box;
+  padding: 17.3px 8px 0; border-radius: 5.61px; filter: drop-shadow(0 3.93px 2.5px rgba(0,0,0,.25));
+  display: flex; flex-direction: column; align-items: center; gap: 6.08px; transform-origin: 50% 50%; overflow: hidden; }
+.sig-card .t { font-family: 'Scratchy', 'BarFontBold', sans-serif; font-size: 21.04px; line-height: normal; color: #cccaf3; white-space: nowrap; }
+.sig-card .ul { width: 123.68px; height: 6.03px; margin-top: -6.08px; flex: none; }
+.sig-card .ls { font-family: 'BarFont', sans-serif; font-size: 13.09px; line-height: 1.32; color: #cccaf3; text-align: center; white-space: nowrap; }
+.sig-card .ls .ing { color: #edecff; }
+.sig-card .g { position: relative; width: 17.31px; height: 23.18px; flex: none; margin-top: 4px; }
+.sig-card .g .drink-view { left: 0; top: 0; transform-origin: 0 0; transform: scale(0.1413); }
