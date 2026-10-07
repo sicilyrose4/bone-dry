@@ -25,6 +25,15 @@ const INGREDIENTS = {
   'lime-juice':   { name:'Lime Juice',    type:'liquid',  file:'lime-juice.png',   color:'#0cd830', shelf:[49.177, 141.23] },
   'simple-syrup': { name:'Simple Syrup',  type:'liquid',  file:'simple-syrup.png', color:'#fcd884', shelf:[47.177, 141.327] },
   grenadine:      { name:'Grenadine',     type:'liquid',  file:'grenadine.png',    color:'#fc0c3c', shelf:[64.343, 132.593] },
+  // Added 2026-10-07 (user's art): lemon-lime soda + lemon juice are on both shelves; the rest are mocktail-only
+  'lemon-lime':   { name:'Lemon-Lime Soda', type:'liquid', file:'lemon-lime-soda.png', color:'#b0d838', shelf:[50.2, 80] },
+  'lemon-juice':  { name:'Lemon Juice',   type:'liquid',  file:'lemon-juice.png',  color:'#fce800', shelf:[43.4, 140] },
+  lemonade:       { name:'Lemonade',      type:'liquid',  file:'lemonade.png',     color:'#fce800', shelf:[68.9, 135] },
+  'iced-tea':     { name:'Iced Tea',      type:'liquid',  file:'iced-tea.png',     color:'#f8a850', shelf:[64.5, 135] },
+  pineapple:      { name:'Pineapple Juice', type:'liquid', file:'pineapple.png',   color:'#fce800', shelf:[70.9, 140] },
+  grapefruit:     { name:'Grapefruit Juice', type:'liquid', file:'grapefruit.png', color:'#e070f8', shelf:[70.9, 140] },
+  'coconut-cream':{ name:'Coconut Cream', type:'liquid',  file:'coconut-cream.png', color:'#f8e8f8', shelf:[65.9, 120] },
+  peach:          { name:'Peach Juice',   type:'liquid',  file:'peach.png',        color:'#f8a890', shelf:[62.3, 140] },
   lime:           { name:'Lime',          type:'garnish', file:'lime.png' },
   lemon:          { name:'Lemon',         type:'garnish', file:'lemon.png' },
   orange:         { name:'Orange',        type:'garnish', file:'orange.png' },
@@ -33,6 +42,13 @@ const INGREDIENTS = {
 };
 const LIQUID_IDS = Object.keys(INGREDIENTS).filter(id => INGREDIENTS[id].type === 'liquid');
 
+// Mocktail mode (user, 2026-10-07): the shelf drops the spirits + triple sec and gets the six
+// mocktail bottles instead. Cocktail mode keeps a cocktail shelf (no mocktail-only bottles).
+const MOCKTAIL_ONLY_IDS = new Set(['lemonade', 'iced-tea', 'pineapple', 'grapefruit', 'coconut-cream', 'peach']);
+const ALCOHOL_IDS = new Set(['vodka', 'gin', 'tequila', 'whiskey', 'white-rum', 'triple-sec']);
+const COCKTAIL_SHELF = LIQUID_IDS.filter(id => !MOCKTAIL_ONLY_IDS.has(id));
+const MOCKTAIL_SHELF = LIQUID_IDS.filter(id => !ALCOHOL_IDS.has(id));
+
 // Shelf heights: each bottle at its rough real-life height, all at one scale
 // (user, 2026-09-24). Width follows each bottle's own art. `shelf` above stays
 // the Figma size — the pour screen still sizes bottles from it.
@@ -40,6 +56,8 @@ const REAL_HEIGHT_CM = {
   vodka: 30, 'white-rum': 29, gin: 29, 'triple-sec': 28, whiskey: 25, tequila: 24,   // 750 ml liquor
   'simple-syrup': 26, cranberry: 23, oj: 22, 'lime-juice': 21, grenadine: 19,        // bar bottles / juice
   'soda-water': 20, 'ginger-beer': 20, 'tonic-water': 18, cola: 14,                   // mixers, cola can
+  'lemon-lime': 14, 'lemon-juice': 21, lemonade: 22, 'iced-tea': 22,                 // added 2026-10-07
+  pineapple: 23, grapefruit: 23, 'coconut-cream': 18, peach: 22,
 };
 const SHELF_PX_PER_CM = 5.8;   // tallest (vodka, 30 cm) ≈ 174 px
 function shelfSize(id) {
@@ -53,7 +71,7 @@ const DRINKS = [
   { id:'vodka-soda',      name:'Vodka Soda',      ingredients:[{id:'vodka',oz:1.5},{id:'soda-water',oz:4},{id:'lime',count:1}] },
   { id:'vodka-tonic',     name:'Vodka Tonic',     ingredients:[{id:'vodka',oz:1.5},{id:'tonic-water',oz:4},{id:'lime',count:1}] },
   { id:'vodka-cranberry', name:'Vodka Cranberry', ingredients:[{id:'vodka',oz:1.5},{id:'cranberry',oz:4},{id:'lime',count:1}] },
-  { id:'dirty-shirley',   name:'Dirty Shirley',   ingredients:[{id:'vodka',oz:1.5},{id:'ginger-beer',oz:4},{id:'grenadine',oz:0.5},{id:'cherry',count:1}] },   // added 2026-09-29
+  { id:'dirty-shirley',   name:'Dirty Shirley',   ingredients:[{id:'vodka',oz:1.5},{id:'lemon-lime',oz:4},{id:'grenadine',oz:0.5},{id:'cherry',count:1}] },   // added 2026-09-29
   { id:'screwdriver',     name:'Screwdriver',     ingredients:[{id:'vodka',oz:1.5},{id:'oj',oz:4},{id:'orange',count:1}] },
   { id:'moscow-mule',     name:'Moscow Mule',     ingredients:[{id:'vodka',oz:1.5},{id:'ginger-beer',oz:4},{id:'lime-juice',oz:0.5},{id:'lime',count:1}] },
   { id:'kentucky-mule',   name:'Kentucky Mule',   ingredients:[{id:'whiskey',oz:1.5},{id:'ginger-beer',oz:4},{id:'lime-juice',oz:0.5},{id:'lime',count:1}] },   // added 2026-09-29
@@ -70,11 +88,53 @@ const DRINKS = [
   { id:'whiskey-ginger',  name:'Whiskey Ginger',  ingredients:[{id:'whiskey',oz:1.5},{id:'ginger-beer',oz:4},{id:'lemon',count:1}] },
   { id:'margarita',       name:'Margarita',       ingredients:[{id:'tequila',oz:2},{id:'triple-sec',oz:1},{id:'lime-juice',oz:1},{id:'lime',count:1}] },
   { id:'tequila-sunrise', name:'Tequila Sunrise', ingredients:[{id:'tequila',oz:1.5},{id:'oj',oz:4},{id:'grenadine',oz:0.5},{id:'orange',count:1},{id:'cherry',count:1}] },
-  // Long Island: lime juice stands in for lemon juice (not on the shelf)
-  { id:'long-island',     name:'Long Island Iced Tea', ingredients:[{id:'vodka',oz:0.5},{id:'gin',oz:0.5},{id:'white-rum',oz:0.5},{id:'tequila',oz:0.5},{id:'triple-sec',oz:0.5},{id:'lime-juice',oz:0.5},{id:'simple-syrup',oz:0.5},{id:'cola',oz:1.5},{id:'lemon',count:1}] },   // added 2026-09-29
+  { id:'long-island',     name:'Long Island Iced Tea', ingredients:[{id:'vodka',oz:0.5},{id:'gin',oz:0.5},{id:'white-rum',oz:0.5},{id:'tequila',oz:0.5},{id:'triple-sec',oz:0.5},{id:'lemon-juice',oz:0.5},{id:'simple-syrup',oz:0.5},{id:'cola',oz:1.5},{id:'lemon',count:1}] },   // added 2026-09-29
   { id:'tequila-soda',    name:'Tequila Soda',    ingredients:[{id:'tequila',oz:1.5},{id:'soda-water',oz:4},{id:'lime',count:1}] },   // added 2026-09-29
   { id:'ranch-water',     name:'Ranch Water',     ingredients:[{id:'tequila',oz:1.5},{id:'lime-juice',oz:0.5},{id:'soda-water',oz:4},{id:'lime',count:1}] },
+
+  // ── Mocktails (drafted 2026-10-05, added 2026-10-07). Peach is a juice, so it's poured by the ounce.
+  //    No accents in names — the game fonts have no ñ. ──
+  { id:'shirley-temple',  name:'Shirley Temple',  mocktail:true, ingredients:[{id:'lemon-lime',oz:4},{id:'grenadine',oz:0.5},{id:'cherry',count:1}] },
+  { id:'roy-rogers',      name:'Roy Rogers',      mocktail:true, ingredients:[{id:'cola',oz:4},{id:'grenadine',oz:0.5},{id:'cherry',count:1}] },
+  { id:'cherry-limeade',  name:'Cherry Limeade',  mocktail:true, ingredients:[{id:'lemon-lime',oz:4},{id:'grenadine',oz:0.5},{id:'lime-juice',oz:0.5},{id:'lime',count:1},{id:'cherry',count:1}] },
+  { id:'nojito',          name:'Nojito',          mocktail:true, ingredients:[{id:'lime-juice',oz:1},{id:'simple-syrup',oz:0.5},{id:'soda-water',oz:3},{id:'mint',count:1},{id:'lime',count:1}] },
+  { id:'virgin-mule',     name:'Virgin Mule',     mocktail:true, ingredients:[{id:'ginger-beer',oz:4},{id:'lime-juice',oz:0.5},{id:'lime',count:1}] },
+  { id:'virgin-sunrise',  name:'Virgin Sunrise',  mocktail:true, ingredients:[{id:'oj',oz:4},{id:'grenadine',oz:0.5},{id:'orange',count:1},{id:'cherry',count:1}] },
+  { id:'cranberry-spritzer', name:'Cranberry Spritzer', mocktail:true, ingredients:[{id:'cranberry',oz:3},{id:'soda-water',oz:2},{id:'lime-juice',oz:0.5},{id:'lime',count:1}] },
+  { id:'tonic-lime',      name:'Tonic and Lime',  mocktail:true, ingredients:[{id:'tonic-water',oz:4},{id:'lime-juice',oz:0.5},{id:'lime',count:1}] },
+  { id:'virgin-cuba-libre', name:'Virgin Cuba Libre', mocktail:true, ingredients:[{id:'cola',oz:4},{id:'lime-juice',oz:0.5},{id:'lime',count:1}] },
+  { id:'virgin-cosmo',    name:'Virgin Cosmo',    mocktail:true, ingredients:[{id:'cranberry',oz:2},{id:'oj',oz:0.5},{id:'lime-juice',oz:0.5},{id:'soda-water',oz:1},{id:'lime',count:1}] },
+  { id:'arnold-palmer',   name:'Arnold Palmer',   mocktail:true, ingredients:[{id:'iced-tea',oz:3},{id:'lemonade',oz:3},{id:'lemon',count:1}] },
+  { id:'peach-iced-tea',  name:'Peach Iced Tea',  mocktail:true, ingredients:[{id:'iced-tea',oz:3},{id:'peach',oz:1},{id:'lemon',count:1}] },
+  { id:'sweet-tea-fizz',  name:'Sweet Tea Fizz',  mocktail:true, ingredients:[{id:'iced-tea',oz:3},{id:'simple-syrup',oz:0.5},{id:'lemon-lime',oz:2},{id:'lemon',count:1}] },
+  { id:'pink-lemonade',   name:'Pink Lemonade',   mocktail:true, ingredients:[{id:'lemonade',oz:4},{id:'grenadine',oz:0.5},{id:'lemon',count:1}] },
+  { id:'sparkling-lemonade', name:'Sparkling Lemonade', mocktail:true, ingredients:[{id:'lemonade',oz:3},{id:'soda-water',oz:2},{id:'lemon',count:1},{id:'mint',count:1}] },
+  { id:'ginger-lemonade', name:'Ginger Lemonade', mocktail:true, ingredients:[{id:'lemonade',oz:3},{id:'ginger-beer',oz:2},{id:'lemon',count:1}] },
+  { id:'virgin-pina-colada', name:'Virgin Pina Colada', mocktail:true, ingredients:[{id:'pineapple',oz:3},{id:'coconut-cream',oz:1.5},{id:'cherry',count:1}] },
+  { id:'coconut-cooler',  name:'Coconut Cooler',  mocktail:true, ingredients:[{id:'pineapple',oz:2},{id:'coconut-cream',oz:1},{id:'soda-water',oz:2},{id:'lime',count:1}] },
+  { id:'bay-breeze',      name:'Bay Breeze',      mocktail:true, ingredients:[{id:'cranberry',oz:3},{id:'pineapple',oz:1.5},{id:'lime',count:1}] },
+  { id:'tropical-punch',  name:'Tropical Punch',  mocktail:true, ingredients:[{id:'pineapple',oz:2},{id:'oj',oz:2},{id:'grenadine',oz:0.5},{id:'orange',count:1},{id:'cherry',count:1}] },
+  { id:'virgin-paloma',   name:'Virgin Paloma',   mocktail:true, ingredients:[{id:'grapefruit',oz:3},{id:'lime-juice',oz:0.5},{id:'soda-water',oz:2},{id:'lime',count:1}] },
+  { id:'grapefruit-tonic', name:'Grapefruit Tonic', mocktail:true, ingredients:[{id:'grapefruit',oz:2},{id:'tonic-water',oz:3},{id:'lime',count:1}] },
+  { id:'virgin-bellini',  name:'Virgin Bellini',  mocktail:true, ingredients:[{id:'peach',oz:2},{id:'lemon-lime',oz:2},{id:'orange',count:1}] },
 ];
+// Bone Dry signature cocktails — the printed poster (Figma 688:2116), amounts exactly as printed
+// (Night Shift + Grave Yard amounts updated by the user 2026-10-07).
+// Locked until the poster's QR code is scanned (?unlock=signature), then ordered like any cocktail.
+DRINKS.push(
+  { id:'the-bone-dry',  name:'The Bone Dry', signature:true, ingredients:[{id:'gin',oz:1.5},{id:'tonic-water',oz:3},{id:'lime-juice',oz:0.5},{id:'lime',count:1}] },
+  { id:'sour-skull',    name:'Sour Skull',   signature:true, ingredients:[{id:'whiskey',oz:1.5},{id:'cola',oz:3},{id:'lemon-juice',oz:0.5},{id:'lemon',count:1}] },
+  { id:'funny-bone',    name:'Funny Bone',   signature:true, ingredients:[{id:'vodka',oz:1.5},{id:'cranberry',oz:1},{id:'lemon-lime',oz:3},{id:'lime-juice',oz:0.5},{id:'cherry',count:1}] },
+  { id:'night-shift',   name:'Night Shift',  signature:true, ingredients:[{id:'white-rum',oz:1.5},{id:'ginger-beer',oz:3},{id:'lime-juice',oz:1},{id:'grenadine',oz:1},{id:'lime',count:1}] },
+  { id:'skeletonic',    name:'Skeletonic',   signature:true, ingredients:[{id:'tequila',oz:1.5},{id:'tonic-water',oz:3},{id:'grenadine',oz:0.25},{id:'orange',count:1}] },
+  { id:'grave-yard',    name:'Grave Yard',   signature:true, ingredients:[{id:'vodka',oz:1.5},{id:'simple-syrup',oz:1},{id:'soda-water',oz:3},{id:'mint',count:1}] },
+);
+const SIGNATURES = DRINKS.filter(d => d.signature);
+const COCKTAILS = DRINKS.filter(d => !d.mocktail && !d.signature);
+const MOCKTAILS = DRINKS.filter(d => d.mocktail);
+// In cocktail mode about 1 order in 15 is a mocktail — only ones the cocktail shelf can make (user, 2026-10-07)
+const MOCKTAIL_CHANCE = 1 / 15;
+const SHELF_MOCKTAILS = MOCKTAILS.filter(d => d.ingredients.every(i => INGREDIENTS[i.id].type !== 'liquid' || COCKTAIL_SHELF.includes(i.id)));
 
 // How garnish amounts read on the recipe card
 const GARNISH_UNITS = { lime:'slice', lemon:'slice', orange:'slice', mint:'sprig', cherry:'' };
@@ -461,11 +521,31 @@ function updateDial(score, drinkTime, peeked) {
 /* ═══════════════════════════════════════════════════════════════
    CUSTOMER MANAGEMENT
 ═══════════════════════════════════════════════════════════════ */
+// MOCKTAILS ONLY toggle on home (Figma 606:554 / 606:942). Remembered between visits.
+const MODE_KEY = 'bonedry-mocktails-only';
+let mocktailsOnly = false;
+try { mocktailsOnly = localStorage.getItem(MODE_KEY) === '1'; } catch (e) { /* storage unavailable */ }
+const shelfIds = () => mocktailsOnly ? MOCKTAIL_SHELF : COCKTAIL_SHELF;
+
+// Signature menu: unlocked by scanning the poster's QR code, which opens the game at
+// https://sicilyrose4.github.io/bone-dry/?unlock=signature — keep handling that address
+// forever, printed posters depend on it. Saved on this phone's browser.
+const SIGNATURE_KEY = 'bonedry-signature-unlocked';
+let signatureUnlocked = false;
+try { signatureUnlocked = localStorage.getItem(SIGNATURE_KEY) === '1'; } catch (e) { /* storage unavailable */ }
+const cocktailPool = () => signatureUnlocked ? [...COCKTAILS, ...SIGNATURES] : COCKTAILS;
+// Every drink a customer could order in this mode (also what the drink menu shows — signatures first)
+const menuDrinks = () => mocktailsOnly ? MOCKTAILS : [...(signatureUnlocked ? SIGNATURES : []), ...COCKTAILS, ...SHELF_MOCKTAILS];
+
 function pickDrink() {
   // Calm → more new drinks; as the dial climbs, drinks you've already made show up more
   const d = effectiveDial();
   const weight = { new: 0.6 * (1 - d) + 0.1, familiar: 0.8 + 0.7 * d };
-  const pool = DRINKS.filter(x => x.id !== G.lastDrinkId);
+  // Cocktail mode: mostly cocktails, now and then a mocktail (never two in a row)
+  const lastWasMock = MOCKTAILS.some(x => x.id === G.lastDrinkId);
+  const source = mocktailsOnly ? MOCKTAILS
+    : (!lastWasMock && Math.random() < MOCKTAIL_CHANCE) ? SHELF_MOCKTAILS : cocktailPool();
+  const pool = source.filter(x => x.id !== G.lastDrinkId);
   const total = pool.reduce((sum, x) => sum + weight[tierOf(x.id)], 0);
   let r = Math.random() * total;
   let pick = pool[pool.length - 1];
@@ -825,7 +905,7 @@ function edgeBottleVisible(order) {
 function shuffleShelfOrder() {
   let order;
   for (let tries = 0; tries < 500; tries++) {
-    order = shuffleArray(LIQUID_IDS);
+    order = shuffleArray(shelfIds());
     const v = edgeBottleVisible(order);
     if (v !== null && v >= 0.3 && v <= 0.75) break;
   }
@@ -970,7 +1050,7 @@ function hexToRgba(hex, a) {
    a drawn surface line on top of each liquid, bubble outlines in fizzy ones,
    a soft shine streak down the side, all with a chalky grain.
    Drawn on a <canvas> — Safari chokes on SVG noise filters redrawn every frame. */
-const FIZZY_IDS = new Set(['soda-water', 'tonic-water', 'cola', 'ginger-beer']);
+const FIZZY_IDS = new Set(['soda-water', 'tonic-water', 'cola', 'ginger-beer', 'lemon-lime']);
 const WAVE_FIZZY = { amp: 2.6, cycles: 2.2 };
 const WAVE_STILL = { amp: 0.8, cycles: 1.2 };
 const SHINE = 'rgba(255,255,255,0.41)', SHINE_DIM = 'rgba(255,255,255,0.33)';
@@ -2142,6 +2222,24 @@ function preload(onProgress) {
 
 $('btn-start-shift').addEventListener('click', (e) => { e.stopPropagation(); initGame(); });
 
+// MOCKTAILS ONLY toggle (Figma 606:554 off / 606:942 on)
+function applyMode(animate) {
+  const home = dom.screens.home, logo = $('home-logo');
+  home.classList.toggle('mocktails', mocktailsOnly);
+  $('btn-mocktails').setAttribute('aria-checked', mocktailsOnly);
+  if (animate) { logo.classList.remove('relight'); void logo.offsetWidth; logo.classList.add('relight'); }
+}
+$('btn-mocktails').addEventListener('click', (e) => {
+  e.stopPropagation();
+  mocktailsOnly = !mocktailsOnly;
+  try { localStorage.setItem(MODE_KEY, mocktailsOnly ? '1' : '0'); } catch (err) { /* storage unavailable */ }
+  applyMode(true);
+});
+$('home-logo').addEventListener('animationend', (e) => { if (e.animationName === 'relight') $('home-logo').classList.remove('relight'); });
+$('btn-mode-info').addEventListener('click', (e) => { e.stopPropagation(); $('mode-tip').classList.toggle('show'); });
+document.addEventListener('pointerdown', (e) => { if (!e.target.closest('#btn-mode-info')) $('mode-tip').classList.remove('show'); });
+applyMode(false);
+
 /* ═══════════════════════════════════════════════════════════════
    DRINK MENU — Figma 559:427 (user, 2026-10-01): looping carousel of recipe cards.
    Arrows or swipe to move; tap a side card to bring it to the middle. Cards slide
@@ -2195,10 +2293,11 @@ function placeMenuCard(card, slot) {
   card.style.pointerEvents = p.o ? 'auto' : 'none';
 }
 
-const drinkAt = offset => DRINKS[((menu.index + offset) % DRINKS.length + DRINKS.length) % DRINKS.length];
+const drinkAt = offset => { const list = menuDrinks(), n = list.length; return list[((menu.index + offset) % n + n) % n]; };
 
 function openDrinkMenu() {
   showScreen('menu');
+  menu.index %= menuDrinks().length;   // the list changes with the mode
   const wrap = $('menu-carousel');
   wrap.innerHTML = '';
   menu.cards = [-2, -1, 0, 1, 2].map(slot => {
@@ -2217,7 +2316,7 @@ function openDrinkMenu() {
 function moveMenu(dir) {
   if (!dir) return;
   const step = Math.sign(dir);
-  menu.index = (menu.index + step + DRINKS.length) % DRINKS.length;
+  menu.index = (menu.index + step + menuDrinks().length) % menuDrinks().length;
   menu.cards.forEach(card => {
     let slot = +card.dataset.slot - step;
     if (Math.abs(slot) > 2) {
@@ -2263,5 +2362,24 @@ window.addEventListener('DOMContentLoaded', () => {
   buildGarnishTray();
   showScreen('home');
   preload(() => {});
+  // Poster QR code → https://sicilyrose4.github.io/bone-dry/?unlock=signature (scanning again just shows it again)
+  if (new URLSearchParams(location.search).get('unlock') === 'signature') {
+    history.replaceState(null, '', location.pathname);   // so a reload / "Add to Home Screen" opens plain home
+    unlockSignatureMenu();
+  }
+});
+
+function unlockSignatureMenu() {
+  signatureUnlocked = true;
+  try { localStorage.setItem(SIGNATURE_KEY, '1'); } catch (e) { /* storage unavailable */ }
+  $('unlock-list').innerHTML = SIGNATURES.map(d => `<span>${scratchyHTML(d.name.toUpperCase(), 22)}</span>`).join('');
+  $('unlock-overlay').style.display = '';
+}
+const closeUnlock = () => { $('unlock-overlay').style.display = 'none'; };
+$('btn-unlock-close').addEventListener('click', (e) => { e.stopPropagation(); closeUnlock(); });
+$('btn-unlock-menu').addEventListener('click', (e) => {
+  e.stopPropagation(); closeUnlock();
+  if (mocktailsOnly) { mocktailsOnly = false; try { localStorage.setItem(MODE_KEY, '0'); } catch (err) { /* storage unavailable */ } applyMode(false); }
+  menu.index = 0; openDrinkMenu();   // signatures sit at the front of the cocktail menu
 });
 
