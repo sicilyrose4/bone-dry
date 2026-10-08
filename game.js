@@ -2363,19 +2363,21 @@ window.addEventListener('DOMContentLoaded', () => {
   if (new URLSearchParams(location.search).get('unlock') === 'signature') {
     history.replaceState(null, '', location.pathname);   // so a reload / "Add to Home Screen" opens plain home
     // Wait for the fonts (cards are measured) and the shaker art, so nothing pops in mid-animation
-    const art = Object.values(SHAKER_PARTS).map(p => { const i = new Image(); i.src = p.src; return i.decode().catch(() => {}); });
+    const art = [...Object.values(SHAKER_PARTS).map(p => p.src), customerImg('purple', 'selected'), 'assets/ui/unlock-bubble.svg', 'assets/ui/menu-arrow-next.svg']
+      .map(src => { const i = new Image(); i.src = src; return i.decode().catch(() => {}); });
     Promise.all([document.fonts.load("21px 'Scratchy'"), document.fonts.load("13px 'BarFont'"), document.fonts.load("28px 'BarFontBold'"), ...art])
       .catch(() => {}).then(unlockSignatureMenu);
   }
 });
 
 /* ═══════════════════════════════════════════════════════════════
-   SIGNATURE MENU UNLOCKED — Figma 719:1910 (user, 2026-10-07)
+   SIGNATURE MENU UNLOCKED — Figma 719:1910 (user, 2026-10-07; reworked 2026-10-08)
    The shaker shakes by itself in the middle ("start in the center") → slides to the side
    ("move to the side") → tips over and the cap pops off ("opened") → it lies poured out while the
-   six recipe cards fly out of its mouth into a fan ("poured") → the shaker slides away, the cards
-   settle and the title fades in ("after"). No X — BACK TO HOME only (user, 2026-10-07).
-   Poses are landscape centers + rotation straight from the four Figma frames.
+   six recipe cards fly out of its mouth into a fan ("poured") → the shaker slides away, the fan
+   rises and "SIGNATURE MENU UNLOCKED!" fades in ("after" 719:1675) → after a short pause the cards
+   straighten into a carousel, the purple customer rises up and their bubble pops in ("after" 731:253).
+   The carousel then works like the DRINK MENU one. No X — BACK TO HOME only.
 ═══════════════════════════════════════════════════════════════ */
 const SHAKER_PARTS = {
   body: { src: 'assets/ui/shaker-body.png', w: 111.42, h: 219.69,
@@ -2383,27 +2385,40 @@ const SHAKER_PARTS = {
   cap:  { src: 'assets/ui/shaker-cap.png',  w: 111.42, h: 120.88,
           center: [431.4, 163.9, 5.2],  side: [161.8, 165.9, -6.08],  open: [184.4, 137.7, -13.21], pour: [102.7, 146.7, -12.66] },
 };
-// "after" frame card slots, left → right (center, rotation, width; all cards are one card scaled), with paint order
-const UNLOCK_SLOTS = [
-  { x: 195.2, y: 266.1, r: -31,    w: 106.49, bg: '#58533e', z: 1 },
-  { x: 255.7, y: 241.1, r: -19.86, w: 124.65, bg: '#7e5740', z: 3 },
-  { x: 352.9, y: 227.9, r: -4.15,  w: 140.29, bg: '#774473', z: 4 },
-  { x: 470.1, y: 226.5, r: 3.73,   w: 140.29, bg: '#3c3b5c', z: 6 },
-  { x: 577.1, y: 247.8, r: 14.98,  w: 125.17, bg: '#5e663d', z: 5 },
-  { x: 650.6, y: 270.6, r: 28.2,   w: 106.49, bg: '#416f72', z: 2 },
+// Fan in the "after" frame 719:1675, left → right (center, rotation, width — one card scaled), paint order.
+// In "poured" the same fan sits 20px lower.
+const UNLOCK_FAN = [
+  { x: 195.2, y: 244.1, r: -31,    w: 106.49, z: 1 },
+  { x: 255.7, y: 219.1, r: -19.86, w: 124.65, z: 3 },
+  { x: 352.9, y: 205.9, r: -4.15,  w: 140.29, z: 4 },
+  { x: 470.1, y: 204.5, r: 3.73,   w: 140.29, z: 6 },
+  { x: 577.1, y: 225.8, r: 14.98,  w: 125.17, z: 5 },
+  { x: 650.6, y: 248.6, r: 28.2,   w: 106.49, z: 2 },
 ];
-const SIG_CARD_W = 140.29, SIG_CARD_H = 156.19;
-// Which drink sits in which slot (my pick — easy to swap). The Bone Dry gets the navy card on top of
-// the pile; the outer cards are partly covered, as in the Figma frame.
-const UNLOCK_ORDER = ['funny-bone', 'grave-yard', 'sour-skull', 'the-bone-dry', 'skeletonic', 'night-shift'];
+// Carousel in the final frame 731:253 — slot by offset from the middle card. With six drinks one is
+// always tucked behind the middle card (offset 3).
+const UNLOCK_ROW = {
+  '-2': { x: 236.3, y: 194.1, w: 115.56, o: 0.6, z: 1 },
+  '-1': { x: 319.0, y: 194.8, w: 136.76, o: 0.8, z: 2 },
+  '0':  { x: 422.1, y: 195.0, w: 174.25, o: 1,   z: 3 },
+  '1':  { x: 543.8, y: 194.8, w: 136.76, o: 0.8, z: 2 },
+  '2':  { x: 607.7, y: 194.1, w: 115.56, o: 0.6, z: 1 },
+  '3':  { x: 422.1, y: 195.0, w: 115.56, o: 0,   z: 0 },
+};
+const SIG_CARD_W = 140.29, SIG_CARD_H = 156.19, SIG_CARD_BG = '#3c3b5c';
+// Carousel order (user, 2026-10-08): The Bone Dry in the middle, then the poster order
+const UNLOCK_ORDER = ['the-bone-dry', 'sour-skull', 'funny-bone', 'night-shift', 'skeletonic', 'grave-yard'];
+// Fan slot → carousel offset, so each card glides to its neighbour's spot (The Bone Dry on the top fan card)
+const FAN_OFFSETS = [3, -2, -1, 0, 1, 2];
 
 const pose = (w, h, [cx, cy, r], s = 1) => `translate(${cx - w / 2}px, ${cy - h / 2}px) rotate(${r}deg) scale(${s})`;
+const rowOffset = (ci, index) => { const n = UNLOCK_ORDER.length; let o = ((ci - index) % n + n) % n; return o > 3 ? o - n : o; };
+const rowPose = slot => pose(SIG_CARD_W, SIG_CARD_H, [slot.x, slot.y, 0], slot.w / SIG_CARD_W);
 
-function buildSigCard(drink, slot) {
+function buildSigCard(drink) {
   const c = document.createElement('div');
   c.className = 'sig-card';
-  c.style.background = slot.bg;
-  c.style.zIndex = slot.z;
+  c.style.background = SIG_CARD_BG;
   c.style.opacity = 0;   // hidden until it flies out of the shaker
   c.innerHTML = `<div class="t"></div><img class="ul" src="assets/ui/recipe-underline.svg?v=2" alt="" />
     <div class="ls">${drink.ingredients.map(recipeLine).join('')}</div><div class="g"><div class="drink-view"></div></div>`;
@@ -2423,6 +2438,7 @@ function fitSigCard(c, drink) {
 }
 
 let unlockAnims = [];
+const unlockRow = { index: 0, cards: [], live: false, swiped: false };
 function unlockSignatureMenu() {
   signatureUnlocked = true;
   try { localStorage.setItem(SIGNATURE_KEY, '1'); } catch (e) { /* storage unavailable */ }
@@ -2433,10 +2449,11 @@ function playUnlock(freezeAt) {
   const ov = $('unlock-overlay'), stage = $('unlock-stage');
   unlockAnims.forEach(a => a.cancel());
   unlockAnims = [];
+  unlockRow.live = false; unlockRow.index = 0;
   stage.innerHTML = '';
   ov.style.display = '';
-  const anim = (el, kf, delay, duration, easing = 'ease-in-out', extra = {}) =>
-    unlockAnims.push(el.animate(kf, { delay, duration, easing, fill: 'both', ...extra }));
+  const anim = (el, kf, delay, duration, easing = 'ease-in-out', extra = {}) => {
+    const a = el.animate(kf, { delay, duration, easing, fill: 'both', ...extra }); unlockAnims.push(a); return a; };
 
   // Shaker: a rig (for the shake) holding the body + cap
   const rig = document.createElement('div'); rig.className = 'shaker-rig'; stage.appendChild(rig);
@@ -2449,11 +2466,26 @@ function playUnlock(freezeAt) {
   }
   const B = SHAKER_PARTS.body, C = SHAKER_PARTS.cap;
 
-  // Cards (in the page first so they can be measured)
-  const cards = UNLOCK_ORDER.map((id, i) => {
-    const drink = SIGNATURES.find(d => d.id === id), slot = UNLOCK_SLOTS[i];
-    const c = buildSigCard(drink, slot); stage.appendChild(c); fitSigCard(c, drink);
-    return { c, slot };
+  // Cards (in the page first so they can be measured). Fan slot i holds the card that ends at FAN_OFFSETS[i].
+  const cards = FAN_OFFSETS.map((off, i) => {
+    const ci = (off + UNLOCK_ORDER.length) % UNLOCK_ORDER.length, drink = SIGNATURES.find(d => d.id === UNLOCK_ORDER[ci]);
+    const c = buildSigCard(drink); stage.appendChild(c); fitSigCard(c, drink);
+    c.style.zIndex = UNLOCK_FAN[i].z;
+    c.addEventListener('click', (e) => { if (!unlockRow.live) return; e.stopPropagation(); const o = rowOffset(ci, unlockRow.index); if (o && o !== 3 && !unlockRow.swiped) moveUnlockRow(o); });
+    return { c, fan: UNLOCK_FAN[i], ci };
+  });
+  unlockRow.cards = cards;
+
+  // Customer + bubble (final frame), arrows
+  const cust = document.createElement('img'); cust.id = 'unlock-customer'; cust.src = customerImg('purple', 'selected'); cust.alt = ''; stage.appendChild(cust);
+  const bub = document.createElement('div'); bub.id = 'unlock-bubble';
+  bub.innerHTML = '<img src="assets/ui/unlock-bubble.svg" alt="" /><p>The Bone Dry signature cocktails are now available for your customers to order.</p>';
+  stage.appendChild(bub);
+  const arrows = ['prev', 'next'].map(dir => {
+    const b = document.createElement('button'); b.className = 'unlock-arrow ' + dir; b.setAttribute('aria-label', dir === 'prev' ? 'Previous drink' : 'Next drink');
+    b.innerHTML = '<img src="assets/ui/menu-arrow-next.svg" alt="" />';
+    b.addEventListener('click', (e) => { e.stopPropagation(); if (unlockRow.live) moveUnlockRow(dir === 'prev' ? -1 : 1); });
+    stage.appendChild(b); return b;
   });
 
   // 0 — screen fades in
@@ -2483,33 +2515,80 @@ function playUnlock(freezeAt) {
   anim(parts.cap, [{ transform: pose(C.w, C.h, C.open) },
                    { transform: pose(C.w, C.h, [C.pour[0] + 30, C.pour[1] - 40, C.pour[2] - 20]), offset: .45 },
                    { transform: pose(C.w, C.h, C.pour) }], POUR_AT, POUR_MS + 200, 'ease-out', { fill: 'forwards' });
-  // 5 — cards fly out of the shaker's mouth into the fan (middle ones first)
+  // 5 — cards fly out of the shaker's mouth into the fan ("poured" = the fan 20px lower)
   const r = B.pour[2] * Math.PI / 180, mouth = [B.pour[0] + Math.sin(r) * B.h / 2, B.pour[1] - Math.cos(r) * B.h / 2];
   const OUT_AT = POUR_AT + POUR_MS - 60;
-  [0, 1, 2, 3, 4, 5].forEach((i, n) => {
-    const { c, slot } = cards[i], s = slot.w / SIG_CARD_W;
-    const end = [slot.x, slot.y - 2, slot.r];   // "poured" sits 2px higher than "after"
-    const mid = [(mouth[0] + slot.x) / 2, Math.min(mouth[1], slot.y) - 70, slot.r * 0.5 + 25];
+  const fanPose = (f, dy = 0) => pose(SIG_CARD_W, SIG_CARD_H, [f.x, f.y + dy, f.r], f.w / SIG_CARD_W);
+  cards.forEach(({ c, fan }, n) => {
+    const s = fan.w / SIG_CARD_W, mid = [(mouth[0] + fan.x) / 2, Math.min(mouth[1], fan.y + 20) - 70, fan.r * 0.5 + 25];
     anim(c, [{ transform: pose(SIG_CARD_W, SIG_CARD_H, [mouth[0], mouth[1], B.pour[2]], 0.12), opacity: 0 },
              { transform: pose(SIG_CARD_W, SIG_CARD_H, mid, s * 0.8), opacity: 1, offset: .45 },
-             { transform: pose(SIG_CARD_W, SIG_CARD_H, end, s), opacity: 1 }], OUT_AT + n * 110, 620, 'cubic-bezier(.25,.8,.3,1)', { fill: 'forwards' });
+             { transform: fanPose(fan, 20), opacity: 1 }], OUT_AT + n * 110, 620, 'cubic-bezier(.25,.8,.3,1)', { fill: 'forwards' });
   });
-  // 6 — the shaker slides off, the cards settle into the "after" frame, the title fades in
+  // 6 — the shaker slides off, the fan rises into the "after" frame, the title fades in
   const AWAY_AT = OUT_AT + 5 * 110 + 620 + 250;
   anim(rig, [{ transform: 'none', opacity: 1 }, { transform: 'translate(-150px, 60px)', opacity: 0 }], AWAY_AT, 500, 'ease-in', { fill: 'forwards' });
-  cards.forEach(({ c, slot }) => anim(c, [{ transform: pose(SIG_CARD_W, SIG_CARD_H, [slot.x, slot.y - 2, slot.r], slot.w / SIG_CARD_W) },
-                                          { transform: pose(SIG_CARD_W, SIG_CARD_H, [slot.x, slot.y, slot.r], slot.w / SIG_CARD_W) }], AWAY_AT + 150, 350, 'ease-out', { fill: 'forwards' }));
-  anim($('unlock-title'), [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], AWAY_AT + 350, 500, 'ease-out');
+  cards.forEach(({ c, fan }) => anim(c, [{ transform: fanPose(fan, 20) }, { transform: fanPose(fan) }], AWAY_AT + 150, 450, 'ease-out', { fill: 'forwards' }));
+  const title = $('unlock-title');
+  anim(title, [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], AWAY_AT + 350, 500, 'ease-out');
+  // 7 — short pause, then the cards straighten into the carousel; the title moves up to make room
+  const ROW_AT = AWAY_AT + 350 + 500 + 900, ROW_MS = 700;
+  // (paint order switches from the fan's to the carousel's halfway through — a discrete z-index step)
+  cards.forEach(({ c, fan, ci }) => {
+    const slot = UNLOCK_ROW[rowOffset(ci, 0)];
+    anim(c, [{ transform: fanPose(fan), opacity: 1, zIndex: fan.z, offset: 0 }, { zIndex: fan.z, offset: .5 }, { zIndex: slot.z, offset: .5 },
+             { transform: rowPose(slot), opacity: slot.o, zIndex: slot.z, offset: 1 }], ROW_AT, ROW_MS, 'cubic-bezier(.45,0,.25,1)', { fill: 'forwards' });
+  });
+  anim(title, [{ transform: 'none' }, { transform: 'translateY(-19px)' }], ROW_AT, ROW_MS, 'cubic-bezier(.45,0,.25,1)', { fill: 'forwards' });
+  arrows.forEach(b => anim(b, [{ opacity: 0 }, { opacity: 1 }], ROW_AT + 400, 400, 'ease-out'));
+  // 8 — the purple customer rises up from the bottom, then their bubble pops in
+  anim(cust, [{ transform: 'translateY(110px)' }, { transform: 'translateY(-4px)', offset: .8 }, { transform: 'none' }], ROW_AT + 500, 550, 'ease-out');
+  anim(bub, [{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'scale(1.06)', offset: .7 }, { opacity: 1, transform: 'none' }], ROW_AT + 1100, 320, 'ease-out');
   // Resting state for the shaker parts before their animations start
   parts.body.style.transform = pose(B.w, B.h, B.center);
   parts.cap.style.transform = pose(C.w, C.h, C.center);
+
+  // When everything has played (or was skipped), hand the cards over to the carousel
+  Promise.all(unlockAnims.map(a => a.finished)).then(startUnlockRow, () => {});
 
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) unlockAnims.forEach(a => a.finish());
   if (freezeAt != null) unlockAnims.forEach(a => { a.pause(); a.currentTime = freezeAt; });
 }
 
-const closeUnlock = () => { unlockAnims.forEach(a => a.cancel()); unlockAnims = []; $('unlock-overlay').style.display = 'none'; showScreen('home'); };
+// Carousel (same feel as the DRINK MENU): arrows, swipe, tap a side card; loops
+function placeUnlockRow() {
+  unlockRow.cards.forEach(({ c, ci }) => {
+    const slot = UNLOCK_ROW[rowOffset(ci, unlockRow.index)];
+    c.style.transform = rowPose(slot); c.style.opacity = slot.o; c.style.zIndex = slot.z;
+  });
+}
+function startUnlockRow() {
+  unlockRow.cards.forEach(({ c }) => c.getAnimations().forEach(a => a.cancel()));
+  placeUnlockRow();
+  void $('unlock-stage').offsetWidth;
+  unlockRow.cards.forEach(({ c }) => c.classList.add('in-row'));
+  unlockRow.live = true;
+}
+function moveUnlockRow(dir) {
+  if (!dir) return;
+  const step = Math.sign(dir), n = UNLOCK_ORDER.length;
+  unlockRow.index = (unlockRow.index + step + n) % n;
+  placeUnlockRow();
+  if (Math.abs(dir) > 1) setTimeout(() => moveUnlockRow(dir - step), 120);
+}
+(() => {
+  let x0 = null;
+  $('unlock-stage').addEventListener('pointerdown', (e) => { x0 = unlockRow.live ? e.clientX : null; });
+  window.addEventListener('pointerup', (e) => {
+    if (x0 === null) return;
+    const r = $('unlock-overlay').getBoundingClientRect(), dx = (e.clientX - x0) * 844 / r.width;
+    x0 = null;
+    if (Math.abs(dx) > 40) { moveUnlockRow(dx < 0 ? 1 : -1); unlockRow.swiped = true; setTimeout(() => { unlockRow.swiped = false; }, 60); }
+  });
+})();
+
+const closeUnlock = () => { unlockAnims.forEach(a => a.cancel()); unlockAnims = []; unlockRow.live = false; $('unlock-overlay').style.display = 'none'; showScreen('home'); };
 $('btn-unlock-home').addEventListener('click', (e) => { e.stopPropagation(); closeUnlock(); });
-// Tap anywhere else to skip to the end
-$('unlock-overlay').addEventListener('click', () => unlockAnims.forEach(a => { if (a.playState !== 'finished') a.finish(); }));
+// Tap anywhere while it plays to skip to the end
+$('unlock-overlay').addEventListener('click', () => { if (!unlockRow.live) unlockAnims.forEach(a => { if (a.playState !== 'finished') a.finish(); }); });
 
