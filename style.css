@@ -907,23 +907,19 @@ html, body {
 .recipe-peek img { display: block; width: 21px; height: 21px; }
 
 /* ─── PAUSE OVERLAY ──────────────────────────────────────────── */
-#pause-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.45);
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'BarFontBold', sans-serif;
-  font-size: 48px;
-  color: #fff;
-  letter-spacing: 4px;
-  flex-direction: column;
-  gap: 22px;
-}
-/* End the shift early — secondary button (like POUR / START SHIFT) */
-#btn-end-shift { letter-spacing: normal; }
+#pause-overlay { position: absolute; inset: 0; z-index: 100; background: rgba(0, 0, 0, 0.6); }   /* dim between the game and the box */
+/* Figma 736:385 */
+#pause-box { position: absolute; left: 146px; top: 55.5px; width: 552px; height: 279px; background: #2b2a45; border-radius: 12px; overflow: hidden; }
+#pause-box .pause-art { position: absolute; left: 165px; top: 47px; width: 425px; height: 295px; pointer-events: none; }
+/* Tiled from a clean stretch of the art's own crayon line, from the left edge to where the drawn line starts */
+#pause-box .pause-line { position: absolute; left: 0; top: 203px; width: 215px; height: 10px;
+  background: url(assets/ui/pause-line.png) repeat-x 0 0 / 100px 10px; pointer-events: none; }
+#pause-title { position: absolute; left: 78px; top: 42px; width: 396px; height: 40px; margin: 0; z-index: 1;
+  font-family: 'Scratchy', 'BarFontBold', sans-serif; font-size: 64px; line-height: 27px; color: #cccaf3; text-align: center; white-space: nowrap; }
+#pause-title span { font-size: 66px; }
+#btn-resume { position: absolute; left: 204px; top: 104px; height: 46px; padding: 0 32px; z-index: 1; }
+#btn-end-shift { position: absolute; left: 205.5px; top: 162px; width: 141px; height: 30px; padding: 0; z-index: 1;
+  background: none; border: none; cursor: pointer; font-family: 'BarFont', sans-serif; font-size: 26px; line-height: normal; color: #918fb7; text-align: center; white-space: nowrap; }
 
 /* Peek confirm — Figma 509:88: 384x194 navy box, centered over a dim layer
    (same dim as the recipe card). Buttons are Secondary-button variants:

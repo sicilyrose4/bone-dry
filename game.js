@@ -454,7 +454,7 @@ function updateCallOuts() {
 function pauseToggle() {
   if (G.shiftEnded) return;
   G.timerRunning = !G.timerRunning;
-  dom.pauseOverlay.style.display = G.timerRunning ? 'none' : 'flex';
+  dom.pauseOverlay.style.display = G.timerRunning ? 'none' : 'block';
   dom.game.classList.toggle('paused', !G.timerRunning);
 }
 
@@ -2186,9 +2186,14 @@ $('btn-end-shift').addEventListener('pointerdown', (e) => {
   endShift(true);
 });
 
-dom.pauseOverlay.addEventListener('pointerdown', (e) => {
+$('btn-resume').addEventListener('pointerdown', (e) => {
   e.stopPropagation();
   if (!G.timerRunning) pauseToggle();
+});
+// Tapping the dim layer outside the box also resumes; taps inside the box do nothing
+dom.pauseOverlay.addEventListener('pointerdown', (e) => {
+  e.stopPropagation();
+  if (e.target === dom.pauseOverlay && !G.timerRunning) pauseToggle();
 });
 
 /* ═══════════════════════════════════════════════════════════════

@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#12111d" />
   <title>Bone Dry</title>
-  <link rel="stylesheet" href="style.css?v=51" />
+  <link rel="stylesheet" href="style.css?v=52" />
 </head>
 <body>
   <div id="viewport">
@@ -320,11 +320,17 @@
         <div id="unlock-stage"></div>
       </div>
 
-      <!-- Pause overlay -->
+      <!-- Pause overlay — Figma 736:385: 552×279 navy box over a dim layer. RESUME / END SHIFT;
+           tapping the dim area outside the box also resumes. -->
       <div id="pause-overlay" style="display:none;">
-        <span>PAUSED</span>
-        <!-- Tap anywhere else to resume -->
-        <button id="btn-end-shift" class="btn-secondary">END SHIFT</button>
+        <div id="pause-box">
+          <!-- The art's pink counter line, carried on to the box's left edge (user, 2026-10-08) -->
+          <div class="pause-line"></div>
+          <img class="pause-art" src="assets/ui/pause-skeleton.png" alt="" />
+          <p id="pause-title">GAM<span>E</span> PAUS<span>E</span>D</p>
+          <button id="btn-resume" class="btn-secondary">RESUME</button>
+          <button id="btn-end-shift">END SHIFT</button>
+        </div>
       </div>
 
       <!-- Notification layer -->
@@ -333,6 +339,6 @@
     </div><!-- #game -->
   </div><!-- #viewport -->
 
-  <script src="game.js?v=63"></script>
+  <script src="game.js?v=64"></script>
 </body>
 </html>
