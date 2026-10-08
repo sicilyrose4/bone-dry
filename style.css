@@ -1029,7 +1029,8 @@ html, body {
 #unlock-overlay { position: absolute; inset: 0; z-index: 70; background: #040318; overflow: hidden; }   /* 2026-10-08 frames */
 #unlock-title { position: absolute; left: 260px; top: 49px; width: 324px; margin: 0; z-index: 2; white-space: nowrap;
   font-family: 'BarFontBold', sans-serif; font-size: 28px; line-height: 27px; color: #cccaf3; text-align: center; }
-#btn-unlock-home { color: #7a78a4; z-index: 5; }
+#btn-unlock-home { color: #7a78a4; z-index: 5; opacity: 0; pointer-events: none; transition: opacity .4s ease; }   /* hidden until the final frame */
+#btn-unlock-home.shown { opacity: 1; pointer-events: auto; }
 #btn-unlock-home svg { display: block; }
 #unlock-stage { position: absolute; inset: 0; }
 #unlock-stage .shaker-part { position: absolute; left: 0; top: 0; transform-origin: 50% 50%; }

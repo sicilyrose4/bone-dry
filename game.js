@@ -2450,6 +2450,7 @@ function playUnlock(freezeAt) {
   unlockAnims.forEach(a => a.cancel());
   unlockAnims = [];
   unlockRow.live = false; unlockRow.index = 0;
+  $('btn-unlock-home').classList.remove('shown');   // only appears once the animation is done (user, 2026-10-08)
   stage.innerHTML = '';
   ov.style.display = '';
   const anim = (el, kf, delay, duration, easing = 'ease-in-out', extra = {}) => {
@@ -2568,6 +2569,7 @@ function startUnlockRow() {
   void $('unlock-stage').offsetWidth;
   unlockRow.cards.forEach(({ c }) => c.classList.add('in-row'));
   unlockRow.live = true;
+  $('btn-unlock-home').classList.add('shown');
 }
 function moveUnlockRow(dir) {
   if (!dir) return;
