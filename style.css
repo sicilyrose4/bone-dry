@@ -1031,6 +1031,10 @@ html, body {
   font-family: 'BarFontBold', sans-serif; font-size: 28px; line-height: 27px; color: #cccaf3; text-align: center; }
 #btn-unlock-home { color: #7a78a4; z-index: 5; opacity: 0; pointer-events: none; transition: opacity .4s ease; }   /* hidden until the final frame */
 #btn-unlock-home.shown { opacity: 1; pointer-events: auto; }
+#btn-unlock-skip { position: absolute; left: 787px; top: 21px; height: 18px; padding: 0; border: none; background: none; cursor: pointer; z-index: 5;
+  font-family: 'BarFontBold', sans-serif; font-size: 18px; line-height: 18px; color: #7a78a4; transition: opacity .3s ease; }
+#btn-unlock-skip::before { content: ''; position: absolute; inset: -12px -14px; }   /* bigger tap area */
+#btn-unlock-skip.gone { opacity: 0; pointer-events: none; }
 #btn-unlock-home svg { display: block; }
 #unlock-stage { position: absolute; inset: 0; }
 #unlock-stage .shaker-part { position: absolute; left: 0; top: 0; transform-origin: 50% 50%; }

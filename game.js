@@ -2451,6 +2451,7 @@ function playUnlock(freezeAt) {
   unlockAnims = [];
   unlockRow.live = false; unlockRow.index = 0;
   $('btn-unlock-home').classList.remove('shown');   // only appears once the animation is done (user, 2026-10-08)
+  $('btn-unlock-skip').classList.remove('gone');    // SKIP shows while it plays (Figma 719:1911)
   stage.innerHTML = '';
   ov.style.display = '';
   const anim = (el, kf, delay, duration, easing = 'ease-in-out', extra = {}) => {
@@ -2570,6 +2571,7 @@ function startUnlockRow() {
   unlockRow.cards.forEach(({ c }) => c.classList.add('in-row'));
   unlockRow.live = true;
   $('btn-unlock-home').classList.add('shown');
+  $('btn-unlock-skip').classList.add('gone');
 }
 function moveUnlockRow(dir) {
   if (!dir) return;
@@ -2591,6 +2593,6 @@ function moveUnlockRow(dir) {
 
 const closeUnlock = () => { unlockAnims.forEach(a => a.cancel()); unlockAnims = []; unlockRow.live = false; $('unlock-overlay').style.display = 'none'; showScreen('home'); };
 $('btn-unlock-home').addEventListener('click', (e) => { e.stopPropagation(); closeUnlock(); });
-// Tap anywhere while it plays to skip to the end
-$('unlock-overlay').addEventListener('click', () => { if (!unlockRow.live) unlockAnims.forEach(a => { if (a.playState !== 'finished') a.finish(); }); });
+// SKIP jumps to the final frame (tapping elsewhere no longer skips — user, 2026-10-08)
+$('btn-unlock-skip').addEventListener('click', (e) => { e.stopPropagation(); if (!unlockRow.live) unlockAnims.forEach(a => { if (a.playState !== 'finished') a.finish(); }); });
 
