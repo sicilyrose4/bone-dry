@@ -417,7 +417,7 @@ function tick() {
    taps a customer for CALL_AFTER seconds, they say one of these in their own speech bubble (the
    same A6 bubble orders use), then a different one every few seconds until they're tapped.
    The first customer of a shift is the exception: their bubble is up right away with
-   "TAP TO TAKE ORDER" over it, and stays until any customer has been tapped once. */
+   "TAP TO SERVE" over it (was TAP TO TAKE ORDER), and stays until any customer has been tapped once. */
 const CALL_OUTS = ['excuse me!', 'hello?', 'over here!', 'hey, bartender!', 'um, hi?', 'can i order?',
                    'ahem…', 'anyone there?', 'psst!', "i'm ready!", 'still waiting…', 'yoo-hoo!'];
 const CALL_AFTER = 2.5;   // seconds of waiting before the first call-out (user, 2026-10-01: was 6)
@@ -487,11 +487,90 @@ function updateCallOuts() {
   });
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   SOUND (user, 2026-10-11) — bar music during a shift, a pouring loop while you hold to pour,
+   a pop when a garnish lands. SOUND ON/OFF lives on the pause screen and is remembered.
+   Files: assets/audio/music.mp3 (Pixabay "bass bass music" 557626 — user's pick),
+   pour.mp3 (Freesound 235555 by simosco, CC0), pop.mp3 (Freesound 245645 by unfa, CC0).
+   Web Audio, so volumes work on iPhone; the context is created on the first tap.
+═══════════════════════════════════════════════════════════════ */
+const SOUND_KEY = 'bonedry-sound';
+let soundOn = true;
+try { soundOn = localStorage.getItem(SOUND_KEY) !== '0'; } catch (e) { /* storage unavailable */ }
+const Sound = (() => {
+  const VOL = { music: 0.32, pour: 0.55, pop: 0.8 };
+  let ctx = null, master, musicEl, pourGain, pourSrc = null, wantMusic = false;
+  const buf = {};
+  function load(name) {
+    fetch(`assets/audio/${name}.mp3`).then(r => r.ok ? r.arrayBuffer() : Promise.reject())
+      .then(ab => new Promise((res, rej) => ctx.decodeAudioData(ab, res, rej)))
+      .then(b => { buf[name] = b; }).catch(() => { /* file missing — that sound just stays silent */ });
+  }
+  // Must run inside a tap/click the first time (phones block audio before that)
+  function init() {
+    if (ctx) { if (ctx.state === 'suspended') ctx.resume().catch(() => {}); return; }
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    ctx = new AC();
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { /* older iOS: follows the ring switch */ }
+    master = ctx.createGain(); master.gain.value = soundOn ? 1 : 0; master.connect(ctx.destination);
+    pourGain = ctx.createGain(); pourGain.gain.value = 0; pourGain.connect(master);
+    load('pour'); load('pop');
+    musicEl = new Audio('assets/audio/music.mp3');
+    musicEl.loop = true; musicEl.preload = 'auto';
+    try { const g = ctx.createGain(); g.gain.value = VOL.music; ctx.createMediaElementSource(musicEl).connect(g); g.connect(master); } catch (e) { musicEl.volume = VOL.music; }
+    if (wantMusic) music(true);
+  }
+  function music(on, restart) {
+    wantMusic = on;
+    if (!musicEl) return;
+    if (on && soundOn && !document.hidden) { if (restart) { try { musicEl.currentTime = 0; } catch (e) {} } musicEl.play().catch(() => {}); }
+    else musicEl.pause();
+  }
+  function pour(on) {
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    if (on && !pourSrc && buf.pour && soundOn) {
+      pourSrc = ctx.createBufferSource(); pourSrc.buffer = buf.pour; pourSrc.loop = true;
+      const d = buf.pour.duration; pourSrc.loopStart = Math.min(0.6, d * 0.2); pourSrc.loopEnd = Math.max(d - 0.6, d * 0.8);
+      pourSrc.connect(pourGain); pourSrc.start(0, pourSrc.loopStart);
+      pourGain.gain.cancelScheduledValues(t); pourGain.gain.setValueAtTime(0, t); pourGain.gain.linearRampToValueAtTime(VOL.pour, t + 0.06);
+    } else if (!on && pourSrc) {
+      const src = pourSrc; pourSrc = null;
+      pourGain.gain.cancelScheduledValues(t); pourGain.gain.setValueAtTime(pourGain.gain.value, t); pourGain.gain.linearRampToValueAtTime(0, t + 0.09);
+      try { src.stop(t + 0.1); } catch (e) {}
+    }
+  }
+  function pop() {
+    if (!ctx || !buf.pop || !soundOn) return;
+    const src = ctx.createBufferSource(), g = ctx.createGain();
+    src.buffer = buf.pop; g.gain.value = VOL.pop; src.connect(g); g.connect(master); src.start();
+  }
+  function setOn(on) {
+    soundOn = on;
+    try { localStorage.setItem(SOUND_KEY, on ? '1' : '0'); } catch (e) { /* storage unavailable */ }
+    if (!ctx) return;
+    master.gain.value = on ? 1 : 0;
+    if (!on) pour(false);
+    music(wantMusic);
+  }
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { pour(false); if (musicEl) musicEl.pause(); } else music(wantMusic); });
+  return { init, music, pour, pop, setOn };
+})();
+function refreshSoundButton() {
+  const b = $('btn-sound');
+  b.classList.toggle('off', !soundOn);
+  b.setAttribute('aria-pressed', soundOn);
+  $('sound-label').textContent = soundOn ? 'SOUND ON' : 'SOUND OFF';
+}
+
 function pauseToggle() {
   if (G.shiftEnded) return;
   G.timerRunning = !G.timerRunning;
   dom.pauseOverlay.style.display = G.timerRunning ? 'none' : 'block';
   dom.game.classList.toggle('paused', !G.timerRunning);
+  Sound.pour(false);
+  Sound.music(G.timerRunning);   // the music stops while the game is paused
 }
 
 function updateTimerDisplays() {
@@ -1262,8 +1341,10 @@ function pourLoop(now) {
     // Past 8 oz the glass is full — the pour just stops
     G.pour.ozPoured = Math.min(G.pour.ozPoured + dt * rate, MAX_OZ - G.pour.baselineOz);
     renderPourLiquid();
+    Sound.pour(G.pour.ozPoured < MAX_OZ - G.pour.baselineOz);   // silent once the glass is full
   } else {
     G.pour.lastTick = 0;
+    Sound.pour(false);
   }
   G.rafId = requestAnimationFrame(pourLoop);
 }
@@ -1274,6 +1355,7 @@ function startPourRAF() {
 }
 
 function stopPourRAF() {
+  Sound.pour(false);
   if (G.rafId) { cancelAnimationFrame(G.rafId); G.rafId = null; }
 }
 
@@ -1531,6 +1613,7 @@ function endShift(early = false) {
   G.shiftEnded = true;
   stopTimer();
   stopPourRAF();
+  Sound.music(false);
   // Ending early from pause: the drink in progress (if any) is dropped
   if (early) resetCurrentDrink();
   dom.pauseOverlay.style.display = 'none';
@@ -1625,6 +1708,8 @@ function stepSummary(now) {
    INIT / RESET
 ═══════════════════════════════════════════════════════════════ */
 function initGame() {
+  Sound.init();
+  Sound.music(true, true);   // bar music from the top, every shift
   G.screen = 'bar';
   G.tips = 0;
   G.shiftRemaining = SHIFT_SECONDS;
@@ -1653,7 +1738,7 @@ function initGame() {
   document.querySelectorAll('.bar-tip-float, .speech-bubble.reaction').forEach(e => e.remove());
   document.querySelectorAll('.speech-bubble.callout-bubble').forEach(e => e.remove());
   $('tap-hint').classList.remove('show');
-  G.tapHint = true;       // first customer of this shift gets TAP TO TAKE ORDER
+  G.tapHint = true;       // first customer of this shift gets TAP TO SERVE
   G.firstCustomerSeen = false;
   hideSpeechArea();
   G.shelf = { order: [], selected: null, toast: null };
@@ -2161,6 +2246,7 @@ function placeSelectedGarnish() {
   const id = G.garnishSel;
   if (!id || !G.timerRunning) return;
   G.drink.garnishes.push({ id, spot: garnishSpot(id, G.drink.garnishes) });
+  Sound.pop();
   const existing = G.drink.poured.find(p => p.id === id);
   if (existing) existing.count = (existing.count || 0) + 1;
   else G.drink.poured.push({ id, count: 1 });
@@ -2233,11 +2319,12 @@ $('btn-resume').addEventListener('pointerdown', (e) => {
   e.stopPropagation();
   if (!G.timerRunning) pauseToggle();
 });
-// Tapping the dim layer outside the box also resumes; taps inside the box do nothing
-dom.pauseOverlay.addEventListener('pointerdown', (e) => {
-  e.stopPropagation();
-  if (e.target === dom.pauseOverlay && !G.timerRunning) pauseToggle();
-});
+// Full-screen pause (Figma 740:499): only RESUME resumes; taps elsewhere do nothing
+dom.pauseOverlay.addEventListener('pointerdown', (e) => e.stopPropagation());
+$('btn-sound').addEventListener('click', (e) => { e.stopPropagation(); Sound.init(); Sound.setOn(!soundOn); refreshSoundButton(); });
+refreshSoundButton();
+// Any first tap wakes the audio (phones need a tap before sound can play)
+['click', 'touchend'].forEach(ev => document.addEventListener(ev, () => Sound.init(), { once: true, passive: true }));
 
 /* ═══════════════════════════════════════════════════════════════
    BOOT — loading screen preloads every image, then home

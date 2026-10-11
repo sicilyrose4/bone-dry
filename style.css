@@ -911,19 +911,24 @@ html, body {
 .recipe-peek img { display: block; width: 21px; height: 21px; }
 
 /* ─── PAUSE OVERLAY ──────────────────────────────────────────── */
-#pause-overlay { position: absolute; inset: 0; z-index: 100; background: rgba(0, 0, 0, 0.6); }   /* dim between the game and the box */
-/* Figma 736:385 */
-#pause-box { position: absolute; left: 146px; top: 55.5px; width: 552px; height: 279px; background: #2b2a45; border-radius: 12px; overflow: hidden; }
-#pause-box .pause-art { position: absolute; left: 165px; top: 47px; width: 425px; height: 295px; pointer-events: none; }
-/* Tiled from a clean stretch of the art's own crayon line, from the left edge to where the drawn line starts */
-#pause-box .pause-line { position: absolute; left: 0; top: 203px; width: 215px; height: 10px;
-  background: url(assets/ui/pause-line.png) repeat-x 0 0 / 100px 10px; pointer-events: none; }
-#pause-title { position: absolute; left: 78px; top: 42px; width: 396px; height: 40px; margin: 0; z-index: 1;
-  font-family: 'Scratchy', 'BarFontBold', sans-serif; font-size: 64px; line-height: 27px; color: #cccaf3; text-align: center; white-space: nowrap; }
-#pause-title span { font-size: 66px; }
-#btn-resume { position: absolute; left: 204px; top: 104px; height: 46px; padding: 0 32px; z-index: 1; }
-#btn-end-shift { position: absolute; left: 205.5px; top: 162px; width: 141px; height: 30px; padding: 0; z-index: 1;
-  background: none; border: none; cursor: pointer; font-family: 'BarFont', sans-serif; font-size: 26px; line-height: normal; color: #918fb7; text-align: center; white-space: nowrap; }
+/* Pause screen — Figma 740:499 / 740:517 (1428×619 frame ×0.591; top content +12px to center on 390,
+   customers anchored to the bottom edge) */
+#pause-overlay { position: absolute; inset: 0; z-index: 100; background: #2b2a45; overflow: hidden; }
+#pause-title { position: absolute; left: 0; right: 0; top: 90px; height: 27px; margin: 0;
+  font-family: 'Scratchy', 'BarFontBold', sans-serif; font-size: 56.7px; line-height: 27px; color: #fff; text-align: center; white-space: nowrap; }
+#pause-title span { font-size: 59.7px; }
+#btn-resume { position: absolute; left: 367.6px; top: 175.7px; width: 108.2px; height: 33.7px; padding: 0; border-radius: 7.1px; font-size: 23.05px; }
+#btn-end-shift { position: absolute; left: 372px; top: 230.7px; width: 99.4px; height: 20px; padding: 0;
+  background: none; border: none; cursor: pointer; font-family: 'BarFontBold', sans-serif; font-size: 18.9px; line-height: 20px; color: #918fb7; text-align: center; white-space: nowrap; }
+#btn-sound { position: absolute; left: 369.4px; top: 283.1px; height: 20px; padding: 0; display: flex; align-items: center; gap: 10px;
+  background: none; border: none; cursor: pointer; font-family: 'BarFontBold', sans-serif; font-size: 18.9px; line-height: 20px; color: #dc6fd3; white-space: nowrap; }
+#btn-sound::before, #btn-end-shift::before { content: ''; position: absolute; inset: -9px -14px; }   /* bigger tap areas */
+#btn-sound svg { width: 14.2px; height: 14.2px; flex: none; display: block; }
+#btn-sound .snd-off { display: none; }
+#btn-sound.off { color: #918fb7; }
+#btn-sound.off .snd-on { display: none; }
+#btn-sound.off .snd-off { display: block; }
+.pause-cust { position: absolute; pointer-events: none; }
 
 /* Peek confirm — Figma 509:88: 384x194 navy box, centered over a dim layer
    (same dim as the recipe card). Buttons are Secondary-button variants:

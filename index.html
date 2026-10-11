@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#12111d" />
   <title>Bone Dry</title>
-  <link rel="stylesheet" href="style.css?v=53" />
+  <link rel="stylesheet" href="style.css?v=54" />
 </head>
 <body>
   <div id="viewport">
@@ -112,8 +112,8 @@
         <div class="customer-slot" id="slot-1"></div>
         <div class="customer-slot" id="slot-2"></div>
         <!-- Waiting customers call out in their own speech bubble (built in game.js — Figma 740:80).
-             The first customer of a shift also gets this hint over their bubble. -->
-        <div id="tap-hint">TAP TO TAKE ORDER</div>
+             The first customer of a shift also gets this hint over their bubble (user: "tap to serve"). -->
+        <div id="tap-hint">TAP TO SERVE</div>
         <!-- Counter -->
         <img class="counter" id="bar-counter" alt="" />
         <!-- Served drinks sit on the counter here -->
@@ -320,17 +320,21 @@
         <div id="unlock-stage"></div>
       </div>
 
-      <!-- Pause overlay — Figma 736:385: 552×279 navy box over a dim layer. RESUME / END SHIFT;
-           tapping the dim area outside the box also resumes. -->
+      <!-- Pause screen — Figma 740:499 (sound on) / 740:517 (sound off): full-screen navy, GAME PAUSED,
+           RESUME, END SHIFT, SOUND ON/OFF, four customers along the bottom (1428×619 frame, ×0.591). -->
       <div id="pause-overlay" style="display:none;">
-        <div id="pause-box">
-          <!-- The art's pink counter line, carried on to the box's left edge (user, 2026-10-08) -->
-          <div class="pause-line"></div>
-          <img class="pause-art" src="assets/ui/pause-skeleton.png" alt="" />
-          <p id="pause-title">GAM<span>E</span> PAUS<span>E</span>D</p>
-          <button id="btn-resume" class="btn-secondary">RESUME</button>
-          <button id="btn-end-shift">END SHIFT</button>
-        </div>
+        <p id="pause-title">GAM<span>E</span> PAUS<span>E</span>D</p>
+        <button id="btn-resume" class="btn-secondary">RESUME</button>
+        <button id="btn-end-shift">END SHIFT</button>
+        <button id="btn-sound" aria-pressed="true">
+          <svg class="snd-on" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M16 8.5C17.333 10.278 17.333 13.722 16 15.5M19 5C22.988 8.808 23.012 15.217 19 19M2 14.959V9.04C2 8.466 2.448 8 3 8H6.586C6.71833 7.99953 6.8492 7.97226 6.97071 7.91984C7.09222 7.86743 7.20185 7.79094 7.293 7.695L10.293 4.307C10.923 3.651 12 4.116 12 5.043V18.957C12 19.891 10.91 20.352 10.284 19.683L7.294 16.314C7.20259 16.2153 7.09185 16.1365 6.96867 16.0825C6.84549 16.0285 6.71251 16.0004 6.578 16H3C2.448 16 2 15.534 2 14.959Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg class="snd-off" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><g transform="translate(1 3)"><path d="M21 12.0114L15 6.01137M21 6.01137L15 12.0114" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M1 11.9704V6.05137C1 5.47737 1.448 5.01137 2 5.01137H5.586C5.71833 5.0109 5.8492 4.98363 5.97071 4.93121C6.09222 4.87879 6.20185 4.80231 6.293 4.70637L9.293 1.31837C9.923 0.662368 11 1.12737 11 2.05437V15.9684C11 16.9024 9.91 17.3634 9.284 16.6944L6.294 13.3254C6.20259 13.2267 6.09185 13.1479 5.96867 13.0939C5.84549 13.0399 5.71251 13.0118 5.578 13.0114H2C1.448 13.0114 1 12.5454 1 11.9704Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g></svg>
+          <span id="sound-label">SOUND ON</span>
+        </button>
+        <img class="pause-cust" style="left:64.4px;top:265.9px;width:57.8px;height:132.3px" src="assets/customers/lime-skeleton.png?v=3" alt="" />
+        <img class="pause-cust" style="left:161.4px;top:265.9px;width:59.7px;height:131.8px" src="assets/customers/orange-skeleton.png?v=3" alt="" />
+        <img class="pause-cust" style="left:630px;top:270.6px;width:60.3px;height:132.4px" src="assets/customers/red-skeleton.png?v=3" alt="" />
+        <img class="pause-cust" style="left:723.4px;top:265.9px;width:76.8px;height:137.1px" src="assets/customers/yellow-skeleton.png?v=3" alt="" />
       </div>
 
       <!-- Notification layer -->
@@ -339,6 +343,6 @@
     </div><!-- #game -->
   </div><!-- #viewport -->
 
-  <script src="game.js?v=65"></script>
+  <script src="game.js?v=66"></script>
 </body>
 </html>
