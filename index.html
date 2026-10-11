@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#12111d" />
   <title>Bone Dry</title>
-  <link rel="stylesheet" href="style.css?v=54" />
+  <link rel="stylesheet" href="style.css?v=55" />
 </head>
 <body>
   <div id="viewport">
@@ -111,9 +111,12 @@
         <div class="customer-slot" id="slot-0"></div>
         <div class="customer-slot" id="slot-1"></div>
         <div class="customer-slot" id="slot-2"></div>
-        <!-- Waiting customers call out in their own speech bubble (built in game.js — Figma 740:80).
-             The first customer of a shift also gets this hint over their bubble (user: "tap to serve"). -->
-        <div id="tap-hint">TAP TO SERVE</div>
+        <!-- Figma 740:101: hint at the top center until the first customer of the shift is tapped -->
+        <div id="tap-hint">TAP A CUSTOMER TO SERVE</div>
+        <!-- "excuse me!" etc. — waiting customers call out (white text over their heads) -->
+        <div class="callout" id="callout-0"></div>
+        <div class="callout" id="callout-1"></div>
+        <div class="callout" id="callout-2"></div>
         <!-- Counter -->
         <img class="counter" id="bar-counter" alt="" />
         <!-- Served drinks sit on the counter here -->
@@ -343,6 +346,6 @@
     </div><!-- #game -->
   </div><!-- #viewport -->
 
-  <script src="game.js?v=66"></script>
+  <script src="game.js?v=67"></script>
 </body>
 </html>

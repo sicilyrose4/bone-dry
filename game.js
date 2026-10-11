@@ -413,76 +413,41 @@ function tick() {
   updateTimerDisplays();
 }
 
-/* Waiting customers call out (user, 2026-10-01; bubbles 2026-10-11 — Figma 740:80): if nobody
-   taps a customer for CALL_AFTER seconds, they say one of these in their own speech bubble (the
-   same A6 bubble orders use), then a different one every few seconds until they're tapped.
-   The first customer of a shift is the exception: their bubble is up right away with
-   "TAP TO SERVE" over it (was TAP TO TAKE ORDER), and stays until any customer has been tapped once. */
+/* Waiting customers call out (user, 2026-10-01): if nobody taps a customer for
+   CALL_AFTER seconds, they say one of these over their head in white text, then a different one
+   every few seconds until they're tapped. (Briefly speech bubbles on 2026-10-11 — the user
+   preferred the text. Figma 740:101.) */
 const CALL_OUTS = ['excuse me!', 'hello?', 'over here!', 'hey, bartender!', 'um, hi?', 'can i order?',
                    'ahem…', 'anyone there?', 'psst!', "i'm ready!", 'still waiting…', 'yoo-hoo!'];
 const CALL_AFTER = 2.5;   // seconds of waiting before the first call-out (user, 2026-10-01: was 6)
 const CALL_SHOW  = 2.5;   // each phrase stays this long…
 const CALL_GAP   = 1.5;   // …then a short pause before the next one
 
-const callBubble = slot => document.getElementById(`call-bubble-${slot}`);
-function hideCallBubble(slot) {
-  const b = callBubble(slot);
-  if (b) { b.removeAttribute('id'); b.classList.add('leaving'); setTimeout(() => b.remove(), 260); }
-  const c = G.customers[slot];
-  if (c && c.hinted) { c.hinted = false; $('tap-hint').classList.remove('show'); }
-}
-function hideAllCallBubbles() { [0, 1, 2].forEach(hideCallBubble); $('tap-hint').classList.remove('show'); }
-const overlaps = (a, b) => a.left < b.right - 4 && a.right > b.left + 4 && a.top < b.bottom && a.bottom > b.top;
-
-// Put a call-out bubble over this customer. Returns false if every phrase tried would sit on a neighbour's bubble.
-function showCallBubble(slot) {
-  const c = G.customers[slot];
-  const area = document.createElement('div');
-  area.className = 'speech-bubble callout-bubble';
-  area.id = `call-bubble-${slot}`;
-  area.innerHTML = '<div class="speech-text"></div><canvas aria-hidden="true"></canvas>';
-  dom.screens.bar.appendChild(area);
-  const others = [...document.querySelectorAll('.speech-bubble.callout-bubble:not(.leaving), .speech-bubble.reaction:not(.leaving)')].filter(e => e !== area);
-  const options = shuffleArray(CALL_OUTS.filter(p => p !== c.lastCall));
-  for (const phrase of [...options.slice(0, 3), ...options.slice(3).sort((a, b) => a.length - b.length)]) {   // then the shortest ones
-    placeBubble(area, area.firstChild, area.lastChild, phrase, slot, false);
-    const box = area.getBoundingClientRect();
-    if (!others.some(o => overlaps(box, o.getBoundingClientRect()))) { c.lastCall = phrase; return true; }
-  }
-  area.remove();
-  return false;
-}
-
 function updateCallOuts() {
   [0, 1, 2].forEach(slot => {
-    const c = G.customers[slot];
+    const c = G.customers[slot], el = $(`callout-${slot}`);
     const waiting = c && c.state === 'skeleton' && G.drink.forCustomer !== slot && dom.speechArea.style.display === 'none';   // quiet while an order bubble is up
     if (!waiting) {
       if (c) { c.waited = 0; c.callTimer = 0; }
-      hideCallBubble(slot);
-      return;
-    }
-    // First customer of the shift: bubble + hint straight away, kept up until someone is tapped
-    if (c.first && G.tapHint) {
-      if (!callBubble(slot) && showCallBubble(slot)) {
-        const b = callBubble(slot).getBoundingClientRect(), g = dom.screens.bar.getBoundingClientRect(), k = 844 / g.width;
-        const hint = $('tap-hint'), half = hint.offsetWidth / 2, GAP = 10;
-        const cx = ((b.left + b.right) / 2 - g.left) * k;
-        hint.style.left = Math.min(Math.max(cx, 30 + dom.barTips.offsetWidth + GAP + half), TOP_ROW_RIGHT - GAP - half) + 'px';
-        hint.classList.add('show');
-        c.hinted = true;
-      }
+      el.classList.remove('show');
       return;
     }
     c.waited = (c.waited || 0) + TICK;
     if (c.waited < CALL_AFTER) return;
     c.callTimer = (c.callTimer || 0) - TICK;
     if (c.callTimer > 0) return;
-    if (callBubble(slot)) {
-      hideCallBubble(slot);
+    if (el.classList.contains('show')) {
+      el.classList.remove('show');
       c.callTimer = CALL_GAP;
     } else {
-      c.callTimer = showCallBubble(slot) ? CALL_SHOW : 0.5;   // no room next to a neighbour's bubble → try again shortly
+      const options = CALL_OUTS.filter(p => p !== c.lastCall);
+      c.lastCall = options[Math.floor(Math.random() * options.length)];
+      el.textContent = c.lastCall;
+      const spec = CUSTOMERS[c.type];
+      el.style.left = SLOT_CX[slot] + 'px';
+      el.style.top = (COUNTER_TOP + (spec.sink || 0) - spec.h - 37) + 'px';   // 14px over their head (Figma 740:101)
+      el.classList.add('show');
+      c.callTimer = CALL_SHOW;
     }
   });
 }
@@ -705,8 +670,7 @@ function noteCustomerLeft(type) {
 function createCustomer(slot, type) {
   const el = document.getElementById(`slot-${slot}`);
   const drink = pickDrink();
-  const customer = { type, drink, line: orderLine(drink), state: 'skeleton', slot, el, first: !G.firstCustomerSeen };
-  G.firstCustomerSeen = true;
+  const customer = { type, drink, line: orderLine(drink), state: 'skeleton', slot, el };
   G.customers[slot] = customer;
   renderCustomer(slot);
   el.classList.remove('leaving');
@@ -745,8 +709,8 @@ function renderCustomer(slot) {
 // stacks on top of the new order bubble.
 function clearCustomerChatter() {
   document.querySelectorAll('.bar-tip-float, .speech-bubble.reaction').forEach(e => e.classList.add('leaving'));
-  hideAllCallBubbles();
-  G.tapHint = false;   // they've tapped a customer — the hint has done its job
+  document.querySelectorAll('.callout').forEach(e => e.classList.remove('show'));
+  $('tap-hint').classList.remove('show');   // they've tapped a customer — the hint has done its job
 }
 
 function selectCustomer(slot) {
@@ -1736,10 +1700,8 @@ function initGame() {
   dom.game.classList.remove('paused');
   dom.counterDrinks.innerHTML = '';
   document.querySelectorAll('.bar-tip-float, .speech-bubble.reaction').forEach(e => e.remove());
-  document.querySelectorAll('.speech-bubble.callout-bubble').forEach(e => e.remove());
-  $('tap-hint').classList.remove('show');
-  G.tapHint = true;       // first customer of this shift gets TAP TO SERVE
-  G.firstCustomerSeen = false;
+  document.querySelectorAll('.callout').forEach(e => e.classList.remove('show'));
+  $('tap-hint').classList.add('show');      // TAP A CUSTOMER TO SERVE, until the first tap of the shift
   hideSpeechArea();
   G.shelf = { order: [], selected: null, toast: null };
   refreshBarControls();
