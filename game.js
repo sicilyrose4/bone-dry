@@ -423,7 +423,10 @@ const CALL_AFTER = 2.5;   // seconds of waiting before the first call-out (user,
 const CALL_SHOW  = 2.5;   // each phrase stays this long…
 const CALL_GAP   = 1.5;   // …then a short pause before the next one
 
+const HINT_AFTER = 2;     // seconds on the bar before "TAP A CUSTOMER TO SERVE" shows (user, 2026-10-11)
+
 function updateCallOuts() {
+  if (G.hintWait > 0 && (G.hintWait -= TICK) <= 0) $('tap-hint').classList.add('show');
   [0, 1, 2].forEach(slot => {
     const c = G.customers[slot], el = $(`callout-${slot}`);
     const waiting = c && c.state === 'skeleton' && G.drink.forCustomer !== slot && dom.speechArea.style.display === 'none';   // quiet while an order bubble is up
@@ -711,6 +714,7 @@ function clearCustomerChatter() {
   document.querySelectorAll('.bar-tip-float, .speech-bubble.reaction').forEach(e => e.classList.add('leaving'));
   document.querySelectorAll('.callout').forEach(e => e.classList.remove('show'));
   $('tap-hint').classList.remove('show');   // they've tapped a customer — the hint has done its job
+  G.hintWait = 0;
 }
 
 function selectCustomer(slot) {
@@ -1704,7 +1708,8 @@ function initGame() {
   dom.counterDrinks.innerHTML = '';
   document.querySelectorAll('.bar-tip-float, .speech-bubble.reaction').forEach(e => e.remove());
   document.querySelectorAll('.callout').forEach(e => e.classList.remove('show'));
-  $('tap-hint').classList.add('show');      // TAP A CUSTOMER TO SERVE, until the first tap of the shift
+  $('tap-hint').classList.remove('show');
+  G.hintWait = HINT_AFTER;                  // TAP A CUSTOMER TO SERVE appears after a moment, until the first tap of the shift
   hideSpeechArea();
   G.shelf = { order: [], selected: null, toast: null };
   refreshBarControls();
