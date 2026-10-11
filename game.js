@@ -455,7 +455,7 @@ function updateCallOuts() {
 /* ═══════════════════════════════════════════════════════════════
    SOUND (user, 2026-10-11) — bar music during a shift, a pouring loop while you hold to pour,
    a pop when a garnish lands. SOUND ON/OFF lives on the pause screen and is remembered.
-   Files: assets/audio/music.mp3 (Pixabay "bass bass music" 557626 — user's pick),
+   Files: assets/audio/music.mp3 (Pixabay "Bass Bass Music" by jonasblakewood, 557626 — user's pick),
    pour.mp3 (Freesound 235555 by simosco, CC0), pop.mp3 (Freesound 245645 by unfa, CC0).
    Web Audio, so volumes work on iPhone; the context is created on the first tap.
 ═══════════════════════════════════════════════════════════════ */
@@ -2277,11 +2277,11 @@ $('btn-end-shift').addEventListener('pointerdown', (e) => {
   endShift(true);
 });
 
-$('btn-resume').addEventListener('pointerdown', (e) => {
+['btn-resume', 'btn-resume-icon'].forEach(id => $(id).addEventListener('pointerdown', (e) => {
   e.stopPropagation();
   if (!G.timerRunning) pauseToggle();
-});
-// Full-screen pause (Figma 740:499): only RESUME resumes; taps elsewhere do nothing
+}));
+// Full-screen pause (Figma 743:555): RESUME or the play icon resumes; taps elsewhere do nothing
 dom.pauseOverlay.addEventListener('pointerdown', (e) => e.stopPropagation());
 $('btn-sound').addEventListener('click', (e) => { e.stopPropagation(); Sound.init(); Sound.setOn(!soundOn); refreshSoundButton(); });
 refreshSoundButton();

@@ -912,19 +912,21 @@ html, body {
 .recipe-peek img { display: block; width: 21px; height: 21px; }
 
 /* ─── PAUSE OVERLAY ──────────────────────────────────────────── */
-/* Pause screen — Figma 740:499 / 740:517 (1428×619 frame ×0.591; top content +12px to center on 390,
-   customers anchored to the bottom edge) */
+/* Pause screen — Figma 743:555 (1340.36×619.36 frame ×0.6297 = exactly 844×390) */
 #pause-overlay { position: absolute; inset: 0; z-index: 100; background: #2b2a45; overflow: hidden; }
-#pause-title { position: absolute; left: 0; right: 0; top: 90px; height: 27px; margin: 0;
-  font-family: 'Scratchy', 'BarFontBold', sans-serif; font-size: 56.7px; line-height: 27px; color: #fff; text-align: center; white-space: nowrap; }
-#pause-title span { font-size: 59.7px; }
-#btn-resume { position: absolute; left: 367.6px; top: 175.7px; width: 108.2px; height: 33.7px; padding: 0; border-radius: 7.1px; font-size: 23.05px; }
-#btn-end-shift { position: absolute; left: 372px; top: 230.7px; width: 99.4px; height: 20px; padding: 0;
-  background: none; border: none; cursor: pointer; font-family: 'BarFontBold', sans-serif; font-size: 18.9px; line-height: 20px; color: #918fb7; text-align: center; white-space: nowrap; }
-#btn-sound { position: absolute; left: 369.4px; top: 283.1px; height: 20px; padding: 0; display: flex; align-items: center; gap: 10px;
-  background: none; border: none; cursor: pointer; font-family: 'BarFontBold', sans-serif; font-size: 18.9px; line-height: 20px; color: #dc6fd3; white-space: nowrap; }
+/* Play triangle sits exactly where the pause bars were (800,22) — tap to resume */
+#btn-resume-icon { position: absolute; left: 790px; top: 12px; width: 35.6px; height: 37.6px; padding: 10px; background: none; border: none; cursor: pointer; }
+#btn-resume-icon svg { display: block; width: 15.6px; height: 17.6px; }
+#pause-title { position: absolute; left: 0; right: 0; top: 84.1px; height: 27px; margin: 0;
+  font-family: 'Scratchy', 'BarFontBold', sans-serif; font-size: 60.45px; line-height: 27px; color: #fff; text-align: center; white-space: nowrap; }
+#pause-title span { font-size: 63.6px; }
+#btn-resume { position: absolute; left: 350.1px; top: 196.1px; width: 143.6px; height: 35.9px; padding: 0; border-radius: 7.56px; font-size: 24.56px; }
+#btn-end-shift { position: absolute; left: 372px; top: 257px; width: 99.8px; height: 20px; padding: 0;
+  background: none; border: none; cursor: pointer; font-family: 'BarFontBold', sans-serif; font-size: 20.15px; line-height: 20px; color: #918fb7; text-align: center; white-space: nowrap; }
+#btn-sound { position: absolute; left: 363px; top: 298.2px; height: 20px; padding: 0; display: flex; align-items: center; gap: 10.7px;
+  background: none; border: none; cursor: pointer; font-family: 'BarFontBold', sans-serif; font-size: 20.15px; line-height: 20px; color: #dc6fd3; white-space: nowrap; }
 #btn-sound::before, #btn-end-shift::before { content: ''; position: absolute; inset: -9px -14px; }   /* bigger tap areas */
-#btn-sound svg { width: 14.2px; height: 14.2px; flex: none; display: block; }
+#btn-sound svg { width: 15.1px; height: 15.1px; flex: none; display: block; }
 #btn-sound .snd-off { display: none; }
 #btn-sound.off { color: #918fb7; }
 #btn-sound.off .snd-on { display: none; }

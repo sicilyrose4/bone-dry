@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#12111d" />
   <title>Bone Dry</title>
-  <link rel="stylesheet" href="style.css?v=55" />
+  <link rel="stylesheet" href="style.css?v=56" />
 </head>
 <body>
   <div id="viewport">
@@ -323,9 +323,10 @@
         <div id="unlock-stage"></div>
       </div>
 
-      <!-- Pause screen — Figma 740:499 (sound on) / 740:517 (sound off): full-screen navy, GAME PAUSED,
-           RESUME, END SHIFT, SOUND ON/OFF, four customers along the bottom (1428×619 frame, ×0.591). -->
+      <!-- Pause screen — Figma 743:555 (1340×619 frame, ×0.6297): full-screen navy, GAME PAUSED, a play
+           icon where the pause button was, RESUME, END SHIFT, SOUND ON/OFF, four customers along the bottom. -->
       <div id="pause-overlay" style="display:none;">
+        <button id="btn-resume-icon" aria-label="Resume"><svg width="24.75" height="27.88" viewBox="0 0 24.7519 27.8819" fill="none" aria-hidden="true"><path d="M0 2.24769C0.000404671 1.85293 0.104664 1.46522 0.302307 1.1235C0.499951 0.78178 0.784023 0.498072 1.126 0.300866C1.46797 0.10366 1.85581 -0.000101273 2.25058 7.41706e-08C2.64534 0.000101422 3.03313 0.104062 3.375 0.301443L23.625 11.9902C23.9675 12.1875 24.2521 12.4716 24.4499 12.8139C24.6477 13.1562 24.7519 13.5445 24.7519 13.9398C24.7519 14.3351 24.6477 14.7235 24.4499 15.0657C24.2521 15.408 23.9675 15.6921 23.625 15.8894L3.375 27.5804C3.03296 27.7779 2.64497 27.8819 2.25001 27.8819C1.85506 27.8819 1.46707 27.7779 1.12502 27.5805C0.782983 27.383 0.498947 27.099 0.301464 26.7569C0.103981 26.4149 1.00332e-05 26.0269 0 25.6319V2.24769Z" fill="#E6E6E6"/></svg></button>
         <p id="pause-title">GAM<span>E</span> PAUS<span>E</span>D</p>
         <button id="btn-resume" class="btn-secondary">RESUME</button>
         <button id="btn-end-shift">END SHIFT</button>
@@ -334,10 +335,10 @@
           <svg class="snd-off" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><g transform="translate(1 3)"><path d="M21 12.0114L15 6.01137M21 6.01137L15 12.0114" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M1 11.9704V6.05137C1 5.47737 1.448 5.01137 2 5.01137H5.586C5.71833 5.0109 5.8492 4.98363 5.97071 4.93121C6.09222 4.87879 6.20185 4.80231 6.293 4.70637L9.293 1.31837C9.923 0.662368 11 1.12737 11 2.05437V15.9684C11 16.9024 9.91 17.3634 9.284 16.6944L6.294 13.3254C6.20259 13.2267 6.09185 13.1479 5.96867 13.0939C5.84549 13.0399 5.71251 13.0118 5.578 13.0114H2C1.448 13.0114 1 12.5454 1 11.9704Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g></svg>
           <span id="sound-label">SOUND ON</span>
         </button>
-        <img class="pause-cust" style="left:64.4px;top:265.9px;width:57.8px;height:132.3px" src="assets/customers/lime-skeleton.png?v=3" alt="" />
-        <img class="pause-cust" style="left:161.4px;top:265.9px;width:59.7px;height:131.8px" src="assets/customers/orange-skeleton.png?v=3" alt="" />
-        <img class="pause-cust" style="left:630px;top:270.6px;width:60.3px;height:132.4px" src="assets/customers/red-skeleton.png?v=3" alt="" />
-        <img class="pause-cust" style="left:723.4px;top:265.9px;width:76.8px;height:137.1px" src="assets/customers/yellow-skeleton.png?v=3" alt="" />
+        <img class="pause-cust" style="left:44.7px;top:257.5px;width:61.6px;height:141px" src="assets/customers/lime-skeleton.png?v=3" alt="" />
+        <img class="pause-cust" style="left:148px;top:257.5px;width:63.6px;height:140.4px" src="assets/customers/orange-skeleton.png?v=3" alt="" />
+        <img class="pause-cust" style="left:629.7px;top:262.6px;width:64.2px;height:141px" src="assets/customers/red-skeleton.png?v=3" alt="" />
+        <img class="pause-cust" style="left:729.2px;top:257.5px;width:81.9px;height:146.1px" src="assets/customers/yellow-skeleton.png?v=3" alt="" />
       </div>
 
       <!-- Notification layer -->
@@ -346,6 +347,6 @@
     </div><!-- #game -->
   </div><!-- #viewport -->
 
-  <script src="game.js?v=67"></script>
+  <script src="game.js?v=68"></script>
 </body>
 </html>
