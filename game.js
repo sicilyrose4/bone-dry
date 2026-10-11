@@ -927,11 +927,14 @@ function openRecipe(drink) {
   list.style.fontSize = fs + 'px';
   list.style.lineHeight = '';
   list.innerHTML = drink.ingredients.map(recipeLine).join('');
-  // Long recipes (e.g. Long Island): tighten + shrink until the mini drink still shows on screen
+  // Longer recipes: tighten + shrink until the space under the mini drink (to the screen's bottom
+  // edge, where the card runs off) matches the 37px above the title (user, 2026-10-11)
   const listBottom = () => 62 + list.offsetTop + list.offsetHeight;   // card sits at y=62
-  const limit = 390 - 13 - 59.5 - 2;                                    // mini drink below it
-  if (listBottom() > limit) list.style.lineHeight = '1.05';
-  while (listBottom() > limit && fs > 15) list.style.fontSize = (--fs) + 'px';
+  const limit = 390 - 37 - 59.5 - 13;                                   // mini drink (59.5 + 13 gap) below it
+  if (listBottom() > limit) list.style.lineHeight = '1.22';
+  while (listBottom() > limit && fs > 15) list.style.fontSize = (fs -= 0.5) + 'px';
+  if (listBottom() > limit) list.style.lineHeight = '1.08';            // very long ones (Long Island)
+  while (listBottom() > limit && fs > 12) list.style.fontSize = (fs -= 0.5) + 'px';
   // Mini drink: what the finished drink should look like
   const poured = drink.ingredients.filter(i => i.oz).map(i => ({ id: i.id, oz: i.oz }));
   const garnishes = [];
@@ -2347,7 +2350,7 @@ const MENU_SLOTS = {   // card center (x, y), scale, opacity — scaled from the
   '1':  { x: 611.0, y: 204.5, s: 0.72, o: 0.7 },
   '2':  { x: 812.2, y: 204.5, s: 0.72, o: 0 },
 };
-const MENU_CARD_W = 277.2, MENU_CARD_H = 308.6;
+const MENU_CARD_W = 277.2, MENU_CARD_H = 308.6, MENU_CARD_PAD = 34.2;   // PAD = top padding, kept under the glass too
 const menu = { index: 0, cards: [] };   // index = drink in the middle
 
 function drinkGarnishes(drink) {
@@ -2370,11 +2373,15 @@ function fillMenuCard(card, drink) {
   const setName = () => { nameBox.style.fontSize = size + 'px'; span.innerHTML = scratchyHTML(name, size); };
   setName();
   while (span.offsetWidth > 236 && size > 18) { size -= 1; setName(); }
-  // Lines: shrink until the glass still fits on the card
-  const ings = card.querySelector('.menu-ings');
-  let fs = drink.ingredients.length > 6 ? 17 : 25.9;
+  // Lines: shrink until the space under the glass matches the padding above the title
+  // (user, 2026-10-11: the drink must never touch the bottom of the card)
+  const ings = card.querySelector('.menu-ings'), glass = card.querySelector('.menu-glass');
+  const n = drink.ingredients.length;
+  let fs = n > 6 ? 17 : 25.9;
   ings.style.fontSize = fs + 'px';
-  while (card.scrollHeight > card.clientHeight && fs > 11) ings.style.fontSize = (fs -= 1) + 'px';
+  ings.style.lineHeight = n >= 5 ? 1.22 : '';   // longer recipes sit a little tighter
+  const limit = card.clientHeight - MENU_CARD_PAD;
+  while (glass.offsetTop + glass.offsetHeight > limit && fs > 11) ings.style.fontSize = (fs -= 0.5) + 'px';
 }
 
 function placeMenuCard(card, slot) {
@@ -2530,7 +2537,8 @@ function fitSigCard(c, drink) {
   while (t.offsetWidth > 122 && size > 12) { size -= 0.5; setName(); }
   const ls = c.querySelector('.ls'), g = c.querySelector('.g');
   let fs = 13.09;
-  while (g.offsetTop + g.offsetHeight > SIG_CARD_H - 6 && fs > 9) { fs -= 0.25; ls.style.fontSize = fs + 'px'; ls.style.lineHeight = fs > 11 ? 1.32 : 1.22; }
+  // same space under the glass as above the title (17.3)
+  while (g.offsetTop + g.offsetHeight > SIG_CARD_H - 17.3 && fs > 8.5) { fs -= 0.25; ls.style.fontSize = fs + 'px'; ls.style.lineHeight = fs > 11 ? 1.32 : 1.22; }
 }
 
 let unlockAnims = [];
