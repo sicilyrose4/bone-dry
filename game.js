@@ -413,40 +413,76 @@ function tick() {
   updateTimerDisplays();
 }
 
-/* Waiting customers call out (user, 2026-10-01): if nobody taps a customer for
-   CALL_AFTER seconds, they say one of these over their head, then a different one
-   every few seconds until they're tapped. */
+/* Waiting customers call out (user, 2026-10-01; bubbles 2026-10-11 — Figma 740:80): if nobody
+   taps a customer for CALL_AFTER seconds, they say one of these in their own speech bubble (the
+   same A6 bubble orders use), then a different one every few seconds until they're tapped.
+   The first customer of a shift is the exception: their bubble is up right away with
+   "TAP TO TAKE ORDER" over it, and stays until any customer has been tapped once. */
 const CALL_OUTS = ['excuse me!', 'hello?', 'over here!', 'hey, bartender!', 'um, hi?', 'can i order?',
                    'ahem…', 'anyone there?', 'psst!', "i'm ready!", 'still waiting…', 'yoo-hoo!'];
 const CALL_AFTER = 2.5;   // seconds of waiting before the first call-out (user, 2026-10-01: was 6)
 const CALL_SHOW  = 2.5;   // each phrase stays this long…
 const CALL_GAP   = 1.5;   // …then a short pause before the next one
 
+const callBubble = slot => document.getElementById(`call-bubble-${slot}`);
+function hideCallBubble(slot) {
+  const b = callBubble(slot);
+  if (b) { b.removeAttribute('id'); b.classList.add('leaving'); setTimeout(() => b.remove(), 260); }
+  const c = G.customers[slot];
+  if (c && c.hinted) { c.hinted = false; $('tap-hint').classList.remove('show'); }
+}
+function hideAllCallBubbles() { [0, 1, 2].forEach(hideCallBubble); $('tap-hint').classList.remove('show'); }
+const overlaps = (a, b) => a.left < b.right - 4 && a.right > b.left + 4 && a.top < b.bottom && a.bottom > b.top;
+
+// Put a call-out bubble over this customer. Returns false if every phrase tried would sit on a neighbour's bubble.
+function showCallBubble(slot) {
+  const c = G.customers[slot];
+  const area = document.createElement('div');
+  area.className = 'speech-bubble callout-bubble';
+  area.id = `call-bubble-${slot}`;
+  area.innerHTML = '<div class="speech-text"></div><canvas aria-hidden="true"></canvas>';
+  dom.screens.bar.appendChild(area);
+  const others = [...document.querySelectorAll('.speech-bubble.callout-bubble:not(.leaving), .speech-bubble.reaction:not(.leaving)')].filter(e => e !== area);
+  const options = shuffleArray(CALL_OUTS.filter(p => p !== c.lastCall));
+  for (const phrase of [...options.slice(0, 3), ...options.slice(3).sort((a, b) => a.length - b.length)]) {   // then the shortest ones
+    placeBubble(area, area.firstChild, area.lastChild, phrase, slot, false);
+    const box = area.getBoundingClientRect();
+    if (!others.some(o => overlaps(box, o.getBoundingClientRect()))) { c.lastCall = phrase; return true; }
+  }
+  area.remove();
+  return false;
+}
+
 function updateCallOuts() {
   [0, 1, 2].forEach(slot => {
-    const c = G.customers[slot], el = $(`callout-${slot}`);
+    const c = G.customers[slot];
     const waiting = c && c.state === 'skeleton' && G.drink.forCustomer !== slot && dom.speechArea.style.display === 'none';   // quiet while an order bubble is up
     if (!waiting) {
       if (c) { c.waited = 0; c.callTimer = 0; }
-      el.classList.remove('show');
+      hideCallBubble(slot);
+      return;
+    }
+    // First customer of the shift: bubble + hint straight away, kept up until someone is tapped
+    if (c.first && G.tapHint) {
+      if (!callBubble(slot) && showCallBubble(slot)) {
+        const b = callBubble(slot).getBoundingClientRect(), g = dom.screens.bar.getBoundingClientRect(), k = 844 / g.width;
+        const hint = $('tap-hint'), half = hint.offsetWidth / 2, GAP = 10;
+        const cx = ((b.left + b.right) / 2 - g.left) * k;
+        hint.style.left = Math.min(Math.max(cx, 30 + dom.barTips.offsetWidth + GAP + half), TOP_ROW_RIGHT - GAP - half) + 'px';
+        hint.classList.add('show');
+        c.hinted = true;
+      }
       return;
     }
     c.waited = (c.waited || 0) + TICK;
     if (c.waited < CALL_AFTER) return;
     c.callTimer = (c.callTimer || 0) - TICK;
     if (c.callTimer > 0) return;
-    if (el.classList.contains('show')) {
-      el.classList.remove('show');
+    if (callBubble(slot)) {
+      hideCallBubble(slot);
       c.callTimer = CALL_GAP;
     } else {
-      const options = CALL_OUTS.filter(p => p !== c.lastCall);
-      c.lastCall = options[Math.floor(Math.random() * options.length)];
-      el.textContent = c.lastCall;
-      const spec = CUSTOMERS[c.type];
-      el.style.left = SLOT_CX[slot] + 'px';
-      el.style.top = (COUNTER_TOP + (spec.sink || 0) - spec.h - 24) + 'px';   // just over their head
-      el.classList.add('show');
-      c.callTimer = CALL_SHOW;
+      c.callTimer = showCallBubble(slot) ? CALL_SHOW : 0.5;   // no room next to a neighbour's bubble → try again shortly
     }
   });
 }
@@ -459,6 +495,8 @@ function pauseToggle() {
 }
 
 function updateTimerDisplays() {
+  const left = Math.ceil(G.shiftRemaining);   // bar screen: time left in the shift, m:ss (Figma 740:80)
+  $('bar-timer').textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
   const t = formatTime(Math.floor(G.drinkElapsed));
   dom.shelfTimer.textContent = t;
   dom.pourTimer.textContent  = t;
@@ -588,7 +626,8 @@ function noteCustomerLeft(type) {
 function createCustomer(slot, type) {
   const el = document.getElementById(`slot-${slot}`);
   const drink = pickDrink();
-  const customer = { type, drink, line: orderLine(drink), state: 'skeleton', slot, el };
+  const customer = { type, drink, line: orderLine(drink), state: 'skeleton', slot, el, first: !G.firstCustomerSeen };
+  G.firstCustomerSeen = true;
   G.customers[slot] = customer;
   renderCustomer(slot);
   el.classList.remove('leaving');
@@ -627,7 +666,8 @@ function renderCustomer(slot) {
 // stacks on top of the new order bubble.
 function clearCustomerChatter() {
   document.querySelectorAll('.bar-tip-float, .speech-bubble.reaction').forEach(e => e.classList.add('leaving'));
-  document.querySelectorAll('.callout').forEach(e => e.classList.remove('show'));
+  hideAllCallBubbles();
+  G.tapHint = false;   // they've tapped a customer — the hint has done its job
 }
 
 function selectCustomer(slot) {
@@ -692,7 +732,7 @@ function placeBubble(area, textEl, canvas, text, slotIdx, mayGoBelow) {
       left = clampLeft(cx + BUBBLE_BELOW.dx - w / 2);
       tailX = cx + BUBBLE_BELOW.tail;
     } else if (!mayGoBelow) {
-      const GAP = 10, minLeft = 30 + dom.barTips.offsetWidth + GAP, maxLeft = 800 - GAP - w;
+      const GAP = 10, minLeft = 30 + dom.barTips.offsetWidth + GAP, maxLeft = TOP_ROW_RIGHT - GAP - w;
       left = Math.min(Math.max(left, minLeft), maxLeft);
     }
   }
@@ -784,12 +824,12 @@ function drawChalkBubble(canvas, w, h, tailLeft, color, below, seed) {
   ctx.drawImage(line, 0, 0);
 }
 
-// Would a bubble at the top (y 45–93) touch the tips amount or the pause button?
+const TOP_ROW_RIGHT = 733;   // the shift timer starts here (then the pause bars at 800)
+// Would a bubble at the top (y 45–93) touch the tips amount or the shift timer?
 function bubbleHitsTopRow(left, w) {
   const GAP = 10;
   const tipsRight = 30 + dom.barTips.offsetWidth;          // "$0.00" starts at x=30
-  const pauseLeft = 800;                                   // pause bars start at x=800
-  return left < tipsRight + GAP || left + w > pauseLeft - GAP;
+  return left < tipsRight + GAP || left + w > TOP_ROW_RIGHT - GAP;
 }
 
 function hideSpeechArea() {
@@ -1611,7 +1651,10 @@ function initGame() {
   dom.game.classList.remove('paused');
   dom.counterDrinks.innerHTML = '';
   document.querySelectorAll('.bar-tip-float, .speech-bubble.reaction').forEach(e => e.remove());
-  document.querySelectorAll('.callout').forEach(e => e.classList.remove('show'));
+  document.querySelectorAll('.speech-bubble.callout-bubble').forEach(e => e.remove());
+  $('tap-hint').classList.remove('show');
+  G.tapHint = true;       // first customer of this shift gets TAP TO TAKE ORDER
+  G.firstCustomerSeen = false;
   hideSpeechArea();
   G.shelf = { order: [], selected: null, toast: null };
   refreshBarControls();
@@ -2202,7 +2245,7 @@ dom.pauseOverlay.addEventListener('pointerdown', (e) => {
 function allImagePaths() {
   const ui = ['icon-restart.svg','arrow-bar.svg','shelf-line.svg','icon-check.svg','icon-back.svg',
               'pour-ticks.svg','tap-target.png','icon-settings.svg','select-outline-whiskey.svg','select-outline-cola.svg',
-              'select-outline-lime.svg','icon-recipe.svg','recipe-underline.svg?v=2','icon-close.svg'].map(f => `assets/ui/${f}`);
+              'select-outline-lime.svg','icon-recipe.svg','icon-close.svg'].map(f => `assets/ui/${f}`);
   return [
     ...Object.values(ART),
     ...CUSTOMER_IDS.flatMap(id => [customerImg(id, 'skeleton'), customerImg(id, 'selected')]),
@@ -2269,7 +2312,6 @@ function drinkGarnishes(drink) {
 function fillMenuCard(card, drink) {
   card.classList.toggle('long', drink.ingredients.length > 6);
   card.innerHTML = `<div class="menu-name"><span></span></div>
-    <img class="menu-ul" src="assets/ui/recipe-underline.svg?v=2" alt="" />
     <div class="menu-ings">${drink.ingredients.map(recipeLine).join('')}</div>
     <div class="menu-glass"><div class="drink-view"></div></div>`;
   renderDrinkView(card.querySelector('.drink-view'), drink.ingredients.filter(i => i.oz).map(i => ({ id: i.id, oz: i.oz })), drinkGarnishes(drink));
@@ -2425,7 +2467,7 @@ function buildSigCard(drink) {
   c.className = 'sig-card';
   c.style.background = SIG_CARD_BG;
   c.style.opacity = 0;   // hidden until it flies out of the shaker
-  c.innerHTML = `<div class="t"></div><img class="ul" src="assets/ui/recipe-underline.svg?v=2" alt="" />
+  c.innerHTML = `<div class="t"></div>
     <div class="ls">${drink.ingredients.map(recipeLine).join('')}</div><div class="g"><div class="drink-view"></div></div>`;
   renderDrinkView(c.querySelector('.drink-view'), drink.ingredients.filter(i => i.oz).map(i => ({ id: i.id, oz: i.oz })), drinkGarnishes(drink));
   return c;

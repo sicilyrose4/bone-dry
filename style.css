@@ -221,7 +221,6 @@ html, body {
 .menu-card.no-anim { transition: none; }
 .menu-card .menu-name { width: 240.2px; height: 42px; display: flex; align-items: center; justify-content: center; font-family: 'Scratchy', 'BarFontBold', sans-serif; line-height: normal; color: #cccaf3; }
 .menu-card .menu-name span { display: inline-block; white-space: nowrap; }
-.menu-card .menu-ul { width: 244.4px; height: 11.9px; flex: none; }
 .menu-card .menu-ings { margin-top: 12px; font-family: 'BarFont', sans-serif; font-size: 25.9px; line-height: 1.32; color: #cccaf3; text-align: center; white-space: nowrap; }
 .menu-card .menu-ings .ing { color: #edecff; }
 .menu-card.long .menu-ings { columns: 2; column-gap: 14px; text-align: left; }   /* 7+ lines (Long Island) */
@@ -286,9 +285,13 @@ html, body {
   pointer-events: none;
 }
 .customer-slot.leaving { opacity: 0; }
-/* A customer who's been waiting too long calls out (small white text over their head) */
-.callout { position: absolute; transform: translateX(-50%); font-family: 'BarFont', sans-serif; font-size: 16px; line-height: normal; color: #fff; white-space: nowrap; pointer-events: none; z-index: 8; opacity: 0; transition: opacity 0.25s ease; }
-.callout.show { opacity: 1; }
+/* A waiting customer calls out in their own A6 bubble (Figma 740:80) — same bubble as the order one */
+.speech-bubble.callout-bubble { animation: barTipIn 0.25s ease; transition: opacity 0.25s ease; z-index: 9; }
+.speech-bubble.callout-bubble.leaving { opacity: 0; }
+/* First customer of the shift: hint centered over their bubble */
+#tap-hint { position: absolute; top: 23px; transform: translateX(-50%); font-family: 'BarFontBold', sans-serif; font-size: 16px; line-height: 16px;
+  color: #9d9cb6; white-space: nowrap; pointer-events: none; z-index: 9; opacity: 0; transition: opacity 0.25s ease; }
+#tap-hint.show { opacity: 1; }
 .customer-slot.arriving { animation: customerIn 0.6s ease; }
 @keyframes customerIn {
   from { opacity: 0; }
@@ -353,6 +356,8 @@ html, body {
   color: #fff;
   z-index: 20;
 }
+/* Shift time left — Figma 740:80: 28px white at x=733, level with the tips */
+#bar-timer { position: absolute; left: 733px; top: 19px; font-family: 'BarFont', sans-serif; font-size: 28px; line-height: normal; color: #fff; z-index: 20; }
 /* Pause: two 4x19 bars at x=800 / 807, y=22 (button padded for a bigger tap target) */
 #bar-pause {
   position: absolute;
@@ -454,7 +459,6 @@ html, body {
   text-align: center;
   white-space: nowrap;
 }
-#recipe-underline { width: 264.48px; height: 13.46px; margin-top: -0.6px; flex: none; }
 #recipe-list {
   margin-top: 13px;
   font-family: 'BarFont', sans-serif;
@@ -1040,7 +1044,6 @@ html, body {
   padding: 17.3px 8px 0; border-radius: 5.61px; filter: drop-shadow(0 3.93px 2.5px rgba(0,0,0,.25));
   display: flex; flex-direction: column; align-items: center; gap: 6.08px; transform-origin: 50% 50%; overflow: hidden; }
 .sig-card .t { font-family: 'Scratchy', 'BarFontBold', sans-serif; font-size: 21.04px; line-height: normal; color: #cccaf3; white-space: nowrap; }
-.sig-card .ul { width: 123.68px; height: 6.03px; margin-top: -6.08px; flex: none; }
 .sig-card .ls { font-family: 'BarFont', sans-serif; font-size: 13.09px; line-height: 1.32; color: #cccaf3; text-align: center; white-space: nowrap; }
 .sig-card .ls .ing { color: #edecff; }
 .sig-card .g { position: relative; width: 17.31px; height: 23.18px; flex: none; margin-top: 4px; }

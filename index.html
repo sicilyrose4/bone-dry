@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#12111d" />
   <title>Bone Dry</title>
-  <link rel="stylesheet" href="style.css?v=52" />
+  <link rel="stylesheet" href="style.css?v=53" />
 </head>
 <body>
   <div id="viewport">
@@ -111,10 +111,9 @@
         <div class="customer-slot" id="slot-0"></div>
         <div class="customer-slot" id="slot-1"></div>
         <div class="customer-slot" id="slot-2"></div>
-        <!-- "excuse me!" etc. — waiting customers call out (small white text over their heads) -->
-        <div class="callout" id="callout-0"></div>
-        <div class="callout" id="callout-1"></div>
-        <div class="callout" id="callout-2"></div>
+        <!-- Waiting customers call out in their own speech bubble (built in game.js — Figma 740:80).
+             The first customer of a shift also gets this hint over their bubble. -->
+        <div id="tap-hint">TAP TO TAKE ORDER</div>
         <!-- Counter -->
         <img class="counter" id="bar-counter" alt="" />
         <!-- Served drinks sit on the counter here -->
@@ -134,6 +133,8 @@
         </button>
         <!-- HUD -->
         <span id="bar-tips">$0.00</span>
+        <!-- Time left in the shift (Figma 740:80) -->
+        <span id="bar-timer">5:00</span>
         <button id="bar-pause" class="pause-btn" aria-label="Pause">
           <div class="pause-bar"></div>
           <div class="pause-bar"></div>
@@ -149,7 +150,6 @@
         <div id="recipe-card">
           <button id="btn-recipe-close" aria-label="Close recipe"><img src="assets/ui/icon-close.svg" alt="" /></button>
           <div id="recipe-title"></div>
-          <img id="recipe-underline" src="assets/ui/recipe-underline.svg?v=2" alt="" />
           <div id="recipe-list"></div>
           <div id="recipe-drink-wrap"><div id="recipe-drink" class="drink-view"></div></div>
         </div>
@@ -339,6 +339,6 @@
     </div><!-- #game -->
   </div><!-- #viewport -->
 
-  <script src="game.js?v=64"></script>
+  <script src="game.js?v=65"></script>
 </body>
 </html>
