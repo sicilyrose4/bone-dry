@@ -913,7 +913,7 @@ html, body {
 
 /* ─── PAUSE OVERLAY ──────────────────────────────────────────── */
 /* Pause screen — Figma 743:555 (1340.36×619.36 frame ×0.6297 = exactly 844×390) */
-#pause-overlay { position: absolute; inset: 0; z-index: 100; background: #2b2a45; overflow: hidden; }
+#pause-overlay { position: absolute; inset: 0; z-index: 100; background: #040318; overflow: hidden; }   /* #040318 (user, 2026-10-12; Figma had #2b2a45) */
 /* Play triangle sits exactly where the pause bars were (800,22) — tap to resume */
 #btn-resume-icon { position: absolute; left: 790px; top: 12px; width: 35.6px; height: 37.6px; padding: 10px; background: none; border: none; cursor: pointer; }
 #btn-resume-icon svg { display: block; width: 15.6px; height: 17.6px; }
