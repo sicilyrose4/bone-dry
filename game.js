@@ -456,18 +456,18 @@ function updateCallOuts() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SOUND (user, 2026-10-11) — bar music during a shift, a pouring loop while you hold to pour,
-   a pop when a garnish lands. SOUND ON/OFF lives on the pause screen and is remembered.
-   Files: assets/audio/music.mp3 (Pixabay "Bass Bass Music" by jonasblakewood, 557626 — user's pick),
-   pour.mp3 (Freesound 235555 by simosco, CC0), pop.mp3 (Freesound 245645 by unfa, CC0).
+   SOUND (user, 2026-10-11) — a pouring loop while you hold to pour and a pop when a garnish
+   lands. SOUND ON/OFF lives on the pause screen and is remembered. No background music: the
+   user tried a track and took it out (2026-10-12).
+   Files: pour.mp3 (Freesound 235555 by simosco, CC0), pop.mp3 (Freesound 245645 by unfa, CC0).
    Web Audio, so volumes work on iPhone; the context is created on the first tap.
 ═══════════════════════════════════════════════════════════════ */
 const SOUND_KEY = 'bonedry-sound';
 let soundOn = true;
 try { soundOn = localStorage.getItem(SOUND_KEY) !== '0'; } catch (e) { /* storage unavailable */ }
 const Sound = (() => {
-  const VOL = { music: 0.32, pour: 0.55, pop: 0.8 };
-  let ctx = null, master, musicEl, pourGain, pourSrc = null, wantMusic = false;
+  const VOL = { pour: 0.55, pop: 0.8 };
+  let ctx = null, master, pourGain, pourSrc = null;
   const buf = {};
   function load(name) {
     fetch(`assets/audio/${name}.mp3`).then(r => r.ok ? r.arrayBuffer() : Promise.reject())
@@ -484,16 +484,6 @@ const Sound = (() => {
     master = ctx.createGain(); master.gain.value = soundOn ? 1 : 0; master.connect(ctx.destination);
     pourGain = ctx.createGain(); pourGain.gain.value = 0; pourGain.connect(master);
     load('pour'); load('pop');
-    musicEl = new Audio('assets/audio/music.mp3');
-    musicEl.loop = true; musicEl.preload = 'auto';
-    try { const g = ctx.createGain(); g.gain.value = VOL.music; ctx.createMediaElementSource(musicEl).connect(g); g.connect(master); } catch (e) { musicEl.volume = VOL.music; }
-    if (wantMusic) music(true);
-  }
-  function music(on, restart) {
-    wantMusic = on;
-    if (!musicEl) return;
-    if (on && soundOn && !document.hidden) { if (restart) { try { musicEl.currentTime = 0; } catch (e) {} } musicEl.play().catch(() => {}); }
-    else musicEl.pause();
   }
   function pour(on) {
     if (!ctx) return;
@@ -520,10 +510,9 @@ const Sound = (() => {
     if (!ctx) return;
     master.gain.value = on ? 1 : 0;
     if (!on) pour(false);
-    music(wantMusic);
   }
-  document.addEventListener('visibilitychange', () => { if (document.hidden) { pour(false); if (musicEl) musicEl.pause(); } else music(wantMusic); });
-  return { init, music, pour, pop, setOn };
+  document.addEventListener('visibilitychange', () => { if (document.hidden) pour(false); });
+  return { init, pour, pop, setOn };
 })();
 function refreshSoundButton() {
   const b = $('btn-sound');
@@ -538,7 +527,6 @@ function pauseToggle() {
   dom.pauseOverlay.style.display = G.timerRunning ? 'none' : 'block';
   dom.game.classList.toggle('paused', !G.timerRunning);
   Sound.pour(false);
-  Sound.music(G.timerRunning);   // the music stops while the game is paused
 }
 
 function updateTimerDisplays() {
@@ -1584,7 +1572,6 @@ function endShift(early = false) {
   G.shiftEnded = true;
   stopTimer();
   stopPourRAF();
-  Sound.music(false);
   // Ending early from pause: the drink in progress (if any) is dropped
   if (early) resetCurrentDrink();
   dom.pauseOverlay.style.display = 'none';
@@ -1680,7 +1667,6 @@ function stepSummary(now) {
 ═══════════════════════════════════════════════════════════════ */
 function initGame() {
   Sound.init();
-  Sound.music(true, true);   // bar music from the top, every shift
   G.screen = 'bar';
   G.tips = 0;
   G.shiftRemaining = SHIFT_SECONDS;
