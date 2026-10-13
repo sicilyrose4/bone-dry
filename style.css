@@ -195,7 +195,7 @@ html, body {
 ═══════════════════════════════════════════ */
 #screen-profile, #screen-leaderboard { background: #040318; }
 #account-card { position: absolute; left: 70px; top: 67px; width: 320px; height: 256px; box-sizing: border-box; padding: 24px 26px; background: #2b2a45; border-radius: 12px; }
-#account-in, #account-out { display: flex; flex-direction: column; gap: 12px; height: 190px; margin-top: 12px; }
+#account-in, #account-out { display: flex; flex-direction: column; gap: 12px; height: 208px; }   /* fills the card (no "ACCOUNT" label — user, 2026-10-13) */
 #account-in > button, #account-out > button { margin-top: auto; align-self: flex-start; }
 .pf-label { font-family: 'BarFontBold', sans-serif; font-size: 14px; letter-spacing: 2px; color: #918fb7; }
 .pf-who { display: flex; align-items: center; gap: 14px; }
