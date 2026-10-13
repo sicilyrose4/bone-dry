@@ -180,25 +180,51 @@ html, body {
   text-align: center;
   white-space: nowrap;
 }
-/* Gear is drawn in portrait in Figma, so it's turned -90° here */
-#btn-settings {
-  position: absolute;
-  left: 790px;
-  top: 24px;
-  width: 22.44px;
-  height: 21.84px;
-  background: none;
-  border: none;
-  padding: 0;
-}
-#btn-settings img {
-  position: absolute;
-  left: 0.3px;
-  top: -0.3px;
-  width: 21.84px;
-  height: 22.44px;
-  transform: rotate(-90deg);
-}
+/* Profile image — Figma 606:554: 34px circle at (782,23), Scratchy initial in the logo green */
+.profile-dot { width: 34px; height: 34px; border-radius: 50%; background: #45426a; border: none; padding: 0; display: flex; align-items: center; justify-content: center;
+  font-family: 'Scratchy', 'BarFontBold', sans-serif; font-size: 32.5px; line-height: 1; color: #c5dc6f; flex: none; }
+.profile-dot span { margin-top: 2px; }
+.profile-dot.big { width: 64px; height: 64px; font-size: 58px; }
+.profile-dot.big span { margin-top: 4px; }
+#btn-profile { position: absolute; left: 782px; top: 23px; cursor: pointer; }
+#btn-profile::before { content: ''; position: absolute; inset: -10px; }   /* bigger tap area */
+#screen-home.signed-out #btn-profile span { visibility: hidden; }          /* empty circle when signed out */
+
+/* ═══════════════════════════════════════════
+   PROFILE + LEADERBOARD (user-approved mockups, 2026-10-13)
+═══════════════════════════════════════════ */
+#screen-profile, #screen-leaderboard { background: #040318; }
+#account-card { position: absolute; left: 70px; top: 67px; width: 320px; height: 256px; box-sizing: border-box; padding: 24px 26px; background: #2b2a45; border-radius: 12px; }
+#account-in, #account-out { display: flex; flex-direction: column; gap: 12px; height: 190px; margin-top: 12px; }
+#account-in > button, #account-out > button { margin-top: auto; align-self: flex-start; }
+.pf-label { font-family: 'BarFontBold', sans-serif; font-size: 14px; letter-spacing: 2px; color: #918fb7; }
+.pf-who { display: flex; align-items: center; gap: 14px; }
+.pf-name { font-family: 'BarFontBold', sans-serif; font-size: 24px; line-height: normal; color: #fff; }
+.pf-sub { margin: 0; font-family: 'BarFont', sans-serif; font-size: 16px; line-height: 1.25; color: #9d9cb6; }
+#btn-sign-in { height: 46px; padding: 0 30px; font-size: 24px; }
+#btn-sign-out { height: 43px; padding: 0 30px; font-size: 22px; }
+#profile-rows { position: absolute; left: 444px; top: 111px; width: 330px; }
+.pf-row { width: 100%; height: 56px; padding: 0; display: flex; align-items: center; justify-content: space-between; background: none; border: none; border-bottom: 1.5px solid #2b2a45;
+  font-family: 'BarFontBold', sans-serif; font-size: 20px; color: #cccaf3; cursor: pointer; }
+.pf-row:last-child { border-bottom: none; }
+.pf-row img.flip { transform: scaleX(-1); opacity: .9; }
+.tog { position: relative; width: 47px; height: 23px; border-radius: 39px; background: #2b2a3c; flex: none; transition: background .25s; }
+.tog i { position: absolute; left: 3px; top: 2px; width: 18px; height: 18px; border-radius: 50%; background: #918fb7; transition: transform .25s cubic-bezier(.3,1.3,.5,1), background .25s; }
+.tog.on { background: #5b3e5c; }
+.tog.on i { transform: translateX(23px); background: #dc6fd3; }
+
+#board-title { position: absolute; left: 0; right: 0; top: 18px; text-align: center; font-family: 'Scratchy', 'BarFontBold', sans-serif; font-size: 45px; line-height: 1; color: #cccaf3; white-space: nowrap; }
+#board-sub { position: absolute; left: 0; right: 0; top: 70px; text-align: center; font-family: 'BarFont', sans-serif; font-size: 15px; color: #918fb7; }
+.board-card { position: absolute; top: 104px; width: 330px; height: 262px; box-sizing: border-box; padding: 16px 16px 0; background: #2b2a45; border-radius: 12px; }
+.board-card .pf-label { margin: 0 8px 10px; }
+.board-row { display: flex; align-items: center; height: 42px; padding: 0 8px; border-radius: 8px; gap: 10px; font-family: 'BarFontBold', sans-serif; font-size: 18px; color: #cccaf3; }
+.board-row .n { width: 16px; color: #918fb7; }
+.board-row .a { width: 30px; height: 30px; border-radius: 50%; background: #040318; overflow: hidden; position: relative; flex: none; }
+.board-row .a img { position: absolute; left: 1px; top: 2px; width: 28px; }
+.board-row .a.me { background: #45426a; display: flex; align-items: center; justify-content: center; font-family: 'Scratchy', sans-serif; font-size: 27px; line-height: 1; color: #c5dc6f; }
+.board-row .amt { margin-left: auto; font-family: 'BarFont', sans-serif; font-size: 19px; color: #fff; }
+.board-row.you { background: #3c3b5c; color: #fff; }
+.board-row.you .n { color: #cccaf3; }
 
 /* ═══════════════════════════════════════════
    DRINK MENU — Figma 559:427, scaled ×0.591 (1428 → 844 wide).
@@ -868,6 +894,7 @@ html, body {
   position: absolute; left: 243.8px; top: 208.2px; transform: translate(-50%, -50%);
   margin: 0; font-family: 'BarFont', sans-serif; font-size: 22.5px; line-height: normal; color: #cccaf3; white-space: nowrap;
 }
+#end-bank { position: absolute; left: 243.8px; top: 236px; transform: translate(-50%, -50%); margin: 0; font-family: 'BarFont', sans-serif; font-size: 18px; line-height: normal; color: #9d9cb6; white-space: nowrap; }
 /* START OVER (primary) + BACK TO HOME (outlined secondary), stretched to the same width */
 #btn-end-home { border-color: transparent; }   /* no stroke (user, 2026-10-01) — text only, same size/spacing */
 .end-buttons { position: absolute; left: 243.4px; top: 263.2px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: stretch; gap: 14.8px; }

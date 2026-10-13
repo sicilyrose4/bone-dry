@@ -299,6 +299,8 @@ const dom = {
     pour:           $('screen-pour'),
     garnish:        $('screen-garnish'),
     end:            $('screen-end'),
+    profile:        $('screen-profile'),
+    leaderboard:    $('screen-leaderboard'),
   },
   overlay:          $('overlay-recipe'),
   recipeCard:       $('recipe-card'),
@@ -1580,6 +1582,7 @@ function endShift(early = false) {
                          ...(early ? { endedEarly: true, secondsLeft: Math.ceil(G.shiftRemaining) } : {}) });
   saveProgress();
   dom.endTips.textContent = `Total tips: $${G.tips.toFixed(2)}`;
+  $('end-bank').textContent = `added to your tip bank: $${tipBank().toFixed(2)}`;
   showScreen('end');
   buildShiftSummary();
 }
@@ -2287,7 +2290,7 @@ refreshSoundButton();
 ═══════════════════════════════════════════════════════════════ */
 function allImagePaths() {
   const ui = ['icon-restart.svg','arrow-bar.svg','shelf-line.svg','icon-check.svg','icon-back.svg',
-              'pour-ticks.svg','tap-target.png','icon-settings.svg','select-outline-whiskey.svg','select-outline-cola.svg',
+              'pour-ticks.svg','tap-target.png','select-outline-whiskey.svg','select-outline-cola.svg',
               'select-outline-lime.svg','icon-recipe.svg','icon-close.svg'].map(f => `assets/ui/${f}`);
   return [
     ...Object.values(ART),
@@ -2446,6 +2449,67 @@ $('btn-menu-next').addEventListener('click', (e) => { e.stopPropagation(); moveM
 $('btn-drink-menu').addEventListener('click', (e) => { e.stopPropagation(); openDrinkMenu(); });
 $('btn-end-home').addEventListener('click', (e) => { e.stopPropagation(); showScreen('home'); });
 $('btn-menu-home').addEventListener('click', (e) => { e.stopPropagation(); showScreen('home'); });
+
+/* ═══════════════════════════════════════════════════════════════
+   TIP BANK, PROFILE, LEADERBOARD (user, 2026-10-13)
+   Tip bank = every saved shift's tips added up; never resets. The leaderboard is today only:
+   sample players with fixed scores, plus the player's real "best shift today" and "tips today".
+   Sign in / out only switches what the account card shows — there are no real accounts.
+═══════════════════════════════════════════════════════════════ */
+const dollars = n => `$${n.toFixed(2)}`;   // always two decimals (the summary's money() drops .00)
+const tipBank = () => PROGRESS.shifts.reduce((sum, sh) => sum + (sh.tips || 0), 0);
+function todaysShifts() {
+  const today = new Date().toDateString();
+  return PROGRESS.shifts.filter(sh => new Date(sh.date).toDateString() === today);
+}
+// Sample players (made up; scores stay the same every day)
+const BOARD_BEST  = [['femur fatale', 'pink', 28.5], ['marrow', 'teal', 25], ['skully', 'yellow', 19], ['tibia tim', 'orange', 16.5]];
+const BOARD_TOTAL = [['marrow', 'teal', 74.5], ['skully', 'yellow', 61], ['femur fatale', 'pink', 52.5], ['ribcage', 'lime', 28]];
+function boardRows(samples, mine) {
+  const rows = [...samples.map(([name, type, amt]) => ({ name, type, amt })), { name: 'you', amt: mine, you: true }]
+    .sort((a, b) => b.amt - a.amt || (a.you ? 1 : -1));   // on a tie the sample player stays ahead
+  return rows.map((r, i) => `<div class="board-row${r.you ? ' you' : ''}"><span class="n">${i + 1}</span>` +
+    (r.you ? `<span class="a me">${signedIn ? 'S' : ''}</span>` : `<span class="a"><img src="${customerImg(r.type, 'skeleton')}" alt="" /></span>`) +
+    `${r.name}<span class="amt">${dollars(r.amt)}</span></div>`).join('');
+}
+function openLeaderboard() {
+  const today = todaysShifts().map(sh => sh.tips || 0);
+  $('board-title').innerHTML = scratchyHTML('LEADERBOARD', 45);
+  $('board-best').innerHTML = boardRows(BOARD_BEST, today.length ? Math.max(...today) : 0);
+  $('board-total').innerHTML = boardRows(BOARD_TOTAL, today.reduce((a, b) => a + b, 0));
+  showScreen('leaderboard');
+}
+
+const SIGNED_KEY = 'bonedry-signed-in';
+let signedIn = true;
+try { signedIn = localStorage.getItem(SIGNED_KEY) !== '0'; } catch (e) { /* storage unavailable */ }
+function refreshProfile() {
+  dom.screens.home.classList.toggle('signed-out', !signedIn);
+  $('account-in').style.display = signedIn ? '' : 'none';
+  $('account-out').style.display = signedIn ? 'none' : '';
+  $('pf-bank').textContent = `tip bank ${dollars(tipBank())}`;
+  $('row-sound').querySelector('.tog').classList.toggle('on', soundOn);
+  $('row-mocktails').querySelector('.tog').classList.toggle('on', mocktailsOnly);
+}
+function setSignedIn(on) {
+  signedIn = on;
+  try { localStorage.setItem(SIGNED_KEY, on ? '1' : '0'); } catch (e) { /* storage unavailable */ }
+  refreshProfile();
+}
+$('btn-profile').addEventListener('click', (e) => { e.stopPropagation(); refreshProfile(); showScreen('profile'); });
+$('btn-profile-home').addEventListener('click', (e) => { e.stopPropagation(); showScreen('home'); });
+$('btn-sign-out').addEventListener('click', (e) => { e.stopPropagation(); setSignedIn(false); });
+$('btn-sign-in').addEventListener('click', (e) => { e.stopPropagation(); setSignedIn(true); });
+$('row-sound').addEventListener('click', (e) => { e.stopPropagation(); Sound.init(); Sound.setOn(!soundOn); refreshSoundButton(); refreshProfile(); });
+$('row-mocktails').addEventListener('click', (e) => {
+  e.stopPropagation();
+  mocktailsOnly = !mocktailsOnly;
+  try { localStorage.setItem(MODE_KEY, mocktailsOnly ? '1' : '0'); } catch (err) { /* storage unavailable */ }
+  applyMode(); refreshProfile();
+});
+$('row-leaderboard').addEventListener('click', (e) => { e.stopPropagation(); openLeaderboard(); });
+$('btn-board-back').addEventListener('click', (e) => { e.stopPropagation(); refreshProfile(); showScreen('profile'); });
+refreshProfile();
 
 // Opens straight to home (loading screen removed, user 2026-09-30). Art still preloads
 // quietly in the background so nothing pops in once a shift starts.

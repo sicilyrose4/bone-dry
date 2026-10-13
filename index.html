@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#12111d" />
   <title>Bone Dry</title>
-  <link rel="stylesheet" href="style.css?v=58" />
+  <link rel="stylesheet" href="style.css?v=59" />
 </head>
 <body>
   <div id="viewport">
@@ -84,7 +84,55 @@
         <!-- Settings screen is still to be designed -->
         <button id="btn-drink-menu" class="home-link">DRINK MENU</button>
         <button id="btn-start-shift" class="btn-secondary">START SHIFT</button>
-        <button id="btn-settings" aria-label="Settings"><img src="assets/ui/icon-settings.svg" alt="" /></button>
+        <!-- Profile image (Figma 606:554: 34px #45426a circle, Scratchy initial) — replaces the settings gear -->
+        <button id="btn-profile" class="profile-dot" aria-label="Profile"><span>S</span></button>
+      </div>
+
+      <!-- ═══════════════════════════════════════════
+           PROFILE (user-approved mockup, 2026-10-13): account card with sign in / out (visual only —
+           there are no real accounts), tip bank, Sound + Mocktails Only, and the way to the leaderboard
+      ═══════════════════════════════════════════ -->
+      <div id="screen-profile" class="screen">
+        <button id="btn-profile-home" class="pour-back">
+          <img src="assets/ui/icon-back.svg" alt="" width="24" height="24" />
+          <span>BACK TO HOME</span>
+        </button>
+        <div id="account-card">
+          <div class="pf-label">ACCOUNT</div>
+          <div id="account-in">
+            <div class="pf-who">
+              <div class="profile-dot big"><span>S</span></div>
+              <div><div class="pf-name">sicily</div><div class="pf-sub" id="pf-bank">tip bank $0.00</div></div>
+            </div>
+            <p class="pf-sub">Your tips and shifts are saved on this phone.</p>
+            <button id="btn-sign-out" class="btn-secondary outline">SIGN OUT</button>
+          </div>
+          <div id="account-out" style="display:none;">
+            <div class="pf-name">Not signed in</div>
+            <p class="pf-sub">Sign in to keep your tips and shift history.</p>
+            <button id="btn-sign-in" class="btn-primary">SIGN IN</button>
+          </div>
+        </div>
+        <div id="profile-rows">
+          <button class="pf-row" id="row-sound">SOUND <span class="tog"><i></i></span></button>
+          <button class="pf-row" id="row-mocktails">MOCKTAILS ONLY <span class="tog"><i></i></span></button>
+          <button class="pf-row" id="row-leaderboard">LEADERBOARD <img class="flip" src="assets/ui/arrow-bar.svg" alt="" width="18" height="16" /></button>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════
+           LEADERBOARD — today only. Sample players with fixed scores + the player's real numbers
+           (best shift today, tips today). Opens from the profile.
+      ═══════════════════════════════════════════ -->
+      <div id="screen-leaderboard" class="screen">
+        <button id="btn-board-back" class="pour-back">
+          <img src="assets/ui/icon-back.svg" alt="" width="24" height="24" />
+          <span>BACK</span>
+        </button>
+        <div id="board-title"></div>
+        <div id="board-sub">today's scores, starts fresh at midnight</div>
+        <div class="board-card" style="left:70px"><div class="pf-label">BEST SHIFT TODAY</div><div id="board-best"></div></div>
+        <div class="board-card" style="left:444px"><div class="pf-label">TIPS TODAY</div><div id="board-total"></div></div>
       </div>
 
       <!-- ═══════════════════════════════════════════
@@ -285,6 +333,8 @@
         <img id="end-skull" src="assets/ui/shift-over-skull.png" alt="" />
         <h1 id="end-title">SHI<span class="t-f">F</span>T <span class="t-o">O</span><span class="t-v">V</span><span class="t-e">E</span>R</h1>
         <p id="end-tips">Total tips: $0.00</p>
+        <!-- Tips never disappear: every shift is added to the tip bank (shown in the profile) -->
+        <p id="end-bank"></p>
         <!-- Every order this shift with its tip + why — drifts down, rests, returns to the top; can be scrolled by hand -->
         <!-- The scroll area is the whole right column; the navy card inside it moves as one layer -->
         <div id="end-summary"><div id="end-summary-card"><div id="end-summary-list"></div></div></div>
@@ -347,6 +397,6 @@
     </div><!-- #game -->
   </div><!-- #viewport -->
 
-  <script src="game.js?v=71"></script>
+  <script src="game.js?v=72"></script>
 </body>
 </html>
