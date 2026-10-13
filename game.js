@@ -1582,7 +1582,7 @@ function endShift(early = false) {
                          ...(early ? { endedEarly: true, secondsLeft: Math.ceil(G.shiftRemaining) } : {}) });
   saveProgress();
   dom.endTips.textContent = `Total tips: $${G.tips.toFixed(2)}`;
-  $('end-bank').textContent = `added to your tip bank: $${tipBank().toFixed(2)}`;
+  $('end-bank').textContent = `all-time tips: $${tipBank().toFixed(2)}`;   // "total tips" in the profile; worded differently here, next to this shift's "Total tips"
   showScreen('end');
   buildShiftSummary();
 }
@@ -2452,7 +2452,7 @@ $('btn-menu-home').addEventListener('click', (e) => { e.stopPropagation(); showS
 
 /* ═══════════════════════════════════════════════════════════════
    TIP BANK, PROFILE, LEADERBOARD (user, 2026-10-13)
-   Tip bank = every saved shift's tips added up; never resets. The leaderboard is today only:
+   Total tips (was "tip bank") = every saved shift's tips added up; never resets. The leaderboard is today only:
    sample players with fixed scores, plus the player's real "best shift today" and "tips today".
    Sign in / out only switches what the account card shows — there are no real accounts.
 ═══════════════════════════════════════════════════════════════ */
@@ -2462,9 +2462,13 @@ function todaysShifts() {
   const today = new Date().toDateString();
   return PROGRESS.shifts.filter(sh => new Date(sh.date).toDateString() === today);
 }
-// Sample players (made up; scores stay the same every day)
-const BOARD_BEST  = [['femur fatale', 'pink', 28.5], ['marrow', 'teal', 25], ['skully', 'yellow', 19], ['tibia tim', 'orange', 16.5]];
-const BOARD_TOTAL = [['marrow', 'teal', 74.5], ['skully', 'yellow', 61], ['femur fatale', 'pink', 52.5], ['ribcage', 'lime', 28]];
+// Sample players (made up; scores stay the same every day) — enough of them that each list scrolls
+const BOARD_BEST = [['femur fatale', 'pink', 28.5], ['bony tony', 'red', 27], ['marrow', 'teal', 25], ['spine tingler', 'blue', 24],
+                    ['patella', 'lavender', 22.5], ['jaw dropper', 'orange2', 21], ['skully', 'yellow', 19], ['knuckles', 'purple', 17.5],
+                    ['tibia tim', 'orange', 16.5], ['lazy bones', 'lime', 14], ['cranium', 'teal', 12], ['scapula', 'pink', 9.5]];
+const BOARD_TOTAL = [['marrow', 'teal', 74.5], ['spine tingler', 'blue', 68], ['skully', 'yellow', 61], ['bony tony', 'red', 55.5],
+                     ['femur fatale', 'pink', 52.5], ['knuckles', 'purple', 47], ['patella', 'lavender', 41], ['jaw dropper', 'orange2', 36.5],
+                     ['ribcage', 'lime', 28], ['tibia tim', 'orange', 22], ['lazy bones', 'lime', 15.5], ['scapula', 'pink', 9]];
 function boardRows(samples, mine) {
   const rows = [...samples.map(([name, type, amt]) => ({ name, type, amt })), { name: 'you', amt: mine, you: true }]
     .sort((a, b) => b.amt - a.amt || (a.you ? 1 : -1));   // on a tie the sample player stays ahead
@@ -2478,6 +2482,11 @@ function openLeaderboard() {
   $('board-best').innerHTML = boardRows(BOARD_BEST, today.length ? Math.max(...today) : 0);
   $('board-total').innerHTML = boardRows(BOARD_TOTAL, today.reduce((a, b) => a + b, 0));
   showScreen('leaderboard');
+  // Each list scrolls; open with the player's own row in view
+  ['board-best', 'board-total'].forEach(id => {
+    const list = $(id), me = list.querySelector('.you');
+    list.scrollTop = Math.max(0, me.offsetTop - (list.clientHeight - me.offsetHeight) / 2);
+  });
 }
 
 const SIGNED_KEY = 'bonedry-signed-in';
@@ -2487,7 +2496,7 @@ function refreshProfile() {
   dom.screens.home.classList.toggle('signed-out', !signedIn);
   $('account-in').style.display = signedIn ? '' : 'none';
   $('account-out').style.display = signedIn ? 'none' : '';
-  $('pf-bank').textContent = `tip bank ${dollars(tipBank())}`;
+  $('pf-bank').textContent = `total tips ${dollars(tipBank())}`;
   $('row-sound').querySelector('.tog').classList.toggle('on', soundOn);
   $('row-mocktails').querySelector('.tog').classList.toggle('on', mocktailsOnly);
 }

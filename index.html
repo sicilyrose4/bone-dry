@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#12111d" />
   <title>Bone Dry</title>
-  <link rel="stylesheet" href="style.css?v=59" />
+  <link rel="stylesheet" href="style.css?v=60" />
 </head>
 <body>
   <div id="viewport">
@@ -102,7 +102,7 @@
           <div id="account-in">
             <div class="pf-who">
               <div class="profile-dot big"><span>S</span></div>
-              <div><div class="pf-name">sicily</div><div class="pf-sub" id="pf-bank">tip bank $0.00</div></div>
+              <div><div class="pf-name">sicily</div><div class="pf-sub" id="pf-bank">total tips $0.00</div></div>
             </div>
             <p class="pf-sub">Your tips and shifts are saved on this phone.</p>
             <button id="btn-sign-out" class="btn-secondary outline">SIGN OUT</button>
@@ -333,7 +333,7 @@
         <img id="end-skull" src="assets/ui/shift-over-skull.png" alt="" />
         <h1 id="end-title">SHI<span class="t-f">F</span>T <span class="t-o">O</span><span class="t-v">V</span><span class="t-e">E</span>R</h1>
         <p id="end-tips">Total tips: $0.00</p>
-        <!-- Tips never disappear: every shift is added to the tip bank (shown in the profile) -->
+        <!-- Tips never disappear: every shift adds to the all-time total (shown as "total tips" in the profile) -->
         <p id="end-bank"></p>
         <!-- Every order this shift with its tip + why — drifts down, rests, returns to the top; can be scrolled by hand -->
         <!-- The scroll area is the whole right column; the navy card inside it moves as one layer -->
@@ -397,6 +397,6 @@
     </div><!-- #game -->
   </div><!-- #viewport -->
 
-  <script src="game.js?v=72"></script>
+  <script src="game.js?v=73"></script>
 </body>
 </html>

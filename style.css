@@ -217,6 +217,10 @@ html, body {
 #board-sub { position: absolute; left: 0; right: 0; top: 70px; text-align: center; font-family: 'BarFont', sans-serif; font-size: 15px; color: #918fb7; }
 .board-card { position: absolute; top: 104px; width: 330px; height: 262px; box-sizing: border-box; padding: 16px 16px 0; background: #2b2a45; border-radius: 12px; }
 .board-card .pf-label { margin: 0 8px 10px; }
+/* Each list scrolls inside its card (5 rows show at a time); soft fade where rows run off */
+#board-best, #board-total { position: relative; height: 212px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch; touch-action: pan-y;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 14px, #000 calc(100% - 22px), transparent 100%); mask-image: linear-gradient(to bottom, transparent 0, #000 14px, #000 calc(100% - 22px), transparent 100%); padding: 6px 0 10px; box-sizing: border-box; }
+#board-best::-webkit-scrollbar, #board-total::-webkit-scrollbar { display: none; }
 .board-row { display: flex; align-items: center; height: 42px; padding: 0 8px; border-radius: 8px; gap: 10px; font-family: 'BarFontBold', sans-serif; font-size: 18px; color: #cccaf3; }
 .board-row .n { width: 16px; color: #918fb7; }
 .board-row .a { width: 30px; height: 30px; border-radius: 50%; background: #040318; overflow: hidden; position: relative; flex: none; }
